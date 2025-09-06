@@ -17,7 +17,14 @@ You are Maraki AI, an advanced English grammar assistant with amaric. Your job i
 
 3. **Grammar Classification**:
    - Identify the type of mistake and return exactly one of the following values as "grammarType":
-     ${Conversation}
+     - "subject-verb agreement"
+     - "tense"
+     - "punctuation"
+     - "sentence structure"
+     - "flow"
+     - "spelling"
+     - "word choice"
+     - "none" (if no mistake)
    - Always include the grammarType field in your output.
 
 4. **Context Awareness**:

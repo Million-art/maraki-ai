@@ -1,6 +1,6 @@
 import { Bot } from 'grammy';
 import { startCommand } from '../commands/start.command.js';
-import { grammarCommand } from '../commands/grammar.command.js';
+import { grammarCommand, handleGrammarCorrection } from '../commands/grammar.command.js';
 import { lessonCommand } from '../commands/lesson.comand.js';
 import { chatMode } from '../commands/chat.command.js';
 import { levelCommand } from '../commands/level.command.js';
@@ -8,7 +8,7 @@ import { referralCommand } from '../commands/referral.command.js';
 import { helpCommand } from '../commands/help.command.js';
 import { updateUserLevel } from '../services/userService.js';
 import { Level } from '../types/User.js';
-import { setSession } from '../utils/redis.js';
+import { setSession, getSession } from '../utils/redis.js';
 
 const bot_token= process.env.TOKEN
 if (!bot_token) {
@@ -36,7 +36,16 @@ bot.command('level',levelCommand)
 bot.command('referral_link',referralCommand)
 bot.command('help', helpCommand)
 // Catch all other messages
-bot.on('message:text', chatMode);
+bot.on('message:text', async (ctx) => {
+  if (!ctx.from) return;
+
+  const session = await getSession(ctx.from.id);
+  if (session?.mode === 'grammar') {
+    await handleGrammarCorrection(ctx);
+  } else {
+    await chatMode(ctx);
+  }
+});
 
 // Callback query handler for buttons
 bot.on('callback_query:data', async (ctx) => {
