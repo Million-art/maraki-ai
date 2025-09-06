@@ -1,8 +1,13 @@
 import {createClient} from 'redis'
 
+const redisUrl = process.env.REDIS_URL || process.env.REDIS_URL_RENDER || 'redis://localhost:6379'
+
+// Force TLS for Upstash Redis connections
+const finalRedisUrl = redisUrl.includes('upstash.io') ? redisUrl.replace('redis://', 'rediss://') : redisUrl
+
 const redis  = createClient({
-    url: process.env.REDIS_URL || process.env.REDIS_URL_RENDER || 'redis://localhost:6379',
-    socket: process.env.REDIS_URL?.startsWith('rediss://') ? {
+    url: finalRedisUrl,
+    socket: finalRedisUrl.startsWith('rediss://') ? {
         tls: true,
         rejectUnauthorized: false
     } : undefined
