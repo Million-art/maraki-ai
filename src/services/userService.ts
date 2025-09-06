@@ -1,6 +1,6 @@
-import { IUser } from "../database/models/user.js";
-import { UserRepository } from "../repository/userRepository.js";
+ import { UserRepository } from "../repository/userRepository.js";
 import { User as TelegramUser } from "grammy/types";
+import { IUser } from "../types/User.js";
 
 export const registerOrUpdate = async (
   from: TelegramUser,
@@ -34,3 +34,16 @@ export const registerOrUpdate = async (
   }
 };
 
+
+export const referralCount = async (from: TelegramUser) => {
+  const userTelegramId = from.id;
+  const user = await UserRepository.findByTelegramId(userTelegramId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return {
+    referralCount: user.referral?.count || 0,
+  };
+};

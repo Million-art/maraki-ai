@@ -13,7 +13,7 @@ Commands:
     /chat_conversation - ⚡ Practice chat conversation
     /speach_conversation - 🗣️ Voice conversation
     /level - Change your language level
-    /my_referral_link - 🔗 Get your referral link and collect point
+    /referral_link - 🔗 Get your referral link and collect point
 
 How to use:
 1. Choose a command to start:
@@ -22,10 +22,10 @@ How to use:
    /chat_conversation - practice chatting in English
    /speach_conversation - speak and practice your pronunciation
    /level - change language level
-   /my_referral_link - share your referral link with friends
+   /referral_link - share your referral link with friends
 
 2. Share your referral link:
-   - Use /my_referral_link to get a personalized link
+   - Use /referral_link to get a personalized link
    - Invite friends to Maraki AI using your link
    - Each friend who joins via your link counts toward your referrals
    - Track your referral rewards and see your impact on the community

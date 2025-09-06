@@ -1,4 +1,5 @@
 import { Context } from "grammy";
+import { referralCount } from "../services/userService.js";
 
 const BOT_USERNAME = process.env.BOT_USERNAME || "MarakiBot";
 
@@ -7,18 +8,18 @@ export const referralCommand = async (ctx: Context) => {
     return ctx.reply("⚠️ Could not get your Telegram ID.");
   }
 
+  const { referralCount: count } = await referralCount(ctx.from);
   const referralLink = `https://t.me/${BOT_USERNAME}?start=${ctx.from.id}`;
 
   const message = `
-👋 Welcome to Maraki AI!
+👋 Hi *${ctx.from.first_name || "friend"}*!
 
-📚 Learn quickly from your mistakes.
-📝 Improve your grammar and conversation skills.
+✨ Here’s your personal referral link:
+🔗 ${referralLink}
 
-🔗 Share this referral link with your friends to help them learn too:
-${referralLink}
+📊 You have referred: ${count} ${count === 1 ? "person" : "people"} 🎉
 
-Thank you for spreading knowledge! 🌟
+Thank you for helping our community grow! 🌟
 `;
 
   await ctx.reply(message);

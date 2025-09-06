@@ -12,9 +12,20 @@ if (!bot_token) {
 }
 const bot = new Bot(bot_token);
 
-////////     COMMANDS /////////////
-////////     COMMANDS /////////////
+////////     MIDDLEWARE for typing... /////////
+bot.use(async (ctx, next) => {
+  if (ctx.chat?.id) {
+    await ctx.api.sendChatAction(ctx.chat.id, "typing");
+    // Optional: add a small delay for realism
+    await new Promise((resolve) => setTimeout(resolve, 800));
+  }
+  return next();
+});
 
+
+////////     COMMANDS /////////////
+////////     COMMANDS /////////////
+ 
 bot.command('start', startCommand);
 bot.command('grammar', grammarCommand);
 bot.command('lesson', lessonCommand);
