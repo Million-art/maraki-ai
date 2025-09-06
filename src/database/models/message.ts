@@ -1,11 +1,7 @@
-import mongoose, { Document, Schema, Types } from "mongoose";
+import mongoose, { Schema } from "mongoose";
+import { IMessage } from "../../types/Message.js";
 
-export interface IMessage extends Document{
-    conversation: Types.ObjectId,
-    sender: "user" | "bot",
-    content: String,
-    createdAt: Date;
-}
+
 const MessageSchema = new Schema<IMessage>(
   {
     conversation: {

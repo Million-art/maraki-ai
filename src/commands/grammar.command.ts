@@ -1,5 +1,5 @@
 import { Context } from "grammy";
-import { getSession, setSession } from "../utils/redis.js";
+import { getSession } from "../utils/redis.js";
 
 
 export const grammarCommand = async(ctx:Context)=>{
