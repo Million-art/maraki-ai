@@ -1,6 +1,6 @@
- import { UserRepository } from "../repository/userRepository.js";
+import { UserRepository } from "../repository/userRepository.js";
 import { User as TelegramUser } from "grammy/types";
-import { IUser } from "../types/User.js";
+import { IUser, Level } from "../types/User.js";
 
 export const registerOrUpdate = async (
   from: TelegramUser,
@@ -47,3 +47,22 @@ export const referralCount = async (from: TelegramUser) => {
     referralCount: user.referral?.count || 0,
   };
 };
+
+export const getCurrentLevel = async(from: TelegramUser)=>{
+    const userTelegramId = from.id;
+    const user = await UserRepository.findByTelegramId(userTelegramId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return {
+    level: user.level,
+  };
+
+}
+
+export const updateUserLevel = async (telegramId: number, newLevel: Level) => {
+  const updatedUser = await UserRepository.updateByTelegramId(telegramId, { level: newLevel });
+  if (!updatedUser) throw new Error("Failed to update user level");
+  return updatedUser;
+}

@@ -1,5 +1,5 @@
-import mongoose, { Schema, Document } from "mongoose";
-import { IUser } from "../../types/User.js";
+import mongoose, { Schema } from "mongoose";
+import { IUser, Level } from "../../types/User.js";
 
 
 
@@ -11,6 +11,7 @@ const UserSchema = new Schema<IUser>(
     lastName: { type: String, default: null },
     isPremium: { type: Boolean, default: false }, 
     isBot: {type: Boolean, default:false},
+    level: {type: String, enum: Object.values(Level), default: Level.Beginner},
     referredBy: { type: Number, default: null },
     referral: {
       count: { type: Number, default: 0 },

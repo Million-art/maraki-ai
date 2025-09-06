@@ -1,5 +1,6 @@
 // database/repositories/user.repository.ts
-import { IUser, User } from "../database/models/user.js";
+import { IUser } from "../types/User.js";
+import { User } from "../database/models/user.js";
 import { User as TelegramUser } from "grammy/types";
 
 export class UserRepository {
