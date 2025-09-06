@@ -1,23 +1,29 @@
-# Sentence Correction Implementation TODO
+# Thorough Testing Plan for Telegram Bot
 
-## 1. Fix grammarPrompt.ts
-- [x] Replace ${Conversation} with explicit list of grammar types: "subject-verb agreement", "tense", "punctuation", "sentence structure", "flow", "spelling", "word choice"
+## Database Testing
+- [x] Test MongoDB connection and basic operations
+- [x] Test Redis connection and session management
+- [x] Test database error handling
+- [x] Set up Jest testing framework
 
-## 2. Enhance grammar.command.ts
-- [x] Add session state management to track when user is sending a sentence
-- [x] Implement logic to construct full prompt with user input, context, and level
-- [x] Integrate callGeminiGenerateContent to call Gemini API
-- [x] Parse JSON response and format reply with correction, explanation, grammar type
-- [x] Add error handling for API failures
+## Server Testing
+- [ ] Test Express server startup
+- [ ] Test basic routes (GET /)
+- [ ] Test middleware functionality
+- [ ] Test error handling
 
-## 3. Update telegram.adapter.ts
-- [x] Modify message handler to route sentence input to grammar correction when in grammar mode
+## Telegram Bot Testing
+- [ ] Test bot initialization
+- [ ] Test command handlers
+- [ ] Test message processing
+- [ ] Test webhook integration
 
-## 4. Test Integration
-- [ ] Test with sample English sentences
-- [ ] Verify JSON parsing and response formatting
-- [ ] Check conversation context usage
+## Services Testing
+- [ ] Test all service modules
+- [ ] Test API integrations
+- [ ] Test utility functions
 
-## 5. Error Handling and Fallback
-- [ ] Implement fallback for Gemini API errors
-- [ ] Add user-friendly error messages
+## Integration Testing
+- [ ] Test end-to-end bot workflows
+- [ ] Test database and Redis integration
+- [ ] Test error scenarios and recovery
