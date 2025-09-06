@@ -8,6 +8,7 @@ import { referralCommand } from '../commands/referral.command.js';
 import { helpCommand } from '../commands/help.command.js';
 import { updateUserLevel } from '../services/userService.js';
 import { Level } from '../types/User.js';
+import { setSession } from '../utils/redis.js';
 
 const bot_token= process.env.TOKEN
 if (!bot_token) {
@@ -44,7 +45,6 @@ bot.on('callback_query:data', async (ctx) => {
   if (!ctx.from) {
     return ctx.answerCallbackQuery("⚠️ Could not get your Telegram ID.");
   }
-
   // Handle level selection
   if (['beginner', 'intermediate', 'advanced'].includes(data)) {
     let newLevel: Level = Level.Beginner; // default
@@ -69,22 +69,26 @@ bot.on('callback_query:data', async (ctx) => {
     // Handle other commands
     switch (data) {
       case 'grammar':
+        await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });
         await grammarCommand(ctx);
         break;
       case 'lesson':
+        await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });
         await lessonCommand(ctx);
         break;
       case 'level':
+        await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });
         await levelCommand(ctx);
         break;
       case 'referral_link':
+        await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });
         await referralCommand(ctx);
         break;
       case 'chat_conversation':
-        await ctx.reply("⚡ Chat conversation mode activated. Send me a message to start chatting!");
+        await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });
         break;
       case 'speech_conversation':
-        await ctx.reply("🗣️ Speech conversation mode. Send voice messages to practice!");
+        await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });
         break;
       case 'close':
         return ctx.deleteMessage();

@@ -1,7 +1,8 @@
 import { Context, InlineKeyboard } from "grammy";
 import { start_msg } from "../messages/start.message.js";
 import { registerOrUpdate } from "../services/userService.js";
- 
+import { getSession, setSession } from "../utils/redis.js";
+
 export async function startCommand(ctx: Context) {
   if (!ctx.from) return;
 
@@ -9,8 +10,18 @@ export async function startCommand(ctx: Context) {
     // Extract referrerId from the start payload
     const referrerId = ctx.match ? Number(ctx.match) : undefined;
 
-    // Register or update user via service layer
-    await registerOrUpdate(ctx.from, referrerId);
+    // Check session for user data
+    const session = await getSession(ctx.from.id);
+    let user;
+    console.log('sesion', session)
+    if (session && session.user) {
+      user = session.user;
+    } else {
+      // Register or update user via service layer
+      user = await registerOrUpdate(ctx.from, referrerId);
+      // Store user in session
+      await setSession(ctx.from.id, { ...session, user });
+    }
 
     // Send welcome message
     const keyboard = new InlineKeyboard()
