@@ -7,6 +7,7 @@ import { speechCommand } from '../commands/speach.command.js';
 import { levelCommand } from '../commands/level.command.js';
 import { referralCommand } from '../commands/referral.command.js';
 import { helpCommand } from '../commands/help.command.js';
+import { translationCommand, handleTranslation, startTranslation } from '../commands/translation.command.js';
 import { updateUserLevel } from '../services/userService.js';
 import { Level } from '../types/User.js';
 import { setSession, getSession } from '../utils/redis.js';
@@ -31,6 +32,7 @@ bot.command('lesson', lessonCommand);
 bot.command('level', levelCommand);
 bot.command('referral_link', referralCommand);
 bot.command('speech_conversation', speechCommand);
+bot.command('translation', translationCommand);
 bot.command('help', helpCommand);
 // Catch all other messages
 bot.on('message:text', async (ctx) => {
@@ -50,20 +52,15 @@ bot.on('message:text', async (ctx) => {
     else if (session?.mode === 'chat_conversation') {
         await handleChatConversation(ctx);
     }
+    else if (session?.mode === 'translation') {
+        await handleTranslation(ctx);
+    }
     else {
         // Global text handler for unknown commands or regular text
         if (text?.startsWith('/')) {
             // Handle unknown commands
             await ctx.reply(`❓ Unknown command: "${text}"\n\n` +
-                `Here are the available commands:\n` +
-                `/start - Main Menu\n` +
-                `/grammar - 🧹Correct your sentence\n` +
-                `/lesson - ✨Learn from your previous mistakes\n` +
-                `/chat_conversation - ⚡Practice chat conversation\n` +
-                `/referral_link - 🔗 Get your referral link\n` +
-                `/level - 📊 Check your level\n` +
-                `/help - ❓ Get help\n\n` +
-                `Or just send me any message and I'll help you practice English! 💬`);
+                `send /help to get a guide.`);
         }
         else {
             // Handle regular text messages
@@ -111,17 +108,13 @@ bot.on('callback_query:data', async (ctx) => {
                 await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });
                 await lessonCommand(ctx);
                 break;
-            case 'level':
-                await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });
-                await levelCommand(ctx);
-                break;
-            case 'referral_link':
-                await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });
-                await referralCommand(ctx);
-                break;
             case 'chat_conversation':
                 await setSession(ctx.from.id, { mode: data, timestamp: Date.now(), userId: ctx.from.id });
                 await startChatConversation(ctx);
+                break;
+            case 'translation':
+                await setSession(ctx.from.id, { mode: data, timestamp: Date.now(), userId: ctx.from.id });
+                await startTranslation(ctx);
                 break;
             case 'speech_conversation':
                 await ctx.answerCallbackQuery("🗣️ Speech conversation feature is coming soon! Stay tuned for pronunciation practice.");

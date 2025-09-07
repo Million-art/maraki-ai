@@ -33,10 +33,9 @@ export async function startCommand(ctx: Context) {
       .text("✨ Learn from your mistake", "lesson")
       .row()
       .text("⚡ Chat Conversation", "chat_conversation")
-      .text("🗣️ Speech Conversation", "speech_conversation")
+      .text("🌐 Amharic → English", "translation")
       .row()
-      .text("📊 Level", "level")
-      .text("🔗 Referral Link", "referral_link");
+      .text("🗣️ Speech Conversation", "speech_conversation");
 
     await ctx.reply(`👋 Hello ${ctx.from.first_name || "there"}.\n${start_msg}`, { reply_markup: keyboard });
   } catch (error) {
