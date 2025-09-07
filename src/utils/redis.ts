@@ -1,12 +1,25 @@
 import {createClient} from 'redis'
 
+// Environment-specific Redis configuration
+const redisUrlLocal = process.env.REDIS_URL_LOCAL || 'redis://localhost:6379'
+const redisUrlProd = process.env.REDIS_URL || ''
+
+const redisUrl = process.env.NODE_ENV === 'production' ? redisUrlProd : redisUrlLocal
+
+// Force TLS for Upstash Redis connections in production
+const finalRedisUrl = redisUrl.includes('upstash.io') ? redisUrl.replace('redis://', 'rediss://') : redisUrl
+
 const redis = createClient({
-  url: process.env.REDIS_URL,
-  socket: {
+  url: finalRedisUrl,
+  socket: finalRedisUrl.startsWith('rediss://') ? {
     tls: true,
+    rejectUnauthorized: false,
     reconnectStrategy: (retries) => {
-      console.log(`🔄 Redis reconnect attempt #${retries}`);
-      return Math.min(retries * 100, 3000); // backoff up to 3s
+       return Math.min(retries * 100, 3000); // backoff up to 3s
+    },
+  } : {
+    reconnectStrategy: (retries) => {
+       return Math.min(retries * 100, 3000); // backoff up to 3s
     },
   },
 });
@@ -15,11 +28,11 @@ redis.on('error', err=>{
     console.error('Redis Client Error', err);
 })
 
- 
+
 export const connectRedis = async()=>{
  if (!redis.isOpen) {
     await redis.connect();
-    console.log('✅ Connected to Redis (Upstash)');
+    console.log('✅ Connected to Redis');
   }
 }
 
