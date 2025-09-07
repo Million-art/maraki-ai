@@ -75,9 +75,12 @@ Sentence to correct: "${sentence}"`;
 
     // Format and send response
     const { correctedText, explanation, grammarType } = parsedResponse;
-    let reply = `📝 **Corrected Sentence:**\n${correctedText}\n\n`;
-    reply += `📖 **Explanation:** ${explanation}\n\n`;
-    reply += `🏷️ **Grammar Type:** ${grammarType}`;
+    // Remove any asterisks from the correctedText and explanation
+    const cleanCorrectedText = correctedText.replace(/\*/g, '');
+    const cleanExplanation = explanation.replace(/\*/g, '');
+    let reply = `<b> Corrected Sentence:</b>\n${cleanCorrectedText}\n\n`;
+    reply += `<b> Explanation:</b> ${cleanExplanation}\n\n`;
+    reply += `<b>🏷️ Grammar Type:</b> ${grammarType}`;
 
     await ctx.reply(reply, { parse_mode: 'HTML' });
 
@@ -101,6 +104,6 @@ Sentence to correct: "${sentence}"`;
     await ctx.reply("❌ An error occurred while correcting your sentence. Please try again later.");
   }
 
-  // Clear session mode
-  await setSession(userId, { mode: null, timestamp: Date.now() });
+  // Keep session mode active for continuous grammar corrections
+  // Session will only be cleared when user explicitly exits (e.g., /start command)
 }
