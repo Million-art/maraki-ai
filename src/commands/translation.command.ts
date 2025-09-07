@@ -48,11 +48,7 @@ export async function handleTranslation(ctx: Context) {
     // Generate translation response with context
     const fullPrompt = `${translationPrompt}
 
-User Level: ${userLevel}
-Previous Conversation Context: ${context}
-Current User Message: "${userMessage}"
-
-Provide accurate Amharic to English translation with explanations and cultural context.`;
+${userMessage}`;
 
     const aiResponse = await callGeminiGenerateContent(fullPrompt);
 
