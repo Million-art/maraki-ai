@@ -1,29 +1,20 @@
-# Thorough Testing Plan for Telegram Bot
+# TODO: Implement Webhook and Polling based on NODE_ENV
 
-## Database Testing
-- [x] Test MongoDB connection and basic operations
-- [x] Test Redis connection and session management
-- [x] Test database error handling
-- [x] Set up Jest testing framework
+## Completed Tasks
+- [x] Modified `src/index.ts` to conditionally use webhook in production and polling in development
+- [x] Added webhook endpoint `/webhook` in Express app using `bot.handleUpdate(req.body)`
+- [x] Exported `bot` from `src/adapters/telegram.adapter.ts`
+- [x] Removed `bot.start()` from adapter to handle conditionally in index.ts
+- [x] Added `WEBHOOK_URL` environment variable to `render.yaml`
+- [x] Fixed webhook implementation to use POST endpoint with bot.handleUpdate
 
-## Server Testing
-- [ ] Test Express server startup
-- [ ] Test basic routes (GET /)
-- [ ] Test middleware functionality
-- [ ] Test error handling
+## Next Steps
+- [ ] Set `WEBHOOK_URL` in production environment (e.g., https://your-app.onrender.com/webhook)
+- [ ] Test in development mode (should use polling)
+- [ ] Test in production mode (should use webhook)
+- [ ] Ensure webhook URL is accessible and handles HTTPS (required by Telegram)
 
-## Telegram Bot Testing
-- [ ] Test bot initialization
-- [ ] Test command handlers
-- [ ] Test message processing
-- [ ] Test webhook integration
-
-## Services Testing
-- [ ] Test all service modules
-- [ ] Test API integrations
-- [ ] Test utility functions
-
-## Integration Testing
-- [ ] Test end-to-end bot workflows
-- [ ] Test database and Redis integration
-- [ ] Test error scenarios and recovery
+## Notes
+- In development (NODE_ENV != 'production'), the bot uses polling via `bot.start()`
+- In production (NODE_ENV = 'production'), the bot sets webhook and uses webhook callback
+- Webhook URL must be HTTPS and publicly accessible for Telegram to send updates
