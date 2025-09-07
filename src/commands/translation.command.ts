@@ -8,15 +8,7 @@ export async function translationCommand(ctx: Context) {
   if (!ctx.from) return;
 
   await ctx.reply(
-    `🌐 **Amharic to English Translation Mode Started!**\n\n` +
-    `Let's practice translating from Amharic (አማርኛ) to English! 📚\n\n` +
-    `I can help you with:\n` +
-    `• Accurate Amharic → English translations\n` +
-    `• Amharic grammar explanations\n` +
-    `• Pronunciation guides for Amharic words\n` +
-    `• Cultural context and idioms\n` +
-    `• Common translation mistakes\n\n` +
-    `Send me Amharic text and I'll help you translate it to English! 🇪🇹➡️🇺🇸`
+    `🌐 Please send me the Amharic sentence you want to translate.`
   );
 }
 
@@ -109,13 +101,6 @@ export async function startTranslation(ctx: Context) {
   }
 
   await ctx.reply(
-    `🌐 **Amharic to English Translation Practice Started!**\n\n` +
-    `Let's work on your Amharic translation skills! 📚\n\n` +
-    `You can send me:\n` +
-    `• Amharic sentences to translate\n` +
-    `• Questions about Amharic grammar\n` +
-    `• Difficult words or phrases\n` +
-    `• Cultural expressions to explain\n\n` +
-    `What Amharic text would you like me to help you translate? 🇪🇹`
+    `Send me your amaric text 🇪🇹`
   );
 }
