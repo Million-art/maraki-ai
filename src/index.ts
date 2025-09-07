@@ -10,7 +10,7 @@ const port= process.env.PORT
 //middleware
 app.use(express.json())
 
-app.get('/', (res: Response)=>{
+app.get('/', (req, res: Response)=>{
     const response = res.send('Maraki Ai is running')
     return response
 })

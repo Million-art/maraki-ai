@@ -12,7 +12,7 @@ export const referralCommand = async (ctx: Context) => {
   const referralLink = `https://t.me/${BOT_USERNAME}?start=${ctx.from.id}`;
 
   const message = `
-👋 Hi *${ctx.from.first_name || "friend"}*!
+👋 Hi ${ctx.from.first_name || "friend"}!
 
 ✨ Here’s your personal referral link:
 🔗 ${referralLink}
