@@ -1,5 +1,5 @@
 import { getSession, setSession } from "../utils/redis.js";
-import grammarPrompt from "../prompt/grammarPrompt.js";
+import grammarPrompt from "../prompt/grammar.prompt.js";
 import { UserRepository } from "../repository/userRepository.js";
 import { Conversation } from "../database/models/conversation.js";
 import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
