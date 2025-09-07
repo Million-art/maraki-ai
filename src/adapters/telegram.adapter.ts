@@ -64,7 +64,17 @@ bot.on('message:text', async (ctx) => {
       // Handle unknown commands
       await ctx.reply(
         `❓ Unknown command: "${text}"\n\n` +
-          `send /help to get a guide.`
+        `Here are the available commands:\n` +
+        `/start - Main Menu\n` +
+        `/grammar - 🧹Correct your sentence\n` +
+        `/lesson - ✨Learn from your previous mistakes\n` +
+        `/chat_conversation - ⚡Practice chat conversation\n` +
+        `/translation - 🌐Amharic to English translation\n` +
+        `/referral_link - 🔗 Get your referral link\n` +
+        `/level - 📊 Check your level\n` +
+        `/speech_conversation - 🗣️ Practice speech conversation (Coming Soon!)\n` +
+        `/help - ❓ Get help\n\n` +
+        `Or just send me any message and I'll help you practice English! 💬`
       );
     } else {
       // Handle regular text messages
@@ -104,27 +114,34 @@ bot.on('callback_query:data', async (ctx) => {
     // Handle other commands
     switch (data) {
       case 'grammar':
+        console.log('Handling grammar callback');
         await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });
         await grammarCommand(ctx);
         break;
       case 'lesson':
+        console.log('Handling lesson callback');
         await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });
         await lessonCommand(ctx);
         break;
       case 'chat_conversation':
+        console.log('Handling chat_conversation callback');
         await setSession(ctx.from.id, { mode: data, timestamp: Date.now(), userId: ctx.from.id });
         await startChatConversation(ctx);
         break;
       case 'translation':
+        console.log('Handling translation callback');
         await setSession(ctx.from.id, { mode: data, timestamp: Date.now(), userId: ctx.from.id });
         await startTranslation(ctx);
         break;
       case 'speech_conversation':
+        console.log('Handling speech_conversation callback');
         await ctx.answerCallbackQuery("🗣️ Speech conversation feature is coming soon! Stay tuned for pronunciation practice.");
         break;
       case 'close':
+        console.log('Handling close callback');
         return ctx.deleteMessage();
       default:
+        console.log('Unknown callback data:', data);
         return ctx.answerCallbackQuery("❓ Unknown action.");
     }
     await ctx.answerCallbackQuery();
