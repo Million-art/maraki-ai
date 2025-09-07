@@ -1,14 +1,8 @@
-import { createClient, RedisClientType } from 'redis'
+import { createClient } from 'redis'
 
 // Type definitions
 interface SessionData {
   [key: string]: any;
-}
-
-interface RedisSocketOptions {
-  tls?: boolean;
-  rejectUnauthorized?: boolean;
-  reconnectStrategy?: (retries: number) => number;
 }
 
 // Environment-specific Redis configuration
@@ -20,7 +14,7 @@ const redisUrl: string = process.env.NODE_ENV === 'production' ? redisUrlProd : 
 // Force TLS for Upstash Redis connections in production
 const finalRedisUrl: string = redisUrl.includes('upstash.io') ? redisUrl.replace('redis://', 'rediss://') : redisUrl
 
-const redis: RedisClientType = createClient({
+const redis = createClient({
   url: finalRedisUrl,
   socket: finalRedisUrl.startsWith('rediss://') ? {
     tls: true,
