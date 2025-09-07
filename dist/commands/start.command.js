@@ -21,6 +21,8 @@ export async function startCommand(ctx) {
             // Store user in session
             await setSession(ctx.from.id, { ...session, user });
         }
+        // Clear any active session mode when starting fresh
+        await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
         // Send welcome message
         const keyboard = new InlineKeyboard()
             .text("🧹 Correct sentence", "grammar")

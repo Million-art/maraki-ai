@@ -59,11 +59,11 @@ Respond with just the topic name, nothing else.`;
     }
 
     await ctx.reply(
-      `📚 **Lesson Mode Activated!**\n\n` +
-      `Based on your conversation history, I suggest we focus on: **${suggestedTopic}**\n\n` +
-      `Your current level: **${userLevel}**\n\n` +
+      `📚 Lesson Mode Activated!\n\n` +
+      `Based on your conversation history, I suggest we focus on: ${suggestedTopic}\n\n` +
+      `Your current level: ${userLevel}\n\n` +
       `Reply with:\n` +
-      `• "yes" or "agree" to start this lesson\n` +
+      `• "yes"  to start this lesson\n` +
       `• "no" or suggest another topic (e.g., "verbs", "grammar", "vocabulary")\n\n` +
       `What would you like to do?`
     );
@@ -145,7 +145,7 @@ User's Previous Focus Areas: Based on conversation history, focus on areas where
       formattedLesson = lessonContent.replace(/```/g, '').trim();
     }
 
-    await ctx.reply(`📖 **Your Lesson: ${selectedTopic.toUpperCase()}**\n\n${formattedLesson}`, { parse_mode: 'HTML' });
+    await ctx.reply(`📖 Your Lesson: ${selectedTopic.toUpperCase()}\n\n${formattedLesson}`, { parse_mode: 'HTML' });
 
     // Update conversation context
     try {

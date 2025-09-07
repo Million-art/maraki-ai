@@ -29,8 +29,12 @@ export const handleGrammarCorrection = async (ctx) => {
         // Get conversation context
         let context = '';
         try {
-            const conversation = await Conversation.findOne({ user: userId }).sort({ createdAt: -1 });
-            context = conversation?.context || '';
+            // Find user by telegramId first to get ObjectId
+            const user = await UserRepository.findByTelegramId(userId);
+            if (user) {
+                const conversation = await Conversation.findOne({ user: user._id }).sort({ createdAt: -1 });
+                context = conversation?.context || '';
+            }
         }
         catch (dbError) {
             console.warn('Database not available, using empty context:', dbError.message);
@@ -46,7 +50,15 @@ Sentence to correct: "${sentence}"`;
         // Parse JSON response
         let parsedResponse;
         try {
-            parsedResponse = JSON.parse(response);
+            // Extract JSON from markdown code blocks if present
+            let jsonString = response;
+            if (response.includes('```json')) {
+                const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+                if (jsonMatch) {
+                    jsonString = jsonMatch[1].trim();
+                }
+            }
+            parsedResponse = JSON.parse(jsonString);
         }
         catch (parseError) {
             console.error('Failed to parse Gemini response:', response);
@@ -55,13 +67,20 @@ Sentence to correct: "${sentence}"`;
         }
         // Format and send response
         const { correctedText, explanation, grammarType } = parsedResponse;
-        let reply = `📝 **Corrected Sentence:**\n${correctedText}\n\n`;
-        reply += `📖 **Explanation:** ${explanation}\n\n`;
-        reply += `🏷️ **Grammar Type:** ${grammarType}`;
+        // Remove any asterisks from the correctedText and explanation
+        const cleanCorrectedText = correctedText.replace(/\*/g, '');
+        const cleanExplanation = explanation.replace(/\*/g, '');
+        let reply = `<b> Corrected Sentence:</b>\n${cleanCorrectedText}\n\n`;
+        reply += `<b> Explanation:</b> ${cleanExplanation}\n\n`;
+        reply += `<b>🏷️ Grammar Type:</b> ${grammarType}`;
         await ctx.reply(reply, { parse_mode: 'HTML' });
         // Update conversation context
         try {
-            await Conversation.findOneAndUpdate({ user: userId }, { context: grammarType }, { upsert: true, new: true });
+            // Find user by telegramId first to get ObjectId
+            const user = await UserRepository.findByTelegramId(userId);
+            if (user) {
+                await Conversation.findOneAndUpdate({ user: user._id }, { context: grammarType }, { upsert: true, new: true });
+            }
         }
         catch (dbError) {
             console.warn('Database not available, skipping context update:', dbError.message);
@@ -71,6 +90,6 @@ Sentence to correct: "${sentence}"`;
         console.error('Grammar correction error:', error);
         await ctx.reply("❌ An error occurred while correcting your sentence. Please try again later.");
     }
-    // Clear session mode
-    await setSession(userId, { mode: null, timestamp: Date.now() });
+    // Keep session mode active for continuous grammar corrections
+    // Session will only be cleared when user explicitly exits (e.g., /start command)
 };

@@ -8,7 +8,7 @@ const app = express();
 const port = process.env.PORT;
 //middleware
 app.use(express.json());
-app.get('/', (res) => {
+app.get('/', (req, res) => {
     const response = res.send('Maraki Ai is running');
     return response;
 });

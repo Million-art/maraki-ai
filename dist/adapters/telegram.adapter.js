@@ -38,6 +38,11 @@ bot.on('message:text', async (ctx) => {
     if (session?.mode === 'grammar') {
         await handleGrammarCorrection(ctx);
     }
+    else if (session?.mode === 'lesson') {
+        // Handle lesson mode responses
+        const { handleLessonResponse } = await import('../commands/lesson.comand.js');
+        await handleLessonResponse(ctx);
+    }
     else {
         await chatMode(ctx);
     }

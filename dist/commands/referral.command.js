@@ -7,7 +7,7 @@ export const referralCommand = async (ctx) => {
     const { referralCount: count } = await referralCount(ctx.from);
     const referralLink = `https://t.me/${BOT_USERNAME}?start=${ctx.from.id}`;
     const message = `
-👋 Hi *${ctx.from.first_name || "friend"}*!
+👋 Hi ${ctx.from.first_name || "friend"}!
 
 ✨ Here’s your personal referral link:
 🔗 ${referralLink}
