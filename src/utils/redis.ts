@@ -13,13 +13,12 @@ redis.on('error', err=>{
     console.error('Redis Client Error', err);
 })
 
-let isConnected = false;
-
+ 
 export const connectRedis = async()=>{
-    if (!isConnected) {
-        await redis.connect();
-        isConnected = true;
-    }
+ if (!redis.isOpen) {
+    await redis.connect();
+    console.log('✅ Connected to Redis (Upstash)');
+  }
 }
 
 export const setSession = async(userId: number, sessionData: any)=>{
@@ -28,9 +27,9 @@ export const setSession = async(userId: number, sessionData: any)=>{
 
 export const getSession = async (userId: number) => {
   try {
-    if (!isConnected) {
-      await connectRedis();
-    }
+     if (!redis.isOpen) {
+    await redis.connect();
+   }
     const data = await redis.get(`session:${userId}`);
     return data ? JSON.parse(data) : null;
   } catch (error) {
@@ -40,9 +39,9 @@ export const getSession = async (userId: number) => {
 };
 
 export const deleteSession = async (userId: number) => {
-  if (!isConnected) {
-    await connectRedis();
-  }
+   if (!redis.isOpen) {
+    await redis.connect();
+   }
   await redis.del(`session:${userId}`);
 };
 
