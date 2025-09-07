@@ -35,8 +35,12 @@ export const handleGrammarCorrection = async(ctx: Context) => {
     // Get conversation context
     let context = '';
     try {
-      const conversation = await Conversation.findOne({ user: userId }).sort({ createdAt: -1 });
-      context = conversation?.context || '';
+      // Find user by telegramId first to get ObjectId
+      const user = await UserRepository.findByTelegramId(userId);
+      if (user) {
+        const conversation = await Conversation.findOne({ user: user._id }).sort({ createdAt: -1 });
+        context = conversation?.context || '';
+      }
     } catch (dbError) {
       console.warn('Database not available, using empty context:', (dbError as Error).message);
     }
@@ -54,7 +58,15 @@ Sentence to correct: "${sentence}"`;
     // Parse JSON response
     let parsedResponse;
     try {
-      parsedResponse = JSON.parse(response);
+      // Extract JSON from markdown code blocks if present
+      let jsonString = response;
+      if (response.includes('```json')) {
+        const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonMatch) {
+          jsonString = jsonMatch[1].trim();
+        }
+      }
+      parsedResponse = JSON.parse(jsonString);
     } catch (parseError) {
       console.error('Failed to parse Gemini response:', response);
       await ctx.reply("❌ Sorry, I couldn't process your sentence. Please try again.");
@@ -71,11 +83,15 @@ Sentence to correct: "${sentence}"`;
 
     // Update conversation context
     try {
-      await Conversation.findOneAndUpdate(
-        { user: userId },
-        { context: grammarType },
-        { upsert: true, new: true }
-      );
+      // Find user by telegramId first to get ObjectId
+      const user = await UserRepository.findByTelegramId(userId);
+      if (user) {
+        await Conversation.findOneAndUpdate(
+          { user: user._id },
+          { context: grammarType },
+          { upsert: true, new: true }
+        );
+      }
     } catch (dbError) {
       console.warn('Database not available, skipping context update:', (dbError as Error).message);
     }
