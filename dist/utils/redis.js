@@ -1,7 +1,7 @@
 import { createClient } from 'redis';
 // Environment-specific Redis configuration
 const redisUrlLocal = process.env.REDIS_URL_LOCAL || 'redis://localhost:6379';
-const redisUrlProd = process.env.REDIS_URL;
+const redisUrlProd = process.env.REDIS_URL || '';
 const redisUrl = process.env.NODE_ENV === 'production' ? redisUrlProd : redisUrlLocal;
 // Force TLS for Upstash Redis connections in production
 const finalRedisUrl = redisUrl.includes('upstash.io') ? redisUrl.replace('redis://', 'rediss://') : redisUrl;
@@ -19,7 +19,7 @@ const redis = createClient({
         },
     },
 });
-redis.on('error', err => {
+redis.on('error', (err) => {
     console.error('Redis Client Error', err);
 });
 export const connectRedis = async () => {
