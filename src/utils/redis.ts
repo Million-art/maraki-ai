@@ -1,13 +1,15 @@
 import {createClient} from 'redis'
 
 const redis = createClient({
-  url: process.env.REDIS_URL, 
+  url: process.env.REDIS_URL,
   socket: {
-    tls: true,        // Force TLS for Upstash
-    rejectUnauthorized: false,
+    tls: true,
+    reconnectStrategy: (retries) => {
+      console.log(`🔄 Redis reconnect attempt #${retries}`);
+      return Math.min(retries * 100, 3000); // backoff up to 3s
+    },
   },
-})
-
+});
 
 redis.on('error', err=>{
     console.error('Redis Client Error', err);
