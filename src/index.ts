@@ -31,6 +31,10 @@ const startServer = async () => {
         await connectDB()
         await connectRedis()
 
+        // Initialize the bot
+        await bot.init()
+        console.log('Bot initialized')
+
         // Set webhook if in production
         if (process.env.NODE_ENV === 'production') {
             const webhookUrl = process.env.WEBHOOK_URL

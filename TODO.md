@@ -7,6 +7,7 @@
 - [x] Removed `bot.start()` from adapter to handle conditionally in index.ts
 - [x] Added `WEBHOOK_URL` environment variable to `render.yaml`
 - [x] Fixed webhook implementation to use POST endpoint with bot.handleUpdate
+- [x] Added `await bot.init()` to initialize the bot before setting webhook or starting polling
 
 ## Next Steps
 - [ ] Set `WEBHOOK_URL` in production environment (e.g., https://your-app.onrender.com/webhook)
