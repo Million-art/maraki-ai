@@ -1,7 +1,11 @@
 import {createClient} from 'redis'
 
-const redis  = createClient({
-    url: process.env.REDIS_URL
+const redis = createClient({
+  url: process.env.REDIS_URL, 
+  socket: {
+    tls: true,        // Force TLS for Upstash
+    rejectUnauthorized: false,
+  },
 })
 
 
