@@ -31,14 +31,28 @@ export const lessonCommand = async(ctx: Context) => {
     try {
       const user = await UserRepository.findByTelegramId(ctx.from.id);
       if (user) {
-        const conversations = await Conversation.find({ user: user._id }).sort({ createdAt: -1 }).limit(10);
-        conversationContext = conversations.map(conv => conv.context).join(' ');
+        const conversation = await Conversation.findOne({ user: user._id });
+
+        // Build context from grammar mistakes and lessons
+        let contextParts = [];
+
+        if (conversation?.grammarMistakes && conversation.grammarMistakes.length > 0) {
+          const recentMistakes = conversation.grammarMistakes.slice(-5);
+          contextParts.push(...recentMistakes.map(m => `Grammar mistake: ${m.grammarType} - "${m.mistake}" → "${m.correction}"`));
+        }
+
+        if (conversation?.lessons && conversation.lessons.length > 0) {
+          const recentLessons = conversation.lessons.slice(-3);
+          contextParts.push(...recentLessons.map(l => `Lesson topic: ${l.topic}`));
+        }
+
+        conversationContext = contextParts.join(' | ');
 
         // Use AI to analyze conversation and suggest topic
         if (conversationContext.trim()) {
-          const analysisPrompt = `Analyze this user's conversation history and suggest the most appropriate English grammar topic they should focus on for their next lesson. Consider their mistakes, interests, and areas they've been working on.
+          const analysisPrompt = `Analyze this user's learning history and suggest the most appropriate English grammar topic they should focus on for their next lesson. Consider their grammar mistakes, previous lesson topics, and areas they've been working on.
 
-User's conversation history:
+User's learning history:
 ${conversationContext}
 
 Please suggest ONE specific grammar topic (e.g., "verb tenses", "prepositions", "sentence structure", "adjectives and adverbs", etc.) that would be most beneficial for them to learn next.
@@ -58,14 +72,28 @@ Respond with just the topic name, nothing else.`;
       console.warn('Database not available, using default topic:', (dbError as Error).message);
     }
 
-    await ctx.reply(
-      `Based on your conversation history, I suggest we focus on: ${suggestedTopic}\n\n` +
-      `Your current level: ${userLevel}\n\n` +
-      `Reply with:\n` +
-      `• "yes"  to start this lesson\n` +
-      `• "no" or suggest another topic (e.g., "verbs", "grammar", "vocabulary")\n\n` +
-      `What would you like to do?`
-    );
+    // Check if user has any learning history
+    const hasHistory = conversationContext.trim().length > 0;
+
+    if (hasHistory) {
+      await ctx.reply(
+        `Based on your recent history, I suggest we focus on: ${suggestedTopic}\n\n` +
+        `Your current level: ${userLevel}\n\n` +
+        `Reply with:\n` +
+        `• "yes"  to start this lesson\n` +
+        `• "no" or suggest another topic (e.g., "verbs", "grammar", "vocabulary")\n\n` +
+        `What would you like to do?`
+      );
+    } else {
+      await ctx.reply(
+        `Welcome to your first lesson! 🎉\n\n` +
+        `I suggest we begin with: **${suggestedTopic}**\n\n` +
+        `Reply with:\n` +
+        `• "yes"  to start this lesson\n` +
+        `• "no" or suggest another topic (e.g., "verbs", "grammar", "vocabulary")\n\n` +
+        `What would you like to learn about?`
+      );
+    }
 
   } catch (error) {
     console.error('Lesson command error:', error);
@@ -93,17 +121,31 @@ export const handleLessonResponse = async(ctx: Context) => {
 
     // Determine the topic based on user response
     if (userResponse.includes('yes') || userResponse.includes('agree') || userResponse.includes('ok')) {
-      // Use AI to suggest topic based on conversation history
+      // Use AI to suggest topic based on learning history
       try {
         const user = await UserRepository.findByTelegramId(userId);
         if (user) {
-          const conversations = await Conversation.find({ user: user._id }).sort({ createdAt: -1 }).limit(10);
-          const conversationContext = conversations.map(conv => conv.context).join(' ');
+          const conversation = await Conversation.findOne({ user: user._id });
+
+          // Build context from grammar mistakes and lessons
+          let contextParts = [];
+
+          if (conversation?.grammarMistakes && conversation.grammarMistakes.length > 0) {
+            const recentMistakes = conversation.grammarMistakes.slice(-5);
+            contextParts.push(...recentMistakes.map(m => `Grammar mistake: ${m.grammarType} - "${m.mistake}" → "${m.correction}"`));
+          }
+
+          if (conversation?.lessons && conversation.lessons.length > 0) {
+            const recentLessons = conversation.lessons.slice(-3);
+            contextParts.push(...recentLessons.map(l => `Lesson topic: ${l.topic}`));
+          }
+
+          const conversationContext = contextParts.join(' | ');
 
           if (conversationContext.trim()) {
-            const analysisPrompt = `Analyze this user's conversation history and suggest the most appropriate English grammar topic they should focus on for their next lesson. Consider their mistakes, interests, and areas they've been working on.
+            const analysisPrompt = `Analyze this user's learning history and suggest the most appropriate English grammar topic they should focus on for their next lesson. Consider their grammar mistakes, previous lesson topics, and areas they've been working on.
 
-User's conversation history:
+User's learning history:
 ${conversationContext}
 
 Please suggest ONE specific grammar topic (e.g., "verb tenses", "prepositions", "sentence structure", "adjectives and adverbs", etc.) that would be most beneficial for them to learn next.
@@ -154,7 +196,15 @@ User's Previous Focus Areas: Based on conversation history, focus on areas where
       if (user) {
         await Conversation.findOneAndUpdate(
           { user: user._id },
-          { context: selectedTopic },
+          {
+            $push: {
+              lessons: {
+                topic: selectedTopic,
+                details: `Lesson generated for topic: ${selectedTopic}`,
+                createdAt: new Date(),
+              },
+            },
+          },
           { upsert: true, new: true }
         );
       }
