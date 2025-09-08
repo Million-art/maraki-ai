@@ -15,7 +15,7 @@ const bot_token = process.env.TOKEN;
 if (!bot_token) {
     throw new Error('TELEGRAM_BOT_TOKEN is not defined in .env');
 }
-const bot = new Bot(bot_token);
+export const bot = new Bot(bot_token);
 ////////     MIDDLEWARE for typing... /////////
 // Removed for faster response
 bot.use(async (ctx, next) => {
@@ -144,5 +144,3 @@ bot.on('callback_query:data', async (ctx) => {
         await ctx.answerCallbackQuery();
     }
 });
-bot.start();
-console.log('Telegram bot is running...');

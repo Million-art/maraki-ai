@@ -1,27 +1,7 @@
 import { callGeminiGenerateContent } from '../api/gemini/callGeminiGenerateContents.js';
 import { UserRepository } from '../repository/userRepository.js';
 import { Conversation } from '../database/models/conversation.js';
-const speechPrompt = `
-You are Maraki AI, a speech and pronunciation coach. Help users practice spoken English through text-based conversation.
-
-**Guidelines:**
-- Focus on pronunciation tips and spoken English patterns
-- Use phonetic spelling when helpful (e.g., "tomato" = /təˈmeɪtoʊ/)
-- Suggest intonation and stress patterns
-- Keep it conversational and encouraging
-- Ask them to practice saying phrases out loud
-- Provide common spoken English expressions
-- Point out pronunciation issues and suggest improvements
-
-**Response Style:**
-- Give pronunciation guidance
-- Suggest practice exercises
-- Ask them to repeat or practice phrases
-- Keep it fun and encouraging
-- Include gentle corrections for pronunciation mistakes
-
-Remember: Focus on how words sound, not just how they're spelled!
-`;
+import { speechPrompt } from '../prompt/speechPrompt.js';
 export async function speechCommand(ctx) {
     if (!ctx.from)
         return;
@@ -49,18 +29,23 @@ export async function handleSpeechConversation(ctx) {
         catch (dbError) {
             console.warn('Database not available, using default user level:', dbError.message);
         }
-        // Get conversation context
+        // Get conversation context from chat history
         let context = '';
         try {
             const user = await UserRepository.findByTelegramId(userId);
             if (user) {
-                const conversations = await Conversation.find({ user: user._id })
-                    .sort({ createdAt: -1 })
-                    .limit(5);
-                context = conversations
-                    .reverse()
-                    .map(conv => conv.context)
-                    .join(' | ');
+                const conversation = await Conversation.findOne({ user: user._id });
+                if (conversation?.chatHistory && conversation.chatHistory.length > 0) {
+                    // Get last 5 chat entries for speech context
+                    const recentChats = conversation.chatHistory.slice(-5);
+                    context = recentChats
+                        .map(chat => {
+                        const userMsg = chat.userMessage || 'No message';
+                        const aiMsg = chat.aiResponse || 'No response';
+                        return `User: ${userMsg.substring(0, 50)}... | AI: ${aiMsg.substring(0, 50)}...`;
+                    })
+                        .join(' | ');
+                }
             }
         }
         catch (dbError) {
@@ -86,9 +71,16 @@ Provide pronunciation guidance and spoken English practice with context awarenes
         try {
             const user = await UserRepository.findByTelegramId(userId);
             if (user) {
-                // Save combined context of user message and AI response
-                const conversationContext = `Speech-User: ${userMessage.substring(0, 50)}... | Speech-AI: ${cleanResponse.substring(0, 50)}...`;
-                await Conversation.findOneAndUpdate({ user: user._id }, { context: conversationContext }, { upsert: true, new: true });
+                // Save speech conversation to chatHistory array
+                await Conversation.findOneAndUpdate({ user: user._id }, {
+                    $push: {
+                        chatHistory: {
+                            userMessage: userMessage,
+                            aiResponse: cleanResponse,
+                            createdAt: new Date(),
+                        },
+                    },
+                }, { upsert: true, new: true });
             }
         }
         catch (dbError) {
@@ -113,12 +105,11 @@ export async function startSpeechConversation(ctx) {
     catch (error) {
         console.warn('Could not clear conversation context:', error);
     }
-    await ctx.reply(`🗣️ **Speech Conversation Mode Started!**\n\n` +
-        `Let's practice spoken English! 🎤\n\n` +
+    await ctx.reply(`Let's practice spoken English! 🎤\n\n` +
         `I'll help you with:\n` +
         `• Pronunciation tips\n` +
         `• Stress and intonation\n` +
         `• Common spoken expressions\n` +
         `• Sound patterns\n\n` +
-        `Try saying your message out loud as you type it. I'll remember our conversation and help improve your pronunciation! What would you like to practice? 🎵`);
+        `Try saying your message out loud as you type it. What would you like to practice? 🎵`);
 }

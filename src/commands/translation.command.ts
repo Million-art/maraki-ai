@@ -28,18 +28,23 @@ export async function handleTranslation(ctx: Context) {
       console.warn('Database not available, using default user level:', (dbError as Error).message);
     }
 
-    // Get conversation context
+    // Get conversation context from chat history
     let context = '';
     try {
       const user = await UserRepository.findByTelegramId(userId);
       if (user) {
-        const conversations = await Conversation.find({ user: user._id })
-          .sort({ createdAt: -1 })
-          .limit(5);
-        context = conversations
-          .reverse()
-          .map(conv => conv.context)
-          .join(' | ');
+        const conversation = await Conversation.findOne({ user: user._id });
+        if (conversation?.chatHistory && conversation.chatHistory.length > 0) {
+          // Get last 5 chat entries for translation context
+          const recentChats = conversation.chatHistory.slice(-5);
+          context = recentChats
+            .map(chat => {
+              const userMsg = chat.userMessage || 'No message';
+              const aiMsg = chat.aiResponse || 'No response';
+              return `User: ${userMsg.substring(0, 50)}... | AI: ${aiMsg.substring(0, 50)}...`;
+            })
+            .join(' | ');
+        }
       }
     } catch (dbError) {
       console.warn('Database not available, using empty context:', (dbError as Error).message);
@@ -65,11 +70,18 @@ ${userMessage}`;
     try {
       const user = await UserRepository.findByTelegramId(userId);
       if (user) {
-        // Save combined context of user message and AI response
-        const conversationContext = `Amharic-User: ${userMessage.substring(0, 50)}... | Translation-AI: ${cleanResponse.substring(0, 50)}...`;
+        // Save translation conversation to chatHistory array
         await Conversation.findOneAndUpdate(
           { user: user._id },
-          { context: conversationContext },
+          {
+            $push: {
+              chatHistory: {
+                userMessage: userMessage,
+                aiResponse: cleanResponse,
+                createdAt: new Date(),
+              },
+            },
+          },
           { upsert: true, new: true }
         );
       }

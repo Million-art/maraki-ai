@@ -33,18 +33,33 @@ export async function handleChatConversation(ctx) {
         catch (dbError) {
             console.warn('Database not available, using default user level:', dbError.message);
         }
-        // Get conversation context (last 5 conversations for memory)
+        // Get conversation context (last 5 chat entries for memory)
         let context = '';
         try {
             const user = await UserRepository.findByTelegramId(userId);
             if (user) {
-                const conversations = await Conversation.find({ user: user._id })
-                    .sort({ createdAt: -1 })
-                    .limit(5);
-                context = conversations
-                    .reverse() // Put in chronological order
-                    .map(conv => conv.context)
-                    .join(' | ');
+                const conversation = await Conversation.findOne({ user: user._id });
+                if (conversation?.chatHistory && conversation.chatHistory.length > 0) {
+                    // Get last 5 chat entries for context
+                    const recentChats = conversation.chatHistory.slice(-5);
+                    context = recentChats
+                        .map(chat => {
+                        const userMsg = chat.userMessage || 'No message';
+                        const aiMsg = chat.aiResponse || 'No response';
+                        // Smart truncation: take first 100 chars, but don't cut words
+                        const truncateSmart = (text, maxLength) => {
+                            if (text.length <= maxLength)
+                                return text;
+                            const truncated = text.substring(0, maxLength);
+                            const lastSpace = truncated.lastIndexOf(' ');
+                            return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...';
+                        };
+                        const truncatedUserMsg = truncateSmart(userMsg, 100);
+                        const truncatedAiMsg = truncateSmart(aiMsg, 100);
+                        return `User: ${truncatedUserMsg} | AI: ${truncatedAiMsg}`;
+                    })
+                        .join(' | ');
+                }
             }
         }
         catch (dbError) {
@@ -70,9 +85,16 @@ Respond naturally and engagingly to continue the conversation. Include gentle gr
         try {
             const user = await UserRepository.findByTelegramId(userId);
             if (user) {
-                // Save combined context of user message and AI response
-                const conversationContext = `User: ${userMessage.substring(0, 50)}... | AI: ${cleanResponse.substring(0, 50)}...`;
-                await Conversation.findOneAndUpdate({ user: user._id }, { context: conversationContext }, { upsert: true, new: true });
+                // Save chat history entry
+                await Conversation.findOneAndUpdate({ user: user._id }, {
+                    $push: {
+                        chatHistory: {
+                            userMessage: userMessage,
+                            aiResponse: cleanResponse,
+                            createdAt: new Date(),
+                        },
+                    },
+                }, { upsert: true, new: true });
             }
         }
         catch (dbError) {

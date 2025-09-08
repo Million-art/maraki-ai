@@ -1,4 +1,4 @@
-import { getSession, setSession } from "../utils/redis.js";
+import { setSession } from "../utils/redis.js";
 import grammarPrompt from "../prompt/grammar.prompt.js";
 import { UserRepository } from "../repository/userRepository.js";
 import { Conversation } from "../database/models/conversation.js";
@@ -7,7 +7,6 @@ export const grammarCommand = async (ctx) => {
     if (!ctx.from) {
         return ctx.reply("⚠️ Could not get your Telegram ID.");
     }
-    const session = await getSession(ctx.from.id);
     await setSession(ctx.from.id, { mode: 'grammar', timestamp: Date.now() });
     await ctx.reply("Ok, send me your sentence");
 };
@@ -26,25 +25,11 @@ export const handleGrammarCorrection = async (ctx) => {
         catch (dbError) {
             console.warn('Database not available, using default user level:', dbError.message);
         }
-        // Get conversation context
-        let context = '';
-        try {
-            // Find user by telegramId first to get ObjectId
-            const user = await UserRepository.findByTelegramId(userId);
-            if (user) {
-                const conversation = await Conversation.findOne({ user: user._id }).sort({ createdAt: -1 });
-                context = conversation?.context || '';
-            }
-        }
-        catch (dbError) {
-            console.warn('Database not available, using empty context:', dbError.message);
-        }
-        // Construct full prompt
+        // Construct full prompt  
         const fullPrompt = `${grammarPrompt}
 
-User Level: ${userLevel}
-Conversation Context: ${context}
-Sentence to correct: "${sentence}"`;
+          User Level: ${userLevel}
+          Sentence to correct: "${sentence}"`;
         // Call Gemini API
         const response = await callGeminiGenerateContent(fullPrompt);
         // Parse JSON response
@@ -79,7 +64,17 @@ Sentence to correct: "${sentence}"`;
             // Find user by telegramId first to get ObjectId
             const user = await UserRepository.findByTelegramId(userId);
             if (user) {
-                await Conversation.findOneAndUpdate({ user: user._id }, { context: grammarType }, { upsert: true, new: true });
+                // Add new grammar mistake to grammarMistakes array
+                await Conversation.findOneAndUpdate({ user: user._id }, {
+                    $push: {
+                        grammarMistakes: {
+                            mistake: sentence,
+                            correction: correctedText,
+                            grammarType: grammarType,
+                            createdAt: new Date(),
+                        },
+                    },
+                }, { upsert: true, new: true });
             }
         }
         catch (dbError) {
@@ -90,6 +85,4 @@ Sentence to correct: "${sentence}"`;
         console.error('Grammar correction error:', error);
         await ctx.reply("❌ An error occurred while correcting your sentence. Please try again later.");
     }
-    // Keep session mode active for continuous grammar corrections
-    // Session will only be cleared when user explicitly exits (e.g., /start command)
 };

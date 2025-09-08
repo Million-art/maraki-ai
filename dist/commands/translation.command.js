@@ -5,15 +5,7 @@ import { translationPrompt } from '../prompt/translation.prompt.js';
 export async function translationCommand(ctx) {
     if (!ctx.from)
         return;
-    await ctx.reply(`🌐 **Amharic to English Translation Mode Started!**\n\n` +
-        `Let's practice translating from Amharic (አማርኛ) to English! 📚\n\n` +
-        `I can help you with:\n` +
-        `• Accurate Amharic → English translations\n` +
-        `• Amharic grammar explanations\n` +
-        `• Pronunciation guides for Amharic words\n` +
-        `• Cultural context and idioms\n` +
-        `• Common translation mistakes\n\n` +
-        `Send me Amharic text and I'll help you translate it to English! 🇪🇹➡️🇺🇸`);
+    await ctx.reply(`🌐 Please send me the Amharic sentence you want to translate.`);
 }
 export async function handleTranslation(ctx) {
     if (!ctx.from || !ctx.message?.text)
@@ -30,18 +22,23 @@ export async function handleTranslation(ctx) {
         catch (dbError) {
             console.warn('Database not available, using default user level:', dbError.message);
         }
-        // Get conversation context
+        // Get conversation context from chat history
         let context = '';
         try {
             const user = await UserRepository.findByTelegramId(userId);
             if (user) {
-                const conversations = await Conversation.find({ user: user._id })
-                    .sort({ createdAt: -1 })
-                    .limit(5);
-                context = conversations
-                    .reverse()
-                    .map(conv => conv.context)
-                    .join(' | ');
+                const conversation = await Conversation.findOne({ user: user._id });
+                if (conversation?.chatHistory && conversation.chatHistory.length > 0) {
+                    // Get last 5 chat entries for translation context
+                    const recentChats = conversation.chatHistory.slice(-5);
+                    context = recentChats
+                        .map(chat => {
+                        const userMsg = chat.userMessage || 'No message';
+                        const aiMsg = chat.aiResponse || 'No response';
+                        return `User: ${userMsg.substring(0, 50)}... | AI: ${aiMsg.substring(0, 50)}...`;
+                    })
+                        .join(' | ');
+                }
             }
         }
         catch (dbError) {
@@ -50,11 +47,7 @@ export async function handleTranslation(ctx) {
         // Generate translation response with context
         const fullPrompt = `${translationPrompt}
 
-User Level: ${userLevel}
-Previous Conversation Context: ${context}
-Current User Message: "${userMessage}"
-
-Provide accurate Amharic to English translation with explanations and cultural context.`;
+${userMessage}`;
         const aiResponse = await callGeminiGenerateContent(fullPrompt);
         // Clean up response
         let cleanResponse = aiResponse;
@@ -67,9 +60,16 @@ Provide accurate Amharic to English translation with explanations and cultural c
         try {
             const user = await UserRepository.findByTelegramId(userId);
             if (user) {
-                // Save combined context of user message and AI response
-                const conversationContext = `Amharic-User: ${userMessage.substring(0, 50)}... | Translation-AI: ${cleanResponse.substring(0, 50)}...`;
-                await Conversation.findOneAndUpdate({ user: user._id }, { context: conversationContext }, { upsert: true, new: true });
+                // Save translation conversation to chatHistory array
+                await Conversation.findOneAndUpdate({ user: user._id }, {
+                    $push: {
+                        chatHistory: {
+                            userMessage: userMessage,
+                            aiResponse: cleanResponse,
+                            createdAt: new Date(),
+                        },
+                    },
+                }, { upsert: true, new: true });
             }
         }
         catch (dbError) {
@@ -94,12 +94,5 @@ export async function startTranslation(ctx) {
     catch (error) {
         console.warn('Could not clear conversation context:', error);
     }
-    await ctx.reply(`🌐 **Amharic to English Translation Practice Started!**\n\n` +
-        `Let's work on your Amharic translation skills! 📚\n\n` +
-        `You can send me:\n` +
-        `• Amharic sentences to translate\n` +
-        `• Questions about Amharic grammar\n` +
-        `• Difficult words or phrases\n` +
-        `• Cultural expressions to explain\n\n` +
-        `What Amharic text would you like me to help you translate? 🇪🇹`);
+    await ctx.reply(`Send me your amaric text 🇪🇹`);
 }
