@@ -1,6 +1,6 @@
 import { getSession, setSession } from "../utils/redis.js";
 import lessonPrompt from "../prompt/lesson.prompt.js";
-import { UserRepository } from "../repository/userRepository.js";
+import { UserRepository } from "../repository/user.repository.js";
 import { Conversation } from "../database/models/conversation.js";
 import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
 export const lessonCommand = async (ctx) => {

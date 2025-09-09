@@ -1,5 +1,5 @@
 import { InlineKeyboard } from "grammy";
-import { getCurrentLevel } from "../services/userService.js";
+import { getCurrentLevel } from "../services/user.service.js";
 export const levelCommand = async (ctx) => {
     if (!ctx.from) {
         return ctx.reply("⚠️ Could not get your Telegram ID.");

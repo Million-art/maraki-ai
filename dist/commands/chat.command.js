@@ -1,5 +1,5 @@
 import { callGeminiGenerateContent } from '../api/gemini/callGeminiGenerateContents.js';
-import { UserRepository } from '../repository/userRepository.js';
+import { UserRepository } from '../repository/user.repository.js';
 import { Conversation } from '../database/models/conversation.js';
 import { chatPrompt } from '../prompt/conversation.prompt.js';
 export async function chatMode(ctx) {

@@ -1,7 +1,8 @@
 import { Context, InlineKeyboard } from "grammy";
 import { BroadcastService } from "../services/broadcast.service.js";
 import { BroadcastRepository } from "../repository/broadcast.repository.js";
-import { User } from '../database/models/user.js'; 
+import { User } from '../database/models/user.js';
+import { setSession, deleteSession } from '../utils/redis.js';
 
 const ADMIN_IDS = process.env.ADMIN_IDS ? process.env.ADMIN_IDS.split(',').map(id => Number(id)) : [];
 
@@ -65,6 +66,7 @@ export async function handleAdminCallback(ctx: Context) {
           { parse_mode: "Markdown" }
         );
         // Set session to expect broadcast message
+        await setSession(ctx.from.id, { mode: 'broadcast', timestamp: Date.now(), userId: ctx.from.id });
         await ctx.api.sendMessage(ctx.from.id, "💬 Reply with your broadcast message:");
         break;
 
@@ -115,9 +117,15 @@ ${result.errors.length > 0 ? `❌ Errors: ${result.errors.slice(0, 3).join(', ')
 
     await ctx.reply(summary, { parse_mode: "Markdown" });
 
+    // Clear broadcast session after completion
+    await deleteSession(ctx.from.id);
+
   } catch (error) {
     console.error("Broadcast error:", error);
     await ctx.reply("❌ Failed to send broadcast message. Please try again.");
+
+    // Clear broadcast session even on error
+    await deleteSession(ctx.from.id);
   }
 }
 

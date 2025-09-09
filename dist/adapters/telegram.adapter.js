@@ -8,7 +8,8 @@ import { levelCommand } from '../commands/level.command.js';
 import { referralCommand } from '../commands/referral.command.js';
 import { helpCommand } from '../commands/help.command.js';
 import { translationCommand, handleTranslation, startTranslation } from '../commands/translation.command.js';
-import { updateUserLevel } from '../services/userService.js';
+import { adminCommand, handleAdminCallback, handleBroadcastMessage } from '../commands/admin.command.js';
+import { updateUserLevel } from '../services/user.service.js';
 import { Level } from '../types/User.js';
 import { setSession, getSession } from '../utils/redis.js';
 const bot_token = process.env.TOKEN;
@@ -34,12 +35,19 @@ bot.command('referral_link', referralCommand);
 bot.command('speech_conversation', speechCommand);
 bot.command('translation', translationCommand);
 bot.command('help', helpCommand);
+bot.command('admin', adminCommand);
 // Catch all other messages
 bot.on('message:text', async (ctx) => {
     if (!ctx.from)
         return;
     const text = ctx.message.text;
     const session = await getSession(ctx.from.id);
+    // Check if admin is sending broadcast message
+    const ADMIN_IDS = process.env.ADMIN_IDS ? process.env.ADMIN_IDS.split(',').map(id => Number(id)) : [];
+    if (ADMIN_IDS.includes(ctx.from.id) && session?.mode === 'broadcast') {
+        await handleBroadcastMessage(ctx);
+        return;
+    }
     // Handle different session modes
     if (session?.mode === 'grammar') {
         await handleGrammarCorrection(ctx);
@@ -84,6 +92,12 @@ bot.on('callback_query:data', async (ctx) => {
     console.log('Callback data:', data);
     if (!ctx.from) {
         return ctx.answerCallbackQuery("⚠️ Could not get your Telegram ID.");
+    }
+    // Handle admin callbacks
+    const ADMIN_IDS = process.env.ADMIN_IDS ? process.env.ADMIN_IDS.split(',').map(id => Number(id)) : [];
+    if (ADMIN_IDS.includes(ctx.from.id) && ['broadcast', 'stats', 'dashboard'].includes(data)) {
+        await handleAdminCallback(ctx);
+        return;
     }
     // Handle level selection
     if (['beginner', 'intermediate', 'advanced'].includes(data)) {
