@@ -8,7 +8,7 @@ import { levelCommand } from '../commands/level.command.js';
 import { referralCommand } from '../commands/referral.command.js';
 import { helpCommand } from '../commands/help.command.js';
 import { translationCommand, handleTranslation, startTranslation } from '../commands/translation.command.js';
-import { updateUserLevel } from '../services/userService.js';
+import { updateUserLevel } from '../services/user.service.js';
 import { Level } from '../types/User.js';
 import { setSession, getSession } from '../utils/redis.js';
 

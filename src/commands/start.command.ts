@@ -1,6 +1,6 @@
 import { Context, InlineKeyboard } from "grammy";
 import { start_msg } from "../messages/start.message.js";
-import { registerOrUpdate } from "../services/userService.js";
+import { registerOrUpdate } from "../services/user.service.js";
 import { getSession, setSession } from "../utils/redis.js";
 
 export async function startCommand(ctx: Context) {

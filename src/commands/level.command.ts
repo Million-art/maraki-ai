@@ -1,5 +1,5 @@
 import { Context, InlineKeyboard } from "grammy";
-import { getCurrentLevel } from "../services/userService.js";
+import { getCurrentLevel } from "../services/user.service.js";
 
 export const levelCommand = async (ctx: Context) => {
   if (!ctx.from) {

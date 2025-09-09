@@ -1,5 +1,5 @@
 import { Context } from "grammy";
-import { referralCount } from "../services/userService.js";
+import { referralCount } from "../services/user.service.js";
 
 const BOT_USERNAME = process.env.BOT_USERNAME || "MarakiBot";
 

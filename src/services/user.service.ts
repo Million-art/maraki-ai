@@ -1,4 +1,4 @@
-import { UserRepository } from "../repository/userRepository.js";
+import { UserRepository } from "../repository/user.repository.js";
 import { User as TelegramUser } from "grammy/types";
 import { IUser, Level } from "../types/User.js";
 
