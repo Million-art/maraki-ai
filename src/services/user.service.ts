@@ -34,7 +34,6 @@ export const registerOrUpdate = async (
   }
 };
 
-
 export const referralCount = async (from: TelegramUser) => {
   const userTelegramId = from.id;
   const user = await UserRepository.findByTelegramId(userTelegramId);
@@ -65,4 +64,10 @@ export const updateUserLevel = async (telegramId: number, newLevel: Level) => {
   const updatedUser = await UserRepository.updateByTelegramId(telegramId, { level: newLevel });
   if (!updatedUser) throw new Error("Failed to update user level");
   return updatedUser;
+}
+
+export const broadcastRemainder = async (telegramId: number, message:string)=>{
+  const user = UserRepository.findByTelegramId(telegramId)
+  if(!user) throw new Error ("Failed to get user")
+    
 }
