@@ -1,38 +1,30 @@
-# Broadcast Session Fix
+# Lesson Follow-up Enhancement
 
 ## Issue
-When admin sends broadcast message but there's no broadcast session, it assumes unknown text instead of handling broadcast properly.
-
-## Root Cause
-In `handleAdminCallback` function, when 'broadcast' is selected, the session mode is not set to 'broadcast', so subsequent messages fall through to unknown text handler.
-
-## Tasks
-- [x] Fix handleAdminCallback to set session mode to 'broadcast' when broadcast is initiated
-- [x] Test the broadcast functionality to ensure it works properly
-- [x] Consider adding session cleanup after broadcast completion
-
-## Files to Edit
-- src/commands/admin.command.ts
-
-# Lesson Menu Enhancement
-
-## Issue
-The lesson command only provided AI-based recommendations. Users wanted structured learning with predefined topics organized by difficulty level.
+Users may get confused after receiving AI-generated lessons and want to ask questions about the lesson content. The current system only handles generating new lessons when in 'lesson' mode.
 
 ## Solution
-Implemented a comprehensive lesson menu with 5 structured parts, each containing specific grammar topics that users can select from.
+Implement a follow-up question system that allows users to ask questions about lessons they've just received, with the AI providing contextual answers based on the lesson content.
 
 ## Tasks
-- [x] Create structured lesson menu with 5 parts (Foundations, Verbs & Tenses, Building Sentences, Phrases & Usage, Writing & Speaking)
-- [x] Add callback handlers for lesson part selection (lesson_part_0 to lesson_part_5)
-- [x] Implement startLessonRecommendation function for AI-based recommendations (Part 0)
-- [x] Implement startLessonPart function to display topics for each part
-- [x] Add callback handlers for individual topic selection (lesson_topic_*)
-- [x] Add back navigation (lesson_back_to_parts)
-- [x] Generate lessons for selected topics using AI
-- [x] Update conversation history with lesson topics
-- [x] Fix TypeScript errors and ensure proper typing
+- [x] Create lessonFollowupPrompt in src/prompt/lesson.prompt.ts
+- [x] Add handleLessonFollowup function in src/commands/lesson.comand.ts
+- [x] Modify handleLessonResponse to include inline keyboard with follow-up options
+- [x] Update telegram.adapter.ts to handle 'lesson_followup' mode and 'lesson_followup_ask' callback
+- [x] Ensure lesson content is stored in database for follow-up context
+- [x] Fix syntax errors in lesson command
+- [x] Test the implementation
 
-## Files to Edit
-- src/commands/lesson.comand.ts
-- src/adapters/telegram.adapter.ts
+## Files Modified
+- src/prompt/lesson.prompt.ts - Added lessonFollowupPrompt
+- src/commands/lesson.comand.ts - Added handleLessonFollowup, modified handleLessonResponse with keyboard
+- src/adapters/telegram.adapter.ts - Added routing for 'lesson_followup' mode and callback handling
+- src/database/models/conversation.ts - Already had content field in LessonSchema
+
+## Testing Status
+- [ ] TypeScript compilation passes
+- [ ] Lesson generation with keyboard buttons works
+- [ ] Follow-up question mode activation works
+- [ ] AI answers questions based on lesson context
+- [ ] Session mode transitions work correctly
+- [ ] Database stores lesson content properly

@@ -27,8 +27,7 @@ export const lessonCommand = async (ctx) => {
             .row()
             .text("❌ Close", "close");
         await ctx.reply(`📚 **English Learning Lessons**\n\n` +
-            `Choose a lesson part to start learning:\n\n` +
-            { reply_markup: keyboard, parse_mode: 'Markdown' });
+            `Choose a lesson part to start learning:\n\n`, { reply_markup: keyboard, parse_mode: 'Markdown' });
     }
     catch (error) {
         console.error('Lesson command error:', error);

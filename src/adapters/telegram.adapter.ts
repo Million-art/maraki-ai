@@ -223,10 +223,13 @@ bot.on('callback_query:data', async (ctx) => {
         // Handle lesson topic selections
         if (data.startsWith('lesson_topic_')) {
           console.log('Handling lesson topic callback:', data);
-          const parts = data.split('_');
-          if (parts.length >= 4) {
-            const partName = parts[2]; // foundations, verbs_tenses, etc.
-            const topicIndex = parseInt(parts[3]);
+          // Parse callback data: lesson_topic_{partName}_{index}
+          // partName can contain underscores (e.g., verbs_tenses)
+          const callbackData = data.substring('lesson_topic_'.length); // Remove prefix
+          const lastUnderscoreIndex = callbackData.lastIndexOf('_');
+          if (lastUnderscoreIndex > 0) {
+            const partName = callbackData.substring(0, lastUnderscoreIndex);
+            const topicIndex = parseInt(callbackData.substring(lastUnderscoreIndex + 1));
 
             // Get topics for this part
             let topics: string[] = [];
@@ -293,7 +296,7 @@ bot.on('callback_query:data', async (ctx) => {
 
             if (topicIndex >= 0 && topicIndex < topics.length) {
               const selectedTopic = topics[topicIndex];
-              await setSession(ctx.from.id, { mode: 'lesson_topic', timestamp: Date.now(), userId: ctx.from.id });
+              await setSession(ctx.from.id, { mode: 'lesson', timestamp: Date.now(), userId: ctx.from.id });
 
               // Generate lesson for selected topic
               try {
@@ -339,6 +342,7 @@ User's Previous Focus Areas: Based on conversation history, focus on areas where
                           lessons: {
                             topic: selectedTopic,
                             details: `Lesson generated for topic: ${selectedTopic}`,
+                            content: formattedLesson,
                             createdAt: new Date(),
                           },
                         },
