@@ -14,6 +14,7 @@ const LessonSchema = new Schema(
   {
     topic: { type: String, required: true },
     details: { type: String },
+    content: { type: String }, // Store full lesson content for follow-up questions
     createdAt: { type: Date, default: Date.now },
   },
   { _id: false }

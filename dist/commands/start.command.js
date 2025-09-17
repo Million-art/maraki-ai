@@ -27,7 +27,7 @@ export async function startCommand(ctx) {
         const keyboard = new InlineKeyboard()
             .text("🧹 Correct sentence", "grammar")
             .row()
-            .text("✨ Learn from your mistake", "lesson")
+            .text("📚 Lesson", "lesson")
             .row()
             .text("⚡ Chat Conversation", "chat_conversation")
             .text("🌐 Amharic → English", "translation")

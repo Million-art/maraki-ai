@@ -63,6 +63,10 @@ bot.on('message:text', async (ctx) => {
     // Handle lesson mode responses
     const { handleLessonResponse } = await import('../commands/lesson.comand.js');
     await handleLessonResponse(ctx);
+  } else if (session?.mode === 'lesson_followup') {
+    // Handle lesson follow-up questions
+    const { handleLessonFollowup } = await import('../commands/lesson.comand.js');
+    await handleLessonFollowup(ctx);
   } else if (session?.mode === 'chat_conversation') {
     await handleChatConversation(ctx);
   } else if (session?.mode === 'translation') {
@@ -206,6 +210,11 @@ bot.on('callback_query:data', async (ctx) => {
         console.log('Handling back to lesson parts callback');
         await setSession(ctx.from.id, { mode: 'lesson_menu', timestamp: Date.now(), userId: ctx.from.id });
         await lessonCommand(ctx);
+        break;
+      case 'lesson_followup_ask':
+        console.log('Handling lesson follow-up ask callback');
+        await setSession(ctx.from.id, { mode: 'lesson_followup', timestamp: Date.now(), userId: ctx.from.id });
+        await ctx.reply("❓ Ask me any question about the lesson above! I'll help clarify anything you're confused about.");
         break;
       case 'close':
         console.log('Handling close callback');
