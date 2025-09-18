@@ -60,13 +60,11 @@ bot.on('message:text', async (ctx) => {
   if (session?.mode === 'grammar') {
     await handleGrammarCorrection(ctx);
   } else if (session?.mode === 'lesson') {
-    // Handle lesson mode responses
-    const { handleLessonResponse } = await import('../commands/lesson.comand.js');
-    await handleLessonResponse(ctx);
+    // Lesson mode is no longer used - redirect to main chat
+    await chatMode(ctx);
   } else if (session?.mode === 'lesson_followup') {
-    // Handle lesson follow-up questions
-    const { handleLessonFollowup } = await import('../commands/lesson.comand.js');
-    await handleLessonFollowup(ctx);
+    // Lesson follow-up is no longer used - redirect to main chat
+    await chatMode(ctx);
   } else if (session?.mode === 'chat_conversation') {
     await handleChatConversation(ctx);
   } else if (session?.mode === 'translation') {
@@ -144,53 +142,11 @@ bot.on('callback_query:data', async (ctx) => {
         await setSession(ctx.from.id, { mode: 'lesson_menu', timestamp: Date.now(), userId: ctx.from.id });
         await lessonCommand(ctx);
         break;
-      case 'lesson_part_0':
-        console.log('Handling lesson part 0 callback');
-        await setSession(ctx.from.id, { mode: 'lesson', timestamp: Date.now(), userId: ctx.from.id });
-        {
-          const { startLessonRecommendation } = await import('../commands/lesson.comand.js');
-          await startLessonRecommendation(ctx);
-        }
-        break;
-      case 'lesson_part_1':
-        console.log('Handling lesson part 1 callback');
-        await setSession(ctx.from.id, { mode: 'lesson_part_1', timestamp: Date.now(), userId: ctx.from.id });
-        {
-          const { startLessonPart } = await import('../commands/lesson.comand.js');
-          await startLessonPart(ctx, 'foundations');
-        }
-        break;
-      case 'lesson_part_2':
-        console.log('Handling lesson part 2 callback');
-        await setSession(ctx.from.id, { mode: 'lesson_part_2', timestamp: Date.now(), userId: ctx.from.id });
-        {
-          const { startLessonPart } = await import('../commands/lesson.comand.js');
-          await startLessonPart(ctx, 'verbs_tenses');
-        }
-        break;
-      case 'lesson_part_3':
-        console.log('Handling lesson part 3 callback');
-        await setSession(ctx.from.id, { mode: 'lesson_part_3', timestamp: Date.now(), userId: ctx.from.id });
-        {
-          const { startLessonPart } = await import('../commands/lesson.comand.js');
-          await startLessonPart(ctx, 'building_sentences');
-        }
-        break;
-      case 'lesson_part_4':
-        console.log('Handling lesson part 4 callback');
-        await setSession(ctx.from.id, { mode: 'lesson_part_4', timestamp: Date.now(), userId: ctx.from.id });
-        {
-          const { startLessonPart } = await import('../commands/lesson.comand.js');
-          await startLessonPart(ctx, 'phrases_usage');
-        }
-        break;
-      case 'lesson_part_5':
-        console.log('Handling lesson part 5 callback');
-        await setSession(ctx.from.id, { mode: 'lesson_part_5', timestamp: Date.now(), userId: ctx.from.id });
-        {
-          const { startLessonPart } = await import('../commands/lesson.comand.js');
-          await startLessonPart(ctx, 'writing_speaking');
-        }
+
+      case 'lesson_full_app':
+        console.log('Handling full lesson mini app callback');
+        // Here you can add logic to send a link or start the mini app
+        await ctx.reply("📚 You can access the full lesson mini app here: [Mini App Link](https://your-mini-app-url.com)", { parse_mode: 'Markdown' });
         break;
       case 'chat_conversation':
         console.log('Handling chat_conversation callback');
@@ -220,154 +176,8 @@ bot.on('callback_query:data', async (ctx) => {
         console.log('Handling close callback');
         return ctx.deleteMessage();
       default:
-        // Handle lesson topic selections
-        if (data.startsWith('lesson_topic_')) {
-          console.log('Handling lesson topic callback:', data);
-          // Parse callback data: lesson_topic_{partName}_{index}
-          // partName can contain underscores (e.g., verbs_tenses)
-          const callbackData = data.substring('lesson_topic_'.length); // Remove prefix
-          const lastUnderscoreIndex = callbackData.lastIndexOf('_');
-          if (lastUnderscoreIndex > 0) {
-            const partName = callbackData.substring(0, lastUnderscoreIndex);
-            const topicIndex = parseInt(callbackData.substring(lastUnderscoreIndex + 1));
-
-            // Get topics for this part
-            let topics: string[] = [];
-            switch (partName) {
-              case 'foundations':
-                topics = [
-                  'The Alphabet & Pronunciation',
-                  'Parts of Speech Overview',
-                  'Nouns',
-                  'Pronouns',
-                  'Verbs',
-                  'Adjectives',
-                  'Adverbs',
-                  'Prepositions',
-                  'Conjunctions',
-                  'Interjections',
-                  'Basic Sentence Structure (Subject + Verb + Object)'
-                ];
-                break;
-              case 'verbs_tenses':
-                topics = [
-                  'Present Simple',
-                  'Present Continuous',
-                  'Past Simple',
-                  'Past Continuous',
-                  'Future Simple ("will")',
-                  'Future "going to"',
-                  'Present Perfect',
-                  'Present Perfect Continuous',
-                  'Past Perfect',
-                  'Past Perfect Continuous',
-                  'Future Perfect & Continuous',
-                  'Passive Voice (all main tenses)'
-                ];
-                break;
-              case 'building_sentences':
-                topics = [
-                  'Questions & Question Words (who, what, where, when, why, how)',
-                  'Negatives (not, never, nothing)',
-                  'Modal Verbs (can, could, should, must, may, might, will, would)',
-                  'Conditionals (Zero, First, Second, Third, Mixed)',
-                  'Reported Speech (statements, questions, commands)'
-                ];
-                break;
-              case 'phrases_usage':
-                topics = [
-                  'Common Phrases for Daily Life (greetings, asking for help, shopping, travel)',
-                  'Collocations (make/do, take/have, etc.)',
-                  'Idioms & Expressions (simple first, then advanced)',
-                  'Phrasal Verbs (get up, take off, put on, look after, etc.)'
-                ];
-                break;
-              case 'writing_speaking':
-                topics = [
-                  'Articles (a, an, the)',
-                  'Countable & Uncountable Nouns',
-                  'Comparatives & Superlatives',
-                  'Linking Words (and, but, because, although, however)',
-                  'Paragraph Writing Basics (topic sentence, supporting details)',
-                  'Formal vs. Informal English (emails, conversations)'
-                ];
-                break;
-            }
-
-            if (topicIndex >= 0 && topicIndex < topics.length) {
-              const selectedTopic = topics[topicIndex];
-              await setSession(ctx.from.id, { mode: 'lesson', timestamp: Date.now(), userId: ctx.from.id });
-
-              // Generate lesson for selected topic
-              try {
-                const { UserRepository } = await import('../repository/user.repository.js');
-                const { Conversation } = await import('../database/models/conversation.js');
-                const { callGeminiGenerateContent } = await import('../api/gemini/callGeminiGenerateContents.js');
-                const lessonPrompt = (await import('../prompt/lesson.prompt.js')).default;
-
-                // Get user level
-                let userLevel;
-                try {
-                  const user = await UserRepository.findByTelegramId(ctx.from.id);
-                  userLevel = user?.level;
-                } catch (dbError) {
-                  console.warn('Database not available, user level not assigned:', (dbError as Error).message);
-                }
-
-                const lessonRequest = `${lessonPrompt}
-
-User Level: ${userLevel}
-Selected Topic: ${selectedTopic}
-User's Previous Focus Areas: Based on conversation history, focus on areas where the user has shown interest or made mistakes.`;
-
-                const lessonContent = await callGeminiGenerateContent(lessonRequest);
-
-                // Parse and format the lesson response
-                let formattedLesson = lessonContent;
-                if (lessonContent.includes('```')) {
-                  formattedLesson = lessonContent.replace(/```/g, '').trim();
-                }
-                formattedLesson = formattedLesson.replace(/\*/g, '');
-
-                await ctx.reply(`📖 Lesson: ${selectedTopic.toUpperCase()}\n\n${formattedLesson}`, { parse_mode: 'HTML' });
-
-                // Update conversation context
-                try {
-                  const user = await UserRepository.findByTelegramId(ctx.from.id);
-                  if (user) {
-                    await Conversation.findOneAndUpdate(
-                      { user: user._id },
-                      {
-                        $push: {
-                          lessons: {
-                            topic: selectedTopic,
-                            details: `Lesson generated for topic: ${selectedTopic}`,
-                            content: formattedLesson,
-                            createdAt: new Date(),
-                          },
-                        },
-                      },
-                      { upsert: true, new: true }
-                    );
-                  }
-                } catch (dbError) {
-                  console.warn('Database not available, skipping context update:', (dbError as Error).message);
-                }
-
-              } catch (error) {
-                console.error('Lesson generation error:', error);
-                await ctx.reply("❌ An error occurred while generating your lesson. Please try again later.");
-              }
-            } else {
-              await ctx.answerCallbackQuery("❌ Invalid topic selection.");
-            }
-          } else {
-            await ctx.answerCallbackQuery("❌ Invalid topic callback format.");
-          }
-        } else {
-          console.log('Unknown callback data:', data);
-          return ctx.answerCallbackQuery("❓ Unknown action.");
-        }
+        console.log('Unknown callback data:', data);
+        return ctx.answerCallbackQuery("❓ Unknown action.");
     }
     await ctx.answerCallbackQuery();
   }
