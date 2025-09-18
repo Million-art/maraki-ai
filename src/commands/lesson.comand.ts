@@ -17,7 +17,7 @@ export const lessonCommand = async(ctx: Context) => {
   try {
     // Create keyboard with both lesson options
     const keyboard = new InlineKeyboard()
-      .text("🎯 Recommended Topic (Learn from mistakes)", "lesson_part_0")
+      .text("🎯 Recommended Topic", "lesson_part_0")
       .row()
       .text("📚 Full Lesson", "lesson_full_app")
       .row()
