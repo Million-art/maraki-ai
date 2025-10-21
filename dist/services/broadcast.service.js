@@ -1,6 +1,6 @@
-import { BroadcastRepository } from '../repository/broadcast.repository.js';
 import { bot } from '../adapters/telegram.adapter.js';
 import { logger } from '../utils/logger.js';
+import { apiService } from './api.service.js';
 export class BroadcastService {
     static BATCH_SIZE = 25;
     static BATCH_DELAY = 1100;
@@ -8,8 +8,20 @@ export class BroadcastService {
      * Send broadcast message to all users
      */
     static async sendBroadcastToAll(message) {
-        const telegramIds = await BroadcastRepository.getAllUserTelegramIds();
-        return this.sendBroadcastToUsers(telegramIds, message);
+        try {
+            const allUsers = await apiService.getAllUsers();
+            const telegramIds = allUsers.map((user) => user.telegramId);
+            return this.sendBroadcastToUsers(telegramIds, message);
+        }
+        catch (error) {
+            logger.error('Error getting all users for broadcast:', error);
+            return {
+                totalUsers: 0,
+                successful: 0,
+                failed: 0,
+                errors: ['Failed to get users from API']
+            };
+        }
     }
     /**
      * Send broadcast message to specific users
@@ -69,10 +81,18 @@ export class BroadcastService {
      * Get broadcast statistics
      */
     static async getBroadcastStats() {
-        const totalUsers = await BroadcastRepository.getUserCount();
-        return {
-            totalUsers
-        };
+        try {
+            const stats = await apiService.getStudentStats();
+            return {
+                totalUsers: stats.totalStudents
+            };
+        }
+        catch (error) {
+            logger.error('Error getting broadcast stats:', error);
+            return {
+                totalUsers: 0
+            };
+        }
     }
     static delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));

@@ -12,6 +12,7 @@ export const helpCommand= async(ctx:Context)=>{
       `/translation - 🌐Amharic to English translation\n` +
       `/referral_link - 🔗 Get your referral link\n` +
       `/level - 📊 Check your level\n` +
+      `/usage - 📊 Check your daily usage limits\n` +
       `/speech_conversation - 🗣️ Practice speech conversation (Coming Soon!)\n` +
       `/help - ❓ Get help\n`
     );

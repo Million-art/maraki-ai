@@ -1,11 +1,11 @@
 import { User as TelegramUser } from "grammy/types";
-import { IUser, Level } from "../types/User.js";
+import { User } from "../types/User.js";
 import { apiService } from "./api.service.js";
 
 export const registerOrUpdate = async (
   from: TelegramUser,
   referrerId?: number
-): Promise<IUser> => {
+): Promise<User> => {
   const userData = {
     telegramId: from.id,
     firstName: from.first_name || undefined,
@@ -55,25 +55,12 @@ export const getCurrentLevel = async(from: TelegramUser) => {
   }
 };
 
-export const updateUserLevel = async (telegramId: number, newLevel: Level) => {
+export const updateUserLevel = async (telegramId: number, newLevel: string) => {
   try {
     const updatedUser = await apiService.createOrUpdateUser(telegramId, { level: newLevel });
     return updatedUser;
   } catch (error) {
     console.error("Error updating user level:", error);
     throw new Error("Failed to update user level");
-  }
-};
-
-export const broadcastRemainder = async (telegramId: number, message: string) => {
-  try {
-    const user = await apiService.getUserByTelegramId(telegramId);
-    if (!user) throw new Error("Failed to get user");
-    
-    // Add your broadcast logic here
-    console.log(`Broadcasting to user ${telegramId}: ${message}`);
-  } catch (error) {
-    console.error("Error in broadcast remainder:", error);
-    throw new Error("Failed to broadcast remainder");
   }
 };

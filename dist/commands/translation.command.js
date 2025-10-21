@@ -1,6 +1,5 @@
 import { callGeminiGenerateContent } from '../api/gemini/callGeminiGenerateContents.js';
-import { UserRepository } from '../repository/user.repository.js';
-import { Conversation } from '../database/models/conversation.js';
+import { apiService } from '../services/api.service.js';
 import { translationPrompt } from '../prompt/translation.prompt.js';
 export async function translationCommand(ctx) {
     if (!ctx.from)
@@ -16,33 +15,30 @@ export async function handleTranslation(ctx) {
         // Get user level for personalized responses
         let userLevel = 'intermediate';
         try {
-            const user = await UserRepository.findByTelegramId(userId);
+            const user = await apiService.getUserByTelegramId(userId);
             userLevel = user?.level || 'intermediate';
         }
-        catch (dbError) {
-            console.warn('Database not available, using default user level:', dbError.message);
+        catch (apiError) {
+            console.warn('API not available, using default user level:', apiError.message);
         }
         // Get conversation context from chat history
         let context = '';
         try {
-            const user = await UserRepository.findByTelegramId(userId);
-            if (user) {
-                const conversation = await Conversation.findOne({ user: user._id });
-                if (conversation?.chatHistory && conversation.chatHistory.length > 0) {
-                    // Get last 5 chat entries for translation context
-                    const recentChats = conversation.chatHistory.slice(-5);
-                    context = recentChats
-                        .map(chat => {
-                        const userMsg = chat.userMessage || 'No message';
-                        const aiMsg = chat.aiResponse || 'No response';
-                        return `User: ${userMsg.substring(0, 50)}... | AI: ${aiMsg.substring(0, 50)}...`;
-                    })
-                        .join(' | ');
-                }
+            const conversation = await apiService.getConversation(userId);
+            if (conversation?.chatHistory && conversation.chatHistory.length > 0) {
+                // Get last 5 chat entries for translation context
+                const recentChats = conversation.chatHistory.slice(-5);
+                context = recentChats
+                    .map((chat) => {
+                    const userMsg = chat.userMessage || 'No message';
+                    const aiMsg = chat.aiResponse || 'No response';
+                    return `User: ${userMsg.substring(0, 50)}... | AI: ${aiMsg.substring(0, 50)}...`;
+                })
+                    .join(' | ');
             }
         }
-        catch (dbError) {
-            console.warn('Database not available, using empty context:', dbError.message);
+        catch (apiError) {
+            console.warn('API not available, using empty context:', apiError.message);
         }
         // Generate translation response with context
         const fullPrompt = `${translationPrompt}
@@ -58,22 +54,14 @@ ${userMessage}`;
         await ctx.reply(`🌐 ${cleanResponse}`, { parse_mode: 'HTML' });
         // Save conversation context
         try {
-            const user = await UserRepository.findByTelegramId(userId);
-            if (user) {
-                // Save translation conversation to chatHistory array
-                await Conversation.findOneAndUpdate({ user: user._id }, {
-                    $push: {
-                        chatHistory: {
-                            userMessage: userMessage,
-                            aiResponse: cleanResponse,
-                            createdAt: new Date(),
-                        },
-                    },
-                }, { upsert: true, new: true });
-            }
+            await apiService.addChatMessage(userId, {
+                userMessage: userMessage,
+                aiResponse: cleanResponse,
+                createdAt: new Date(),
+            });
         }
-        catch (dbError) {
-            console.warn('Database not available, skipping context save:', dbError.message);
+        catch (apiError) {
+            console.warn('API not available, skipping context save:', apiError.message);
         }
     }
     catch (error) {
@@ -86,10 +74,8 @@ export async function startTranslation(ctx) {
         return;
     try {
         // Clear any existing conversation context for this mode
-        const user = await UserRepository.findByTelegramId(ctx.from.id);
-        if (user) {
-            await Conversation.deleteMany({ user: user._id });
-        }
+        // Note: Direct deletion not available via API, conversation will be managed by backend
+        console.log('Translation mode started - conversation context will be managed by backend');
     }
     catch (error) {
         console.warn('Could not clear conversation context:', error);

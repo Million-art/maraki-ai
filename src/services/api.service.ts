@@ -10,7 +10,7 @@ export class ApiService {
   // User Management
   async getUserByTelegramId(telegramId: number) {
     try {
-      const response = await axios.get(`${this.baseUrl}/api/students/telegram/${telegramId}`);
+      const response = await axios.get(`${this.baseUrl}/api/users/telegram/${telegramId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -20,7 +20,7 @@ export class ApiService {
 
   async createOrUpdateUser(telegramId: number, userData: any) {
     try {
-      const response = await axios.post(`${this.baseUrl}/api/students/telegram/${telegramId}`, userData);
+      const response = await axios.post(`${this.baseUrl}/api/users/telegram/${telegramId}`, userData);
       return response.data;
     } catch (error) {
       console.error('Error creating/updating user:', error);
@@ -53,7 +53,7 @@ export class ApiService {
 
   async upgradeToPremium(telegramId: number, paymentData?: any) {
     try {
-      const response = await axios.post(`${this.baseUrl}/api/students/${telegramId}/upgrade`, paymentData);
+      const response = await axios.post(`${this.baseUrl}/api/users/${telegramId}/upgrade`, paymentData);
       return response.data;
     } catch (error) {
       console.error('Error upgrading to premium:', error);
@@ -138,22 +138,7 @@ export class ApiService {
     }
   }
 
-  // Legacy methods for backward compatibility
-  async addTelegramStars(telegramId: number, starsAmount: number) {
-    return this.addProviderFunds(telegramId, 'telegram_stars', starsAmount);
-  }
-
-  async useTelegramStars(telegramId: number, starsAmount: number) {
-    return this.createPayment({
-      telegramId,
-      provider: 'telegram_stars',
-      amount: starsAmount,
-      currency: 'stars',
-      subscriptionTier: 'premium',
-      subscriptionDuration: 30
-    });
-  }
-
+  // Chapa payment methods
   async processChapaPayment(telegramId: number, chapaData: any) {
     return this.createPayment({
       telegramId,
@@ -218,24 +203,15 @@ export class ApiService {
     }
   }
 
-  // Additional methods for broadcast service
-  async getAllUsers() {
-    try {
-      const response = await axios.get(`${this.baseUrl}/api/students/all`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching all users:', error);
-      return [];
-    }
-  }
 
-  async getStudentStats() {
+  // Usage Status
+  async getUsageStatus(telegramId: number) {
     try {
-      const response = await axios.get(`${this.baseUrl}/api/students/stats`);
+      const response = await axios.get(`${this.baseUrl}/api/users/${telegramId}/usage-status`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching student stats:', error);
-      return { totalStudents: 0, premiumStudents: 0, freeStudents: 0, conversionRate: 0 };
+      console.error('Error fetching usage status:', error);
+      return null;
     }
   }
 }

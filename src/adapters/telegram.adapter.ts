@@ -1,6 +1,4 @@
 import dotenv from 'dotenv';
-dotenv.config();
-
 import { Bot } from 'grammy';
 import { startCommand } from '../commands/start.command.js';
 import { grammarCommand, handleGrammarCorrection } from '../commands/grammar.command.js';
@@ -11,10 +9,12 @@ import { levelCommand } from '../commands/level.command.js';
 import { referralCommand } from '../commands/referral.command.js';
 import { helpCommand } from '../commands/help.command.js';
 import { translationCommand, handleTranslation, startTranslation } from '../commands/translation.command.js';
-import { adminCommand, handleAdminCallback, handleBroadcastMessage } from '../commands/admin.command.js';
+import { usageCommand } from '../commands/usage.command.js';
 import { updateUserLevel } from '../services/user.service.js';
 // Level enum moved to backend API
 import { setSession, getSession } from '../utils/redis.js';
+
+dotenv.config();
 
 const bot_token= process.env.TOKEN
 if (!bot_token) {
@@ -43,7 +43,7 @@ bot.command('referral_link',referralCommand)
 bot.command('speech_conversation', speechCommand);
 bot.command('translation', translationCommand);
 bot.command('help', helpCommand)
-bot.command('admin', adminCommand);
+bot.command('usage', usageCommand);
 
 // Catch all other messages
 bot.on('message:text', async (ctx) => {
@@ -52,12 +52,6 @@ bot.on('message:text', async (ctx) => {
   const text = ctx.message.text;
   const session = await getSession(ctx.from.id);
 
-  // Check if admin is sending broadcast message
-  const ADMIN_IDS = process.env.ADMIN_IDS ? process.env.ADMIN_IDS.split(',').map(id => Number(id)) : [];
-  if (ADMIN_IDS.includes(ctx.from.id) && session?.mode === 'broadcast') {
-    await handleBroadcastMessage(ctx);
-    return;
-  }
 
   // Handle different session modes
   if (session?.mode === 'grammar') {
@@ -107,12 +101,6 @@ bot.on('callback_query:data', async (ctx) => {
     return ctx.answerCallbackQuery("⚠️ Could not get your Telegram ID.");
   }
 
-  // Handle admin callbacks
-  const ADMIN_IDS = process.env.ADMIN_IDS ? process.env.ADMIN_IDS.split(',').map(id => Number(id)) : [];
-  if (ADMIN_IDS.includes(ctx.from.id) && ['broadcast', 'stats', 'dashboard'].includes(data)) {
-    await handleAdminCallback(ctx);
-    return;
-  }
 
   // Handle level selection
   if (['beginner', 'intermediate', 'advanced'].includes(data)) {

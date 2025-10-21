@@ -19,6 +19,7 @@ export async function chatMode(ctx: Context) {
     `/translation - 🌐Amharic to English translation\n` +
     `/referral_link - 🔗 Get your referral link\n` +
     `/level - 📊 Check your level\n` +
+    `/usage - 📊 Check your daily usage limits\n` +
     `/speech_conversation - 🗣️ Practice speech conversation (Coming Soon!)\n` +
     `/help - ❓ Get help\n\n` +
     `Or just keep chatting and I'll help you practice English! 💬`
@@ -50,7 +51,7 @@ export async function handleChatConversation(ctx: Context) {
           // Get last 5 chat entries for context
           const recentChats = conversation.chatHistory.slice(-5);
           context = recentChats
-            .map(chat => {
+            .map((chat: any) => {
               const userMsg = chat.userMessage || 'No message';
               const aiMsg = chat.aiResponse || 'No response';
 

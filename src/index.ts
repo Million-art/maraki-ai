@@ -49,11 +49,13 @@ const startServer = async () => {
         }
 
         app.listen(port, ()=>{
-            console.log('Maraki Ai is running on port', port)
+            console.log('Maraki   is running on port', port)
         })
     } catch (error) {
         console.error('Failed to start server:', error)
     }
 }
+
+
 
 startServer()

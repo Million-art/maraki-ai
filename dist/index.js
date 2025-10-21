@@ -1,6 +1,5 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { connectDB } from './database/database.js';
 import { connectRedis } from './utils/redis.js';
 import { bot } from './adapters/telegram.adapter.js';
 dotenv.config();
@@ -25,7 +24,6 @@ app.post('/webhook', async (req, res) => {
 });
 const startServer = async () => {
     try {
-        await connectDB();
         await connectRedis();
         // Initialize the bot
         await bot.init();
@@ -47,11 +45,11 @@ const startServer = async () => {
             console.log('Bot started with polling');
         }
         app.listen(port, () => {
-            console.log('Maraki Ai is running on port', port);
+            console.log('Maraki   is running on port', port);
         });
     }
     catch (error) {
-        console.error('Failed to connect to databases:', error);
+        console.error('Failed to start server:', error);
     }
 };
 startServer();

@@ -1,25 +1,24 @@
 import { InlineKeyboard } from "grammy";
 import { BroadcastService } from "../services/broadcast.service.js";
-import { BroadcastRepository } from "../repository/broadcast.repository.js";
-import { User } from '../database/models/user.js';
+import { apiService } from "../services/api.service.js";
 import { setSession, deleteSession } from '../utils/redis.js';
-const ADMIN_IDS = process.env.ADMIN_IDS ? process.env.ADMIN_IDS.split(',').map(id => Number(id)) : [];
+const ADMIN_ID = Number(process.env.ADMIN_ID);
 export async function adminCommand(ctx) {
     if (!ctx.from)
         return;
     // Check if user is admin
-    if (!ADMIN_IDS.includes(ctx.from.id)) {
+    if (ADMIN_ID !== Number(ctx.from.id)) {
         return ctx.reply("❌ You don't have permission to access the admin dashboard.");
     }
     await showAdminDashboard(ctx);
 }
 export async function showAdminDashboard(ctx) {
-    if (!ctx.from || !ADMIN_IDS.includes(ctx.from.id))
+    if (!ctx.from || ADMIN_ID !== Number(ctx.from.id))
         return;
     try {
         // Get statistics
-        const totalUsers = await BroadcastRepository.getUserCount();
         const broadcastStats = await BroadcastService.getBroadcastStats();
+        const totalUsers = broadcastStats.totalUsers;
         const dashboardText = `
 📊 Admin Dashboard
 
@@ -45,7 +44,7 @@ Choose an action:
     }
 }
 export async function handleAdminCallback(ctx) {
-    if (!ctx.from || !ADMIN_IDS.includes(ctx.from.id))
+    if (!ctx.from || ADMIN_ID !== Number(ctx.from.id))
         return;
     const data = ctx.callbackQuery?.data;
     if (!data)
@@ -76,7 +75,7 @@ export async function handleAdminCallback(ctx) {
     }
 }
 export async function handleBroadcastMessage(ctx) {
-    if (!ctx.from || !ADMIN_IDS.includes(ctx.from.id) || !ctx.message?.text)
+    if (!ctx.from || ADMIN_ID !== Number(ctx.from.id) || !ctx.message?.text)
         return;
     const message = ctx.message.text;
     try {
@@ -108,8 +107,9 @@ ${result.errors.length > 0 ? `❌ Errors: ${result.errors.slice(0, 3).join(', ')
 }
 async function showDetailedStats(ctx) {
     try {
-        const totalUsers = await BroadcastRepository.getUserCount();
-        // Get user level breakdown using aggregation
+        const broadcastStats = await BroadcastService.getBroadcastStats();
+        const totalUsers = broadcastStats.totalUsers;
+        // Get user level breakdown using API
         const levelStats = await getUserLevelStats();
         const statsText = `
 📊 Detailed Statistics
@@ -138,27 +138,26 @@ async function showDetailedStats(ctx) {
     }
 }
 async function getUserLevelStats() {
-    // Use MongoDB aggregation to get counts by level
-    const aggregationResult = await User.aggregate([
-        {
-            $group: {
-                _id: "$level",
-                count: { $sum: 1 }
+    try {
+        // Get all users from API and count by level
+        const allUsers = await apiService.getAllUsers();
+        // Initialize counts
+        const levelCounts = {
+            beginner: 0,
+            intermediate: 0,
+            advanced: 0
+        };
+        // Count users by level
+        allUsers.forEach(user => {
+            const level = user.level?.toLowerCase();
+            if (level && level in levelCounts) {
+                levelCounts[level]++;
             }
-        }
-    ]);
-    // Initialize counts
-    const levelCounts = {
-        beginner: 0,
-        intermediate: 0,
-        advanced: 0
-    };
-    // Map aggregation results to levelCounts
-    aggregationResult.forEach((item) => {
-        const levelKey = item._id.toLowerCase();
-        if (levelKey in levelCounts) {
-            levelCounts[levelKey] = item.count;
-        }
-    });
-    return levelCounts;
+        });
+        return levelCounts;
+    }
+    catch (error) {
+        console.error('Error getting user level stats:', error);
+        return { beginner: 0, intermediate: 0, advanced: 0 };
+    }
 }

@@ -35,7 +35,7 @@ export async function handleTranslation(ctx: Context) {
         // Get last 5 chat entries for translation context
         const recentChats = conversation.chatHistory.slice(-5);
         context = recentChats
-          .map(chat => {
+          .map((chat: any) => {
             const userMsg = chat.userMessage || 'No message';
             const aiMsg = chat.aiResponse || 'No response';
             return `User: ${userMsg.substring(0, 50)}... | AI: ${aiMsg.substring(0, 50)}...`;

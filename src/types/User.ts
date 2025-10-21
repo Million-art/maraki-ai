@@ -14,6 +14,4 @@ export interface User {
   };
   subscriptionTier?: string;
   subscriptionExpiresAt?: string;
-  telegramStarsUsed?: number;
-  telegramStarsBalance?: number;
 }
