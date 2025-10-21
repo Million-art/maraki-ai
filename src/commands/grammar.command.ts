@@ -1,8 +1,7 @@
 import { Context } from "grammy";
 import { setSession } from "../utils/redis.js";
 import grammarPrompt from "../prompt/grammar.prompt.js";
- import { UserRepository } from "../repository/user.repository.js";
-import { Conversation } from "../database/models/conversation.js";
+import { apiService } from "../services/api.service.js";
 import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
 
 export const grammarCommand = async(ctx:Context)=>{
@@ -25,10 +24,10 @@ export const handleGrammarCorrection = async(ctx: Context) => {
     // Get user level
     let userLevel = 'intermediate';
     try {
-      const user = await UserRepository.findByTelegramId(userId);
+      const user = await apiService.getUserByTelegramId(userId);
       userLevel = user?.level || 'intermediate';
-    } catch (dbError) {
-      console.warn('Database not available, using default user level:', (dbError as Error).message);
+    } catch (apiError) {
+      console.warn('API not available, using default user level:', (apiError as Error).message);
     }
 
     // Construct full prompt  
@@ -71,27 +70,14 @@ export const handleGrammarCorrection = async(ctx: Context) => {
 
     // Update conversation context
     try {
-      // Find user by telegramId first to get ObjectId
-      const user = await UserRepository.findByTelegramId(userId);
-      if (user) {
-        // Add new grammar mistake to grammarMistakes array
-        await Conversation.findOneAndUpdate(
-          { user: user._id },
-          {
-            $push: {
-              grammarMistakes: {
-                mistake: sentence,
-                correction: correctedText,
-                grammarType: grammarType,
-                createdAt: new Date(),
-              },
-            },
-          },
-          { upsert: true, new: true }
-        );
-      }
-    } catch (dbError) {
-      console.warn('Database not available, skipping context update:', (dbError as Error).message);
+      await apiService.addGrammarMistake(userId, {
+        mistake: sentence,
+        correction: correctedText,
+        grammarType: grammarType,
+        createdAt: new Date(),
+      });
+    } catch (apiError) {
+      console.warn('API not available, skipping context update:', (apiError as Error).message);
     }
 
   } catch (error) {

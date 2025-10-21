@@ -1,8 +1,7 @@
 import { Context, InlineKeyboard } from "grammy";
 import { getSession, setSession } from "../utils/redis.js";
 import lessonPrompt from "../prompt/lesson.prompt.js";
-import { UserRepository } from "../repository/user.repository.js";
-import { Conversation } from "../database/models/conversation.js";
+import { apiService } from "../services/api.service.js";
 import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
 import { lessonFollowupPrompt } from "../prompt/lesson.prompt.js";
 
@@ -48,32 +47,31 @@ export const startLessonRecommendation = async(ctx: Context) => {
     let conversationContext = '';
     let suggestedTopic = 'general grammar';
 
-    // Get user level from database, no default assignment
+    // Get user level from API, no default assignment
     let userLevel;
     try {
-      const user = await UserRepository.findByTelegramId(ctx.from.id);
+      const user = await apiService.getUserByTelegramId(ctx.from.id);
       userLevel = user?.level;
-    } catch (dbError) {
-      console.warn('Database not available, user level not assigned:', (dbError as Error).message);
+    } catch (apiError) {
+      console.warn('API not available, user level not assigned:', (apiError as Error).message);
     }
 
     // Get conversation context to analyze patterns with AI
     try {
-      const user = await UserRepository.findByTelegramId(ctx.from.id);
-      if (user) {
-        const conversation = await Conversation.findOne({ user: user._id });
+      const conversation = await apiService.getConversation(ctx.from.id);
+      if (conversation) {
 
         // Build context from grammar mistakes and lessons
         let contextParts = [];
 
         if (conversation?.grammarMistakes && conversation.grammarMistakes.length > 0) {
           const recentMistakes = conversation.grammarMistakes.slice(-5);
-          contextParts.push(...recentMistakes.map(m => `Grammar mistake: ${m.grammarType} - "${m.mistake}" → "${m.correction}"`));
+          contextParts.push(...recentMistakes.map((m: any) => `Grammar mistake: ${m.grammarType} - "${m.mistake}" → "${m.correction}"`));
         }
 
         if (conversation?.lessons && conversation.lessons.length > 0) {
           const recentLessons = conversation.lessons.slice(-3);
-          contextParts.push(...recentLessons.map(l => `Lesson topic: ${l.topic}`));
+          contextParts.push(...recentLessons.map((l: any) => `Lesson topic: ${l.topic}`));
         }
 
         conversationContext = contextParts.join(' | ');
@@ -138,13 +136,13 @@ export const handleLessonResponse = async(ctx: Context) => {
   const userResponse = ctx.message.text.toLowerCase();
 
   try {
-    // Get user level from database, no default assignment
+    // Get user level from API, no default assignment
     let userLevel;
     try {
-      const user = await UserRepository.findByTelegramId(userId);
+      const user = await apiService.getUserByTelegramId(userId);
       userLevel = user?.level;
-    } catch (dbError) {
-      console.warn('Database not available, user level not assigned:', (dbError as Error).message);
+    } catch (apiError) {
+      console.warn('API not available, user level not assigned:', (apiError as Error).message);
     }
 
     let selectedTopic = '';
@@ -153,21 +151,20 @@ export const handleLessonResponse = async(ctx: Context) => {
     if (userResponse.includes('yes') || userResponse.includes('agree') || userResponse.includes('ok')) {
       // Use AI to suggest topic based on learning history
       try {
-        const user = await UserRepository.findByTelegramId(userId);
-        if (user) {
-          const conversation = await Conversation.findOne({ user: user._id });
+        const conversation = await apiService.getConversation(userId);
+        if (conversation) {
 
           // Build context from grammar mistakes and lessons
           let contextParts = [];
 
           if (conversation?.grammarMistakes && conversation.grammarMistakes.length > 0) {
             const recentMistakes = conversation.grammarMistakes.slice(-5);
-            contextParts.push(...recentMistakes.map(m => `Grammar mistake: ${m.grammarType} - "${m.mistake}" → "${m.correction}"`));
+            contextParts.push(...recentMistakes.map((m: any) => `Grammar mistake: ${m.grammarType} - "${m.mistake}" → "${m.correction}"`));
           }
 
           if (conversation?.lessons && conversation.lessons.length > 0) {
             const recentLessons = conversation.lessons.slice(-3);
-            contextParts.push(...recentLessons.map(l => `Lesson topic: ${l.topic}`));
+            contextParts.push(...recentLessons.map((l: any) => `Lesson topic: ${l.topic}`));
           }
 
           const conversationContext = contextParts.join(' | ');
@@ -229,25 +226,14 @@ User's Previous Focus Areas: Based on conversation history, focus on areas where
 
     // Update conversation context
     try {
-      const user = await UserRepository.findByTelegramId(userId);
-      if (user) {
-                await Conversation.findOneAndUpdate(
-                  { user: user._id },
-                  {
-                    $push: {
-                      lessons: {
-                        topic: selectedTopic,
-                        details: formattedLesson,
-                        content: formattedLesson,
-                        createdAt: new Date(),
-                      },
-                    },
-                  },
-                  { upsert: true, new: true }
-                );
-      }
-    } catch (dbError) {
-      console.warn('Database not available, skipping context update:', (dbError as Error).message);
+      await apiService.addLesson(userId, {
+        topic: selectedTopic,
+        details: formattedLesson,
+        content: formattedLesson,
+        createdAt: new Date(),
+      });
+    } catch (apiError) {
+      console.warn('API not available, skipping context update:', (apiError as Error).message);
     }
 
   } catch (error) {
@@ -266,15 +252,12 @@ export const handleLessonFollowup = async(ctx: Context) => {
     // Retrieve last lesson content from conversation history
     let lastLessonContent = '';
     try {
-      const user = await UserRepository.findByTelegramId(userId);
-      if (user) {
-        const conversation = await Conversation.findOne({ user: user._id });
-        if (conversation?.lessons && conversation.lessons.length > 0) {
-          lastLessonContent = conversation.lessons[conversation.lessons.length - 1].content || '';
-        }
+      const conversation = await apiService.getConversation(userId);
+      if (conversation?.lessons && conversation.lessons.length > 0) {
+        lastLessonContent = conversation.lessons[conversation.lessons.length - 1].content || '';
       }
-    } catch (dbError) {
-      console.warn('Database not available, cannot retrieve lesson content:', (dbError as Error).message);
+    } catch (apiError) {
+      console.warn('API not available, cannot retrieve lesson content:', (apiError as Error).message);
     }
 
     if (!lastLessonContent) {

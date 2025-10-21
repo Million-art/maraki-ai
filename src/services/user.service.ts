@@ -1,14 +1,12 @@
-import { UserRepository } from "../repository/user.repository.js";
 import { User as TelegramUser } from "grammy/types";
 import { IUser, Level } from "../types/User.js";
+import { apiService } from "./api.service.js";
 
 export const registerOrUpdate = async (
   from: TelegramUser,
   referrerId?: number
 ): Promise<IUser> => {
-  const existingUser = await UserRepository.findByTelegramId(from.id);
-
-  const userData: Partial<IUser> = {
+  const userData = {
     telegramId: from.id,
     firstName: from.first_name || undefined,
     lastName: from.last_name || undefined,
@@ -18,56 +16,64 @@ export const registerOrUpdate = async (
     referredBy: referrerId, // set referrer if present
   };
 
-  if (existingUser) {
-    const updatedUser = await UserRepository.updateByTelegramId(from.id, userData);
-    if (!updatedUser) throw new Error("Failed to update user");
-    return updatedUser;
-  } else {
-    const newUser = await UserRepository.create(userData);
-
-    // If there is a referrer, increment their referral info
-    if (referrerId) {
-      await UserRepository.addReferral(referrerId, from.id);
-    }
-
-    return newUser;
+  try {
+    const user = await apiService.createOrUpdateUser(from.id, userData);
+    return user;
+  } catch (error) {
+    console.error("Error registering/updating user:", error);
+    throw new Error("Failed to register/update user");
   }
 };
 
 export const referralCount = async (from: TelegramUser) => {
-  const userTelegramId = from.id;
-  const user = await UserRepository.findByTelegramId(userTelegramId);
-
-  if (!user) {
-    throw new Error("User not found");
+  try {
+    const user = await apiService.getUserByTelegramId(from.id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return {
+      referralCount: user.referral?.count || 0,
+    };
+  } catch (error) {
+    console.error("Error getting referral count:", error);
+    return { referralCount: 0 };
   }
-
-  return {
-    referralCount: user.referral?.count || 0,
-  };
 };
 
-export const getCurrentLevel = async(from: TelegramUser)=>{
-    const userTelegramId = from.id;
-    const user = await UserRepository.findByTelegramId(userTelegramId);
-  if (!user) {
-    throw new Error("User not found");
+export const getCurrentLevel = async(from: TelegramUser) => {
+  try {
+    const user = await apiService.getUserByTelegramId(from.id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return {
+      level: user.level,
+    };
+  } catch (error) {
+    console.error("Error getting current level:", error);
+    return { level: 'beginner' };
   }
-
-  return {
-    level: user.level,
-  };
-
-}
+};
 
 export const updateUserLevel = async (telegramId: number, newLevel: Level) => {
-  const updatedUser = await UserRepository.updateByTelegramId(telegramId, { level: newLevel });
-  if (!updatedUser) throw new Error("Failed to update user level");
-  return updatedUser;
-}
+  try {
+    const updatedUser = await apiService.createOrUpdateUser(telegramId, { level: newLevel });
+    return updatedUser;
+  } catch (error) {
+    console.error("Error updating user level:", error);
+    throw new Error("Failed to update user level");
+  }
+};
 
-export const broadcastRemainder = async (telegramId: number, message:string)=>{
-  const user = UserRepository.findByTelegramId(telegramId)
-  if(!user) throw new Error ("Failed to get user")
+export const broadcastRemainder = async (telegramId: number, message: string) => {
+  try {
+    const user = await apiService.getUserByTelegramId(telegramId);
+    if (!user) throw new Error("Failed to get user");
     
-}
+    // Add your broadcast logic here
+    console.log(`Broadcasting to user ${telegramId}: ${message}`);
+  } catch (error) {
+    console.error("Error in broadcast remainder:", error);
+    throw new Error("Failed to broadcast remainder");
+  }
+};

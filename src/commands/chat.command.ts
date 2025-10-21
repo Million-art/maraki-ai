@@ -1,7 +1,6 @@
 import { Context } from 'grammy';
 import { callGeminiGenerateContent } from '../api/gemini/callGeminiGenerateContents.js';
-import { UserRepository } from '../repository/user.repository.js';
-import { Conversation } from '../database/models/conversation.js';
+import { apiService } from '../services/api.service.js';
 import { chatPrompt } from '../prompt/conversation.prompt.js';
 
 
@@ -37,19 +36,17 @@ export async function handleChatConversation(ctx: Context) {
     // Get user level for personalized responses
     let userLevel = 'intermediate';
     try {
-      const user = await UserRepository.findByTelegramId(userId);
+      const user = await apiService.getUserByTelegramId(userId);
       userLevel = user?.level || 'intermediate';
-    } catch (dbError) {
-      console.warn('Database not available, using default user level:', (dbError as Error).message);
+    } catch (apiError) {
+      console.warn('API not available, using default user level:', (apiError as Error).message);
     }
 
     // Get conversation context (last 5 chat entries for memory)
     let context = '';
     try {
-      const user = await UserRepository.findByTelegramId(userId);
-      if (user) {
-        const conversation = await Conversation.findOne({ user: user._id });
-        if (conversation?.chatHistory && conversation.chatHistory.length > 0) {
+      const conversation = await apiService.getConversation(userId);
+      if (conversation?.chatHistory && conversation.chatHistory.length > 0) {
           // Get last 5 chat entries for context
           const recentChats = conversation.chatHistory.slice(-5);
           context = recentChats
@@ -72,9 +69,8 @@ export async function handleChatConversation(ctx: Context) {
             })
             .join(' | ');
         }
-      }
-    } catch (dbError) {
-      console.warn('Database not available, using empty context:', (dbError as Error).message);
+    } catch (apiError) {
+      console.warn('API not available, using empty context:', (apiError as Error).message);
     }
 
     // Generate chat response with context
@@ -99,25 +95,13 @@ Respond naturally and engagingly to continue the conversation. Include gentle gr
 
     // Save conversation context
     try {
-      const user = await UserRepository.findByTelegramId(userId);
-      if (user) {
-        // Save chat history entry
-        await Conversation.findOneAndUpdate(
-          { user: user._id },
-          {
-            $push: {
-              chatHistory: {
-                userMessage: userMessage,
-                aiResponse: cleanResponse,
-                createdAt: new Date(),
-              },
-            },
-          },
-          { upsert: true, new: true }
-        );
-      }
-    } catch (dbError) {
-      console.warn('Database not available, skipping context save:', (dbError as Error).message);
+      await apiService.addChatMessage(userId, {
+        userMessage: userMessage,
+        aiResponse: cleanResponse,
+        createdAt: new Date(),
+      });
+    } catch (apiError) {
+      console.warn('API not available, skipping context save:', (apiError as Error).message);
     }
 
   } catch (error) {
@@ -130,11 +114,9 @@ export async function startChatConversation(ctx: Context) {
   if (!ctx.from) return;
 
   try {
-    // Clear any existing conversation context for this mode
-    const user = await UserRepository.findByTelegramId(ctx.from.id);
-    if (user) {
-      await Conversation.deleteMany({ user: user._id });
-    }
+    // Note: Conversation clearing would need to be implemented in the API
+    // For now, we'll skip this functionality
+    console.log('Starting new chat conversation for user:', ctx.from.id);
   } catch (error) {
     console.warn('Could not clear conversation context:', error);
   }

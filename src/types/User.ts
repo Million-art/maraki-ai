@@ -1,24 +1,19 @@
-import { Document } from "mongoose";
-
-export enum Level {
-  Beginner = 'beginner',
-  Intermediate = 'intermediate',
-  Advanced = 'advanced',
-}
-
-export interface IUser extends Document {
-  telegramId: number;
-  username?: string;
-  firstName?: string;
-  lastName?: string;
+export interface User {
+  id: string;
+  level?: string;
+  first_name?: string;
+  last_name?: string;   
+  telegramId?: number;
   isPremium?: boolean;
+  isMarakiPremium?: boolean;
   isBot?: boolean;
-  level: Level;
-  referredBy?: number | null;
-  referral: {
+  referredBy?: number;
+  referral?: {
     count: number;
     usersTelegramId: number[];
   };
-  createdAt: Date;
-  updatedAt: Date;
+  subscriptionTier?: string;
+  subscriptionExpiresAt?: string;
+  telegramStarsUsed?: number;
+  telegramStarsBalance?: number;
 }

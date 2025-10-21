@@ -1,7 +1,7 @@
-import { BroadcastRepository } from '../repository/broadcast.repository.js';
 import { bot } from '../adapters/telegram.adapter.js';
 import { logger } from '../utils/logger.js';
 import { BroadcastMessage, BroadcastResult } from '../types/Broadcast.js';
+import { apiService } from './api.service.js';
 
 
 
@@ -13,8 +13,19 @@ export class BroadcastService {
    * Send broadcast message to all users
    */
   static async sendBroadcastToAll(message: BroadcastMessage): Promise<BroadcastResult> {
-    const telegramIds = await BroadcastRepository.getAllUserTelegramIds();
-    return this.sendBroadcastToUsers(telegramIds, message);
+    try {
+      const allUsers = await apiService.getAllUsers();
+      const telegramIds = allUsers.map(user => user.telegramId);
+      return this.sendBroadcastToUsers(telegramIds, message);
+    } catch (error) {
+      logger.error('Error getting all users for broadcast:', error);
+      return {
+        totalUsers: 0,
+        successful: 0,
+        failed: 0,
+        errors: ['Failed to get users from API']
+      };
+    }
   }
 
   /**
@@ -90,11 +101,17 @@ export class BroadcastService {
   static async getBroadcastStats(): Promise<{
     totalUsers: number;
   }> {
-    const totalUsers = await BroadcastRepository.getUserCount();
-
-    return {
-      totalUsers
-    };
+    try {
+      const stats = await apiService.getStudentStats();
+      return {
+        totalUsers: stats.totalStudents
+      };
+    } catch (error) {
+      logger.error('Error getting broadcast stats:', error);
+      return {
+        totalUsers: 0
+      };
+    }
   }
 
   private static delay(ms: number): Promise<void> {

@@ -1,8 +1,8 @@
 import { Context, InlineKeyboard } from "grammy";
 import { BroadcastService } from "../services/broadcast.service.js";
-import { BroadcastRepository } from "../repository/broadcast.repository.js";
-import { User } from '../database/models/user.js';
+import { apiService } from "../services/api.service.js";
 import { setSession, deleteSession } from '../utils/redis.js';
+import { User } from "../types/User.js";
 
 const ADMIN_IDS = process.env.ADMIN_IDS ? process.env.ADMIN_IDS.split(',').map(id => Number(id)) : [];
 
@@ -22,8 +22,8 @@ export async function showAdminDashboard(ctx: Context) {
 
   try {
     // Get statistics
-    const totalUsers = await BroadcastRepository.getUserCount();
     const broadcastStats = await BroadcastService.getBroadcastStats();
+    const totalUsers = broadcastStats.totalUsers;
 
     const dashboardText = `
 📊 Admin Dashboard
@@ -131,9 +131,10 @@ ${result.errors.length > 0 ? `❌ Errors: ${result.errors.slice(0, 3).join(', ')
 
 async function showDetailedStats(ctx: Context) {
   try {
-    const totalUsers = await BroadcastRepository.getUserCount();
+    const broadcastStats = await BroadcastService.getBroadcastStats();
+    const totalUsers = broadcastStats.totalUsers;
 
-    // Get user level breakdown using aggregation
+    // Get user level breakdown using API
     const levelStats = await getUserLevelStats();
 
     const statsText = `
@@ -167,30 +168,28 @@ async function showDetailedStats(ctx: Context) {
 
 
 async function getUserLevelStats(): Promise<{beginner: number, intermediate: number, advanced: number}> {
-  // Use MongoDB aggregation to get counts by level
-  const aggregationResult = await User.aggregate([
-    {
-      $group: {
-        _id: "$level",
-        count: { $sum: 1 }
+  try {
+    // Get all users from API and count by level
+    const allUsers: User[] = await apiService.getAllUsers();
+    
+    // Initialize counts
+    const levelCounts = {
+      beginner: 0,
+      intermediate: 0,
+      advanced: 0
+    };
+
+    // Count users by level
+    allUsers.forEach(user => {
+      const level = user.level?.toLowerCase();
+      if (level && level in levelCounts) {
+        levelCounts[level as keyof typeof levelCounts]++;
       }
-    }
-  ]);
+    });
 
-  // Initialize counts
-  const levelCounts = {
-    beginner: 0,
-    intermediate: 0,
-    advanced: 0
-  };
-
-  // Map aggregation results to levelCounts
-  aggregationResult.forEach((item: { _id: string; count: number }) => {
-    const levelKey = item._id.toLowerCase();
-    if (levelKey in levelCounts) {
-      levelCounts[levelKey as keyof typeof levelCounts] = item.count;
-    }
-  });
-
-  return levelCounts;
+    return levelCounts;
+  } catch (error) {
+    console.error('Error getting user level stats:', error);
+    return { beginner: 0, intermediate: 0, advanced: 0 };
+  }
 }

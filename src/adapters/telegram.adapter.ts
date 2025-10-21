@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { Bot } from 'grammy';
 import { startCommand } from '../commands/start.command.js';
 import { grammarCommand, handleGrammarCorrection } from '../commands/grammar.command.js';
@@ -10,12 +13,12 @@ import { helpCommand } from '../commands/help.command.js';
 import { translationCommand, handleTranslation, startTranslation } from '../commands/translation.command.js';
 import { adminCommand, handleAdminCallback, handleBroadcastMessage } from '../commands/admin.command.js';
 import { updateUserLevel } from '../services/user.service.js';
-import { Level } from '../types/User.js';
+// Level enum moved to backend API
 import { setSession, getSession } from '../utils/redis.js';
 
 const bot_token= process.env.TOKEN
 if (!bot_token) {
-    throw new Error('TELEGRAM_BOT_TOKEN is not defined in .env');
+    throw new Error('TOKEN is not defined in .env');
 }
 export const bot = new Bot(bot_token);
 
@@ -113,16 +116,16 @@ bot.on('callback_query:data', async (ctx) => {
 
   // Handle level selection
   if (['beginner', 'intermediate', 'advanced'].includes(data)) {
-    let newLevel: Level = Level.Beginner; // default
+    let newLevel: string = 'beginner'; // default
     switch (data) {
       case 'beginner':
-        newLevel = Level.Beginner;
+        newLevel = 'beginner';
         break;
       case 'intermediate':
-        newLevel = Level.Intermediate;
+        newLevel = 'intermediate';
         break;
       case 'advanced':
-        newLevel = Level.Advanced;
+        newLevel = 'advanced';
         break;
     }
     try {
