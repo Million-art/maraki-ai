@@ -18,8 +18,8 @@ export const lessonCommand = async(ctx: Context) => {
     const keyboard = new InlineKeyboard()
       .text("🎯 Recommended Topic", "lesson_part_0")
       .row()
-      .text("📚 Full Lesson", "lesson_full_app")
-      .row()
+      // .text("📚 Full Lesson", "lesson_full_app")
+      // .row()
       .text("❌ Close", "close");
 
     await ctx.reply(
