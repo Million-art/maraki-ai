@@ -126,16 +126,8 @@ bot.on('callback_query:data', async (ctx) => {
                 break;
             case 'lesson':
                 console.log('Handling lesson callback');
-                await setSession(ctx.from.id, { mode: 'lesson_menu', timestamp: Date.now(), userId: ctx.from.id });
-                await lessonCommand(ctx);
-                break;
-            case 'lesson_part_0':
-                console.log('Handling recommended topic callback');
                 await setSession(ctx.from.id, { mode: 'lesson', timestamp: Date.now(), userId: ctx.from.id });
-                {
-                    const { startLessonRecommendation } = await import('../commands/lesson.comand.js');
-                    await startLessonRecommendation(ctx);
-                }
+                await lessonCommand(ctx);
                 break;
             // case 'lesson_full_app':
             //   console.log('Handling full lesson mini app callback');
@@ -157,7 +149,7 @@ bot.on('callback_query:data', async (ctx) => {
                 break;
             case 'lesson_back_to_parts':
                 console.log('Handling back to lesson parts callback');
-                await setSession(ctx.from.id, { mode: 'lesson_menu', timestamp: Date.now(), userId: ctx.from.id });
+                await setSession(ctx.from.id, { mode: 'lesson', timestamp: Date.now(), userId: ctx.from.id });
                 await lessonCommand(ctx);
                 break;
             case 'lesson_followup_ask':

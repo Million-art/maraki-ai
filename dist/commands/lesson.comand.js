@@ -1,4 +1,3 @@
-import { InlineKeyboard } from "grammy";
 import { getSession, setSession } from "../utils/redis.js";
 import lessonPrompt from "../prompt/lesson.prompt.js";
 import { apiService } from "../services/api.service.js";
@@ -9,21 +8,14 @@ export const lessonCommand = async (ctx) => {
         return ctx.reply("⚠️ Could not get your Telegram ID.");
     }
     const session = await getSession(ctx.from.id);
-    await setSession(ctx.from.id, { mode: 'lesson_menu', timestamp: Date.now() });
+    await setSession(ctx.from.id, { mode: 'lesson', timestamp: Date.now() });
     try {
-        // Create keyboard with both lesson options
-        const keyboard = new InlineKeyboard()
-            .text("🎯 Recommended Topic", "lesson_part_0")
-            .row()
-            .text("📚 Full Lesson", "lesson_full_app")
-            .row()
-            .text("❌ Close", "close");
-        await ctx.reply(`📚 **English Learning Lessons**\n\n` +
-            `Choose your learning option:\n\n`, { reply_markup: keyboard, parse_mode: 'Markdown' });
+        // Directly start lesson recommendation instead of showing menu
+        await startLessonRecommendation(ctx);
     }
     catch (error) {
         console.error('Lesson command error:', error);
-        await ctx.reply("❌ An error occurred while loading the lesson menu. Please try again later.");
+        await ctx.reply("❌ An error occurred while starting the lesson. Please try again later.");
     }
 };
 export const startLessonRecommendation = async (ctx) => {
