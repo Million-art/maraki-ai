@@ -29,6 +29,7 @@ export async function startCommand(ctx: Context) {
     // Send welcome message
     const keyboard = new InlineKeyboard()
       .text("🧹 Correct sentence", "grammar")
+      .text("🧠 Quiz", "quiz")
       .row()
       .text("📚 Lesson", "lesson")
       .row()
