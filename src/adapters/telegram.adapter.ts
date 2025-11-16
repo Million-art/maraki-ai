@@ -166,6 +166,11 @@ bot.on('callback_query:data', async (ctx) => {
         await setSession(ctx.from.id, { mode: 'lesson_followup', timestamp: Date.now(), userId: ctx.from.id });
         await ctx.reply("❓ Ask me any question about the lesson above! I'll help clarify anything you're confused about.");
         break;
+      case 'quiz':
+        console.log('Handling quiz callback');
+        await setSession(ctx.from.id, { mode: 'quiz', timestamp: Date.now(), userId: ctx.from.id });
+        await quizCommand(ctx);
+        break;
       case 'close':
         console.log('Handling close callback');
         return ctx.deleteMessage();
