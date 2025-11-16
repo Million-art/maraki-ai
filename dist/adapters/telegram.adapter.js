@@ -137,10 +137,10 @@ bot.on('callback_query:data', async (ctx) => {
                     await startLessonRecommendation(ctx);
                 }
                 break;
-            case 'lesson_full_app':
-                console.log('Handling full lesson mini app callback');
-                await ctx.reply("📚 You can access the full lesson mini app here: [Mini App Link](https://mini-app-seven-gray.vercel.app/)", { parse_mode: 'Markdown' });
-                break;
+            // case 'lesson_full_app':
+            //   console.log('Handling full lesson mini app callback');
+            //   await ctx.reply("📚 You can access the full lesson mini app here: [Mini App Link](https://mini-app-seven-gray.vercel.app/)", { parse_mode: 'Markdown' });
+            //   break;
             case 'chat_conversation':
                 console.log('Handling chat_conversation callback');
                 await setSession(ctx.from.id, { mode: data, timestamp: Date.now(), userId: ctx.from.id });

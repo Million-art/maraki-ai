@@ -11,7 +11,21 @@ export const registerOrUpdate = async (from, referrerId) => {
     };
     try {
         const user = await apiService.createOrUpdateUser(from.id, userData);
-        return user;
+        // Convert IUser to User interface
+        return {
+            id: user._id.toString(),
+            telegramId: user.telegramId,
+            first_name: user.firstName,
+            last_name: user.lastName,
+            level: user.level,
+            isPremium: user.isPremium,
+            isMarakiPremium: user.isMarakiPremium,
+            isBot: user.isBot,
+            referredBy: user.referredBy,
+            referral: user.referral,
+            subscriptionTier: user.subscriptionTier,
+            subscriptionExpiresAt: user.subscriptionExpiresAt?.toISOString(),
+        };
     }
     catch (error) {
         console.error("Error registering/updating user:", error);

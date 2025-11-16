@@ -1,6 +1,7 @@
 import { User as TelegramUser } from "grammy/types";
 import { User } from "../types/User.js";
 import { apiService } from "./api.service.js";
+import { User as UserModel } from "../models/User.js";
 
 export const registerOrUpdate = async (
   from: TelegramUser,
@@ -18,7 +19,21 @@ export const registerOrUpdate = async (
 
   try {
     const user = await apiService.createOrUpdateUser(from.id, userData);
-    return user;
+    // Convert IUser to User interface
+    return {
+      id: (user as any)._id.toString(),
+      telegramId: user.telegramId,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      level: user.level,
+      isPremium: user.isPremium,
+      isMarakiPremium: user.isMarakiPremium,
+      isBot: user.isBot,
+      referredBy: user.referredBy,
+      referral: user.referral,
+      subscriptionTier: user.subscriptionTier,
+      subscriptionExpiresAt: user.subscriptionExpiresAt?.toISOString(),
+    };
   } catch (error) {
     console.error("Error registering/updating user:", error);
     throw new Error("Failed to register/update user");
