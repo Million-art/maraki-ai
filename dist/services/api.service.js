@@ -350,5 +350,53 @@ export class ApiService {
             return null;
         }
     }
+    // Quiz Management
+    async saveQuizResult(telegramId, quizData) {
+        try {
+            const user = await User.findOne({ telegramId });
+            if (!user) {
+                throw new Error('User not found');
+            }
+            // Update user quiz statistics
+            user.totalQuizzesCompleted += 1;
+            await user.save();
+            // Save quiz attempt details
+            const quizAttempt = {
+                quizId: 'general_quiz_' + Date.now(),
+                userId: telegramId.toString(),
+                status: 'completed',
+                completedAt: new Date(),
+                totalQuestions: quizData.totalQuestions,
+                correctAnswers: quizData.correctAnswers,
+                scorePercentage: quizData.score,
+                totalPoints: quizData.correctAnswers,
+                earnedPoints: quizData.correctAnswers,
+                isPassed: quizData.score >= 60,
+                questionAttempts: quizData.questions.map((q, index) => ({
+                    questionId: `q_${index}`,
+                    selectedOptionId: q.userAnswer?.toString(),
+                    isCorrect: q.isCorrect,
+                    pointsEarned: q.isCorrect ? 1 : 0,
+                    maxPoints: 1,
+                    answeredAt: new Date(),
+                }))
+            };
+            // For now, we'll store this in the user's conversation or create a simple quiz collection
+            // Since we don't have a dedicated QuizAttempt model, we'll add it to conversation
+            const conversation = await this.getConversation(telegramId);
+            if (conversation) {
+                if (!conversation.quizAttempts) {
+                    conversation.quizAttempts = [];
+                }
+                conversation.quizAttempts.push(quizAttempt);
+                await conversation.save();
+            }
+            return { success: true };
+        }
+        catch (error) {
+            console.error('Error saving quiz result:', error);
+            throw error;
+        }
+    }
 }
 export const apiService = new ApiService();
