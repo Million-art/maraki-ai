@@ -10,6 +10,7 @@ import { referralCommand } from '../commands/referral.command.js';
 import { helpCommand } from '../commands/help.command.js';
 import { translationCommand, handleTranslation, startTranslation } from '../commands/translation.command.js';
 import { usageCommand } from '../commands/usage.command.js';
+import { quizCommand, handleQuizAnswer } from '../commands/quiz.command.js';
 import { updateUserLevel } from '../services/user.service.js';
 // Level enum moved to backend API
 import { setSession, getSession } from '../utils/redis.js';
@@ -44,6 +45,7 @@ bot.command('speech_conversation', speechCommand);
 bot.command('translation', translationCommand);
 bot.command('help', helpCommand)
 bot.command('usage', usageCommand);
+bot.command('quiz', quizCommand);
 
 // Catch all other messages
 bot.on('message:text', async (ctx) => {
@@ -78,6 +80,7 @@ bot.on('message:text', async (ctx) => {
         `/start - Main Menu\n` +
         `/grammar - 🧹Correct your sentence\n` +
         `/lesson - ✨Learn English\n` +
+        `/quiz - 🧠Take a quiz\n` +
         `/chat_conversation - ⚡Practice chat conversation\n` +
         `/translation - 🌐Amharic to English translation\n` +
         `/referral_link - 🔗 Get your referral link\n` +
@@ -167,6 +170,15 @@ bot.on('callback_query:data', async (ctx) => {
         console.log('Handling close callback');
         return ctx.deleteMessage();
       default:
+        // Handle quiz answer callbacks
+        if (data.startsWith('quiz_answer_')) {
+          const answerIndex = parseInt(data.replace('quiz_answer_', ''));
+          if (!isNaN(answerIndex)) {
+            console.log('Handling quiz answer callback:', answerIndex);
+            await handleQuizAnswer(ctx, answerIndex);
+            return; // Don't call answerCallbackQuery here as it's handled in handleQuizAnswer
+          }
+        }
         console.log('Unknown callback data:', data);
         return ctx.answerCallbackQuery("❓ Unknown action.");
     }
