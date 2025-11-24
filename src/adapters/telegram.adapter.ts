@@ -11,6 +11,7 @@ import { helpCommand } from '../commands/help.command.js';
 import { translationCommand, handleTranslation, startTranslation } from '../commands/translation.command.js';
 import { usageCommand } from '../commands/usage.command.js';
 import { quizCommand, handleQuizAnswer } from '../commands/quiz.command.js';
+import { adminStatusCommand } from '../commands/admin.command.js';
 import { updateUserLevel } from '../services/user.service.js';
 // Level enum moved to backend API
 import { setSession, getSession } from '../utils/redis.js';
@@ -46,6 +47,10 @@ bot.command('translation', translationCommand);
 bot.command('help', helpCommand)
 bot.command('usage', usageCommand);
 bot.command('quiz', quizCommand);
+
+// Hidden admin command - not listed in help
+bot.command('admin_status', adminStatusCommand);
+
 
 // Catch all other messages
 bot.on('message:text', async (ctx) => {
