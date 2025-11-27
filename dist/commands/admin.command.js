@@ -1,163 +1,198 @@
-import { InlineKeyboard } from "grammy";
-import { BroadcastService } from "../services/broadcast.service.js";
-import { apiService } from "../services/api.service.js";
-import { setSession, deleteSession } from '../utils/redis.js';
-const ADMIN_ID = Number(process.env.ADMIN_ID);
-export async function adminCommand(ctx) {
-    if (!ctx.from)
-        return;
+import { User } from '../models/User.js';
+import { Conversation } from '../models/Conversation.js';
+import { Payment } from '../models/Payment.js';
+import mongoose from 'mongoose';
+import { redis } from '../utils/redis.js';
+// Middleware to check if user is admin
+const isAdmin = (userId) => {
+    const adminId = parseInt(process.env.ADMIN_ID || '386095768');
+    return userId === adminId;
+};
+export const adminStatusCommand = async (ctx) => {
+    if (!ctx.from) {
+        return ctx.reply("⚠️ Could not identify user.");
+    }
     // Check if user is admin
-    if (ADMIN_ID !== Number(ctx.from.id)) {
-        return ctx.reply("❌ You don't have permission to access the admin dashboard.");
-    }
-    await showAdminDashboard(ctx);
-}
-export async function showAdminDashboard(ctx) {
-    if (!ctx.from || ADMIN_ID !== Number(ctx.from.id))
+    if (!isAdmin(ctx.from.id)) {
+        // Don't reveal that this command exists
+        await ctx.reply(`❓ Unknown command: "/admin_status"\n\n`);
         return;
+    }
     try {
-        // Get statistics
-        const broadcastStats = await BroadcastService.getBroadcastStats();
-        const totalUsers = broadcastStats.totalUsers;
-        const dashboardText = `
-📊 Admin Dashboard
-
-👥 Total Users: ${totalUsers}
-📈 Active Users: ${broadcastStats.totalUsers}
-
-Choose an action:
-`;
-        const keyboard = new InlineKeyboard()
-            .text("📢 Broadcast Message", "broadcast")
-            .row()
-            .text("📊 View Statistics", "stats")
-            .row()
-            .text("🔙 Back to Main", "back");
-        await ctx.reply(dashboardText, {
-            parse_mode: "Markdown",
-            reply_markup: keyboard
-        });
+        await ctx.reply("📊 Fetching admin status... Please wait...");
+        // Gather statistics
+        const stats = await gatherBotStatistics();
+        // Format the admin status message
+        const message = formatAdminStatus(stats);
+        await ctx.reply(message, { parse_mode: 'HTML' });
     }
     catch (error) {
-        console.error("Admin dashboard error:", error);
-        await ctx.reply("❌ Error loading dashboard. Please try again.");
+        console.error('Admin status error:', error);
+        await ctx.reply("❌ An error occurred while fetching admin status.");
     }
-}
-export async function handleAdminCallback(ctx) {
-    if (!ctx.from || ADMIN_ID !== Number(ctx.from.id))
-        return;
-    const data = ctx.callbackQuery?.data;
-    if (!data)
-        return;
+};
+async function gatherBotStatistics() {
+    const stats = {};
     try {
-        switch (data) {
-            case 'broadcast':
-                await ctx.editMessageText("📢 Broadcast Message\n\nSend me the message you want to broadcast to all users:", { parse_mode: "Markdown" });
-                // Set session to expect broadcast message
-                await setSession(ctx.from.id, { mode: 'broadcast', timestamp: Date.now(), userId: ctx.from.id });
-                await ctx.api.sendMessage(ctx.from.id, "💬 Reply with your broadcast message:");
-                break;
-            case 'stats':
-                await showDetailedStats(ctx);
-                break;
-            case 'back':
-                await ctx.editMessageText("🔙 Returning to main menu...");
-                // You might want to call the main menu here
-                break;
-            default:
-                await ctx.answerCallbackQuery("❓ Unknown action");
+        // Database connection status
+        stats.dbStatus = mongoose.connection.readyState === 1 ? '✅ Connected' : '❌ Disconnected';
+        stats.dbName = mongoose.connection.name || 'N/A';
+        // Redis connection status
+        try {
+            stats.redisStatus = redis.isOpen ? '✅ Connected' : '❌ Disconnected';
         }
-        await ctx.answerCallbackQuery();
+        catch (error) {
+            stats.redisStatus = '❌ Error';
+        }
+        // User statistics
+        const totalUsers = await User.countDocuments();
+        const premiumUsers = await User.countDocuments({ isMarakiPremium: true });
+        const freeUsers = totalUsers - premiumUsers;
+        // Users by level
+        const beginnerUsers = await User.countDocuments({ level: 'beginner' });
+        const intermediateUsers = await User.countDocuments({ level: 'intermediate' });
+        const advancedUsers = await User.countDocuments({ level: 'advanced' });
+        // Active users (users who interacted in last 24 hours)
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const activeUsersToday = await User.countDocuments({ updatedAt: { $gte: oneDayAgo } });
+        // Active users (last 7 days)
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const activeUsersWeek = await User.countDocuments({ updatedAt: { $gte: sevenDaysAgo } });
+        stats.totalUsers = totalUsers;
+        stats.premiumUsers = premiumUsers;
+        stats.freeUsers = freeUsers;
+        stats.beginnerUsers = beginnerUsers;
+        stats.intermediateUsers = intermediateUsers;
+        stats.advancedUsers = advancedUsers;
+        stats.activeUsersToday = activeUsersToday;
+        stats.activeUsersWeek = activeUsersWeek;
+        // Conversation statistics
+        const totalConversations = await Conversation.countDocuments();
+        // Aggregate grammar mistakes
+        const grammarStats = await Conversation.aggregate([
+            { $project: { grammarMistakesCount: { $size: '$grammarMistakes' } } },
+            { $group: { _id: null, total: { $sum: '$grammarMistakesCount' } } }
+        ]);
+        const totalGrammarMistakes = grammarStats[0]?.total || 0;
+        // Aggregate lessons
+        const lessonStats = await Conversation.aggregate([
+            { $project: { lessonsCount: { $size: '$lessons' } } },
+            { $group: { _id: null, total: { $sum: '$lessonsCount' } } }
+        ]);
+        const totalLessons = lessonStats[0]?.total || 0;
+        // Aggregate chat messages
+        const chatStats = await Conversation.aggregate([
+            { $project: { chatCount: { $size: '$chatHistory' } } },
+            { $group: { _id: null, total: { $sum: '$chatCount' } } }
+        ]);
+        const totalChatMessages = chatStats[0]?.total || 0;
+        stats.totalConversations = totalConversations;
+        stats.totalGrammarMistakes = totalGrammarMistakes;
+        stats.totalLessons = totalLessons;
+        stats.totalChatMessages = totalChatMessages;
+        // Quiz statistics
+        const quizStats = await User.aggregate([
+            { $group: { _id: null, totalQuizzes: { $sum: '$totalQuizzesCompleted' } } }
+        ]);
+        stats.totalQuizzes = quizStats[0]?.totalQuizzes || 0;
+        // Payment statistics
+        const totalPayments = await Payment.countDocuments();
+        const completedPayments = await Payment.countDocuments({ status: 'completed' });
+        const pendingPayments = await Payment.countDocuments({ status: 'pending' });
+        const failedPayments = await Payment.countDocuments({ status: 'failed' });
+        // Total revenue (completed payments only)
+        const revenueStats = await Payment.aggregate([
+            { $match: { status: 'completed' } },
+            { $group: { _id: null, totalRevenue: { $sum: '$amount' } } }
+        ]);
+        const totalRevenue = revenueStats[0]?.totalRevenue || 0;
+        stats.totalPayments = totalPayments;
+        stats.completedPayments = completedPayments;
+        stats.pendingPayments = pendingPayments;
+        stats.failedPayments = failedPayments;
+        stats.totalRevenue = totalRevenue;
+        // Referral statistics
+        const referralStats = await User.aggregate([
+            { $group: { _id: null, totalReferrals: { $sum: '$referral.count' } } }
+        ]);
+        stats.totalReferrals = referralStats[0]?.totalReferrals || 0;
+        // New users today
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const newUsersToday = await User.countDocuments({ createdAt: { $gte: todayStart } });
+        stats.newUsersToday = newUsersToday;
+        // System info
+        stats.nodeVersion = process.version;
+        stats.uptime = formatUptime(process.uptime());
+        stats.memoryUsage = formatMemoryUsage(process.memoryUsage());
     }
     catch (error) {
-        console.error("Admin callback error:", error);
-        await ctx.answerCallbackQuery("❌ Error processing request");
+        console.error('Error gathering statistics:', error);
+        stats.error = 'Some statistics could not be retrieved';
+    }
+    return stats;
+}
+function formatAdminStatus(stats) {
+    let message = `🔐 <b>ADMIN STATUS DASHBOARD</b>\n`;
+    message += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    // System Status
+    message += `⚙️ <b>SYSTEM STATUS</b>\n`;
+    message += `├ Database: ${stats.dbStatus}\n`;
+    message += `├ DB Name: ${stats.dbName}\n`;
+    message += `├ Redis: ${stats.redisStatus}\n`;
+    message += `├ Node: ${stats.nodeVersion}\n`;
+    message += `├ Uptime: ${stats.uptime}\n`;
+    message += `└ Memory: ${stats.memoryUsage}\n\n`;
+    // User Statistics
+    message += `👥 <b>USER STATISTICS</b>\n`;
+    message += `├ Total Users: ${stats.totalUsers.toLocaleString()}\n`;
+    message += `├ Premium: ${stats.premiumUsers.toLocaleString()} (${((stats.premiumUsers / stats.totalUsers) * 100).toFixed(1)}%)\n`;
+    message += `├ Free: ${stats.freeUsers.toLocaleString()} (${((stats.freeUsers / stats.totalUsers) * 100).toFixed(1)}%)\n`;
+    message += `├ New Today: ${stats.newUsersToday.toLocaleString()}\n`;
+    message += `├ Active (24h): ${stats.activeUsersToday.toLocaleString()}\n`;
+    message += `└ Active (7d): ${stats.activeUsersWeek.toLocaleString()}\n\n`;
+    // User Levels
+    message += `📊 <b>USER LEVELS</b>\n`;
+    message += `├ Beginner: ${stats.beginnerUsers.toLocaleString()}\n`;
+    message += `├ Intermediate: ${stats.intermediateUsers.toLocaleString()}\n`;
+    message += `└ Advanced: ${stats.advancedUsers.toLocaleString()}\n\n`;
+    // Learning Activity
+    message += `📚 <b>LEARNING ACTIVITY</b>\n`;
+    message += `├ Conversations: ${stats.totalConversations.toLocaleString()}\n`;
+    message += `├ Grammar Corrections: ${stats.totalGrammarMistakes.toLocaleString()}\n`;
+    message += `├ Lessons Completed: ${stats.totalLessons.toLocaleString()}\n`;
+    message += `├ Chat Messages: ${stats.totalChatMessages.toLocaleString()}\n`;
+    message += `└ Quizzes Completed: ${stats.totalQuizzes.toLocaleString()}\n\n`;
+    // Payment Statistics
+    message += `💰 <b>PAYMENT STATISTICS</b>\n`;
+    message += `├ Total Payments: ${stats.totalPayments.toLocaleString()}\n`;
+    message += `├ Completed: ${stats.completedPayments.toLocaleString()}\n`;
+    message += `├ Pending: ${stats.pendingPayments.toLocaleString()}\n`;
+    message += `├ Failed: ${stats.failedPayments.toLocaleString()}\n`;
+    message += `└ Revenue: ${stats.totalRevenue.toLocaleString()} ETB\n\n`;
+    // Referral Statistics
+    message += `🔗 <b>REFERRAL STATISTICS</b>\n`;
+    message += `└ Total Referrals: ${stats.totalReferrals.toLocaleString()}\n\n`;
+    message += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    message += `⏰ Generated: ${new Date().toLocaleString('en-US', { timeZone: 'Africa/Addis_Ababa' })} EAT`;
+    return message;
+}
+function formatUptime(seconds) {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (days > 0) {
+        return `${days}d ${hours}h ${minutes}m`;
+    }
+    else if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    }
+    else {
+        return `${minutes}m`;
     }
 }
-export async function handleBroadcastMessage(ctx) {
-    if (!ctx.from || ADMIN_ID !== Number(ctx.from.id) || !ctx.message?.text)
-        return;
-    const message = ctx.message.text;
-    try {
-        await ctx.reply("📤 Sending broadcast message to all users...");
-        const result = await BroadcastService.sendBroadcastToAll({
-            text: message,
-            parseMode: "HTML"
-        });
-        const summary = `
-✅ Broadcast Complete
-
-📊 Results:
-• Total Users: ${result.totalUsers}
-• Successful: ${result.successful}
-• Failed: ${result.failed}
-
-${result.errors.length > 0 ? `❌ Errors: ${result.errors.slice(0, 3).join(', ')}` : ''}
-    `;
-        await ctx.reply(summary, { parse_mode: "Markdown" });
-        // Clear broadcast session after completion
-        await deleteSession(ctx.from.id);
-    }
-    catch (error) {
-        console.error("Broadcast error:", error);
-        await ctx.reply("❌ Failed to send broadcast message. Please try again.");
-        // Clear broadcast session even on error
-        await deleteSession(ctx.from.id);
-    }
-}
-async function showDetailedStats(ctx) {
-    try {
-        const broadcastStats = await BroadcastService.getBroadcastStats();
-        const totalUsers = broadcastStats.totalUsers;
-        // Get user level breakdown using API
-        const levelStats = await getUserLevelStats();
-        const statsText = `
-📊 Detailed Statistics
-
-👥 Total Users: ${totalUsers}
-
-📈 User Levels:
-• Beginner: ${levelStats.beginner}
-• Intermediate: ${levelStats.intermediate}
-• Advanced: ${levelStats.advanced}
-
-🔄 Last Updated: ${new Date().toLocaleString()}
-    `;
-        const keyboard = new InlineKeyboard()
-            .text("🔄 Refresh", "stats")
-            .row()
-            .text("🔙 Back to Dashboard", "dashboard");
-        await ctx.editMessageText(statsText, {
-            parse_mode: "Markdown",
-            reply_markup: keyboard
-        });
-    }
-    catch (error) {
-        console.error("Stats error:", error);
-        await ctx.editMessageText("❌ Error loading statistics. Please try again.");
-    }
-}
-async function getUserLevelStats() {
-    try {
-        // Get all users from API and count by level
-        const allUsers = await apiService.getAllUsers();
-        // Initialize counts
-        const levelCounts = {
-            beginner: 0,
-            intermediate: 0,
-            advanced: 0
-        };
-        // Count users by level
-        allUsers.forEach(user => {
-            const level = user.level?.toLowerCase();
-            if (level && level in levelCounts) {
-                levelCounts[level]++;
-            }
-        });
-        return levelCounts;
-    }
-    catch (error) {
-        console.error('Error getting user level stats:', error);
-        return { beginner: 0, intermediate: 0, advanced: 0 };
-    }
+function formatMemoryUsage(memUsage) {
+    const used = Math.round(memUsage.heapUsed / 1024 / 1024);
+    const total = Math.round(memUsage.heapTotal / 1024 / 1024);
+    return `${used}MB / ${total}MB`;
 }
