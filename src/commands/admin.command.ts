@@ -89,21 +89,21 @@ async function gatherBotStatistics() {
     
     // Aggregate grammar mistakes
     const grammarStats = await Conversation.aggregate([
-      { $project: { grammarMistakesCount: { $size: '$grammarMistakes' } } },
+      { $project: { grammarMistakesCount: { $size: { $ifNull: ['$grammarMistakes', []] } } } },
       { $group: { _id: null, total: { $sum: '$grammarMistakesCount' } } }
     ]);
     const totalGrammarMistakes = grammarStats[0]?.total || 0;
 
     // Aggregate lessons
     const lessonStats = await Conversation.aggregate([
-      { $project: { lessonsCount: { $size: '$lessons' } } },
+      { $project: { lessonsCount: { $size: { $ifNull: ['$lessons', []] } } } },
       { $group: { _id: null, total: { $sum: '$lessonsCount' } } }
     ]);
     const totalLessons = lessonStats[0]?.total || 0;
 
     // Aggregate chat messages
     const chatStats = await Conversation.aggregate([
-      { $project: { chatCount: { $size: '$chatHistory' } } },
+      { $project: { chatCount: { $size: { $ifNull: ['$chatHistory', []] } } } },
       { $group: { _id: null, total: { $sum: '$chatCount' } } }
     ]);
     const totalChatMessages = chatStats[0]?.total || 0;
