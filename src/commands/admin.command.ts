@@ -5,15 +5,10 @@ import { Payment } from '../models/Payment.js';
 import mongoose from 'mongoose';
 import { redis } from '../utils/redis.js';
 
-// Admin user IDs - Add your Telegram ID here
-const ADMIN_IDS = [
-  // Add admin Telegram IDs here, e.g.: 123456789, 987654321
-  parseInt(process.env.ADMIN_ID || '0'),
-];
-
 // Middleware to check if user is admin
 const isAdmin = (userId: number): boolean => {
-  return ADMIN_IDS.includes(userId);
+  const adminId = parseInt(process.env.ADMIN_ID || '386095768');
+  return userId === adminId;
 };
 
 export const adminStatusCommand = async (ctx: Context) => {
