@@ -80,7 +80,7 @@ const initialize = async () => {
 
 // Health check endpoint
 app.get('/', (req, res: Response) => {
-    res.send('Maraki Ai is running')
+    res.send('Practice English is running')
 })
 
 // Webhook endpoint for Telegram

@@ -10,7 +10,7 @@ How to use:
 
 2. Share your referral link:
    - Use /referral_link to get a personalized link
-   - Invite friends to Maraki AI using your link
+   - Invite friends to Practice English using your link
    - Each friend who joins via your link counts toward your referrals
    - Track your referral rewards and see your impact on the community
 
