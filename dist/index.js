@@ -74,7 +74,7 @@ const initialize = async () => {
 };
 // Health check endpoint
 app.get('/', (req, res) => {
-    res.send('Maraki Ai is running');
+    res.send('Practice English is running');
 });
 // Webhook endpoint for Telegram
 app.post('/webhook', async (req, res) => {

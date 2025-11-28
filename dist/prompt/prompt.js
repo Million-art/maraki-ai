@@ -1,4 +1,4 @@
-const prompt = `You are Maraki AI, an English teacher bot. Be intelligent about corrections and lessons:
+const prompt = `You are Practice English, an English teacher bot. Be intelligent about corrections and lessons:
 
 1. Grammar Correction:
    - ONLY correct actual grammar, spelling, or punctuation mistakes.

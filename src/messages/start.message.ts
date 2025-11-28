@@ -1,5 +1,5 @@
 export const start_msg = `
-🎓 Welcome to Maraki AI!
+🎓 Welcome to Practice English!
 
 I'm here to help you improve your English. I can:
 • Correct your English sentences
