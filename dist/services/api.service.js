@@ -22,11 +22,30 @@ export class ApiService {
     }
     async createOrUpdateUser(telegramId, userData) {
         try {
-            const { data } = await axios.get(`${this.backendUrl}/api/students/${telegramId}`, { timeout: 5000 });
+            const { data } = await axios.post(`${this.backendUrl}/api/student/register`, {
+                telegramId,
+                ...userData,
+            }, { timeout: 5000 });
             return data;
         }
         catch (error) {
             return { telegramId, ...userData };
+        }
+    }
+    async getReferralStats(telegramId) {
+        try {
+            const { data } = await axios.get(`${this.backendUrl}/api/student/referral-stats/${telegramId}`, { timeout: 5000 });
+            return data;
+        }
+        catch (error) {
+            return {
+                totalReferred: 0,
+                target: 10,
+                remaining: 10,
+                progressPercentage: 0,
+                rewardUnlocked: false,
+                referralLink: `https://t.me/maraki_english_bot?start=${telegramId}`,
+            };
         }
     }
     // Premium & Usage Management
