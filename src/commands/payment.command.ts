@@ -6,11 +6,11 @@ export async function handlePaymentCommand(ctx: Context) {
 
   const paymentText =
     `💳 *Maraki VIP Subscription & Bank Transfer*\n\n` +
-    `Unlock unlimited AI chat, speech practice, and full bank aptitude & Grade 12 exam modules!\n\n` +
+    `Unlock unlimited Maraki AI chat, real-time tutoring, full bank aptitude & Grade 12 exam modules!\n\n` +
     `📌 *Pricing Tiers:*\n` +
-    `• ⚡ *Daily Pass*: 10 ETB / day\n` +
-    `• 🌟 *Monthly VIP*: 150 ETB / month (Best Value)\n` +
-    `• 🚀 *Yearly Pass*: 1,200 ETB / year\n\n` +
+    `• ⚡ *Weekly Pass*: 99 ETB / week\n` +
+    `• 🌟 *Monthly VIP*: 299 ETB / month (Best Value 🔥)\n` +
+    `• 🚀 *Yearly Pass*: 2,499 ETB / year (Save 30%)\n\n` +
     `🏦 *Direct Bank Transfer Accounts:*\n` +
     `• *Commercial Bank of Ethiopia (CBE)*:\n` +
     `  ` + '`1000123456789`' + ` (Account: Maraki English)\n` +
@@ -19,7 +19,7 @@ export async function handlePaymentCommand(ctx: Context) {
     `• *Telebirr*:\n` +
     `  ` + '`0911223344`' + `\n\n` +
     `✅ *How to Activate Instantly:*\n` +
-    `1. Transfer the exact amount for your chosen tier.\n` +
+    `1. Transfer the exact amount for your chosen tier (99 ETB, 299 ETB, or 2,499 ETB).\n` +
     `2. Copy the receipt link from CBE Mobile/Dashen SuperApp (e.g., \`https://mbreciept.cbe.com.et/v2-XXXXXX\`) or reference ID.\n` +
     `3. Simply paste the link or reference directly in this chat!\n\n` +
     `⚡ Our automated system will verify your receipt with the bank and upgrade your account in seconds!`;
@@ -42,9 +42,9 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
       await ctx.reply(
         `🎉 *PAYMENT VERIFIED SUCCESSFULLY!*\n\n` +
         `Bank: *${result.result?.bankName || 'CBE'}*\n` +
-        `Amount: *${result.result?.amount || 150} ETB*\n` +
+        `Amount: *${result.result?.amount || 299} ETB*\n` +
         `Reference: \`${result.result?.referenceNumber || referenceText}\`\n\n` +
-        `🌟 Your *Maraki Premium* status is now ACTIVE! You have unlimited access to AI practice and exam modules.`,
+        `🌟 Your *Maraki Premium* status is now ACTIVE! You have unlimited access to Maraki AI practice and exam modules.`,
         { parse_mode: 'Markdown' }
       );
     } else {
