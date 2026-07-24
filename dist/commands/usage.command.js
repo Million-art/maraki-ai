@@ -1,3 +1,4 @@
+import { InlineKeyboard } from 'grammy';
 import { apiService } from '../services/api.service.js';
 export async function usageCommand(ctx) {
     if (!ctx.from)
@@ -8,31 +9,40 @@ export async function usageCommand(ctx) {
             await ctx.reply("❌ Could not fetch your usage status. Please try again later.");
             return;
         }
-        const { tier, daily, monthly, lastReset } = usageStatus;
-        // Format the usage status message
-        let message = `📊 **Your Token Usage Status**\n\n`;
-        message += `🎯 **Plan:** ${tier.toUpperCase()}\n`;
-        message += `🔄 **Last Reset:** ${new Date(lastReset).toLocaleDateString()}\n\n`;
-        // Daily usage
-        message += `📅 **Daily Tokens**\n`;
-        const dailyProgressBar = createProgressBar(daily.used, daily.limit);
-        const dailyStatusIcon = daily.remaining > 0 ? '✅' : '❌';
-        message += `${dailyProgressBar} ${dailyStatusIcon}\n`;
-        message += `${daily.used.toLocaleString()}/${daily.limit.toLocaleString()} tokens (${daily.remaining.toLocaleString()} left)\n\n`;
-        // Monthly usage
-        message += `📆 **Monthly Tokens**\n`;
-        const monthlyProgressBar = createProgressBar(monthly.used, monthly.limit);
-        const monthlyStatusIcon = monthly.remaining > 0 ? '✅' : '❌';
-        message += `${monthlyProgressBar} ${monthlyStatusIcon}\n`;
-        message += `${monthly.used.toLocaleString()}/${monthly.limit.toLocaleString()} tokens (${monthly.remaining.toLocaleString()} left)\n\n`;
-        // Add upgrade suggestion if on free tier
-        if (tier === 'free') {
-            message += `💡 **Want more tokens?**\n`;
-            message += `• Premium: 10x more daily tokens (10,000/day)\n`;
-            message += `• Pro: 50x more daily tokens (50,000/day)\n`;
-            message += `Use /premium to see pricing.`;
+        const isPremium = usageStatus.isPremium || false;
+        const tier = isPremium ? 'MARAKI PREMIUM' : 'FREE TIER';
+        const weeklyQuizzesUsed = usageStatus.weeklyQuizzesUsed || 0;
+        const weeklyQuizLimit = usageStatus.weeklyQuizLimit || 3;
+        const remainingQuizzes = usageStatus.remaining !== undefined && usageStatus.remaining >= 0 ? usageStatus.remaining : (isPremium ? 'Unlimited' : Math.max(0, weeklyQuizLimit - weeklyQuizzesUsed));
+        const weeklyLessonsUsed = usageStatus.weeklyLessonsUsed || 0;
+        const weeklyLessonLimit = usageStatus.weeklyLessonLimit || 5;
+        const remainingLessons = usageStatus.remainingLessons !== undefined && usageStatus.remainingLessons >= 0 ? usageStatus.remainingLessons : (isPremium ? 'Unlimited' : Math.max(0, weeklyLessonLimit - weeklyLessonsUsed));
+        let message = `📊 <b>Your Usage & Allowance Status</b>\n\n`;
+        message += `🎯 <b>Plan:</b> ${tier}\n\n`;
+        const keyboard = new InlineKeyboard();
+        if (isPremium) {
+            message += `✨ <b>Premium Benefits Active:</b>\n`;
+            message += `• ♾️ Unlimited Quizzes\n`;
+            message += `• ♾️ Unlimited Lessons & Materials\n`;
+            message += `• 🤖 Maraki AI Real-time Tutoring\n`;
         }
-        await ctx.reply(message, { parse_mode: 'Markdown' });
+        else {
+            // Quiz usage
+            message += `📝 <b>Weekly Quizzes:</b>\n`;
+            const quizBar = createProgressBar(weeklyQuizzesUsed, weeklyQuizLimit);
+            message += `${quizBar}\n`;
+            message += `${weeklyQuizzesUsed}/${weeklyQuizLimit} Quizzes Used (${remainingQuizzes} Left)\n\n`;
+            // Lesson usage
+            message += `📚 <b>Weekly Lessons:</b>\n`;
+            const lessonBar = createProgressBar(weeklyLessonsUsed, weeklyLessonLimit);
+            message += `${lessonBar}\n`;
+            message += `${weeklyLessonsUsed}/${weeklyLessonLimit} Lessons Used (${remainingLessons} Left)\n\n`;
+            // Upgrade CTA
+            message += `💡 <b>Want Unlimited AI Quizzes & Real-time Tutoring?</b>\n`;
+            message += `Upgrade to <b>Maraki Premium</b> for unlimited learning!\n`;
+            keyboard.text("⚡ Upgrade to Maraki Premium", "pay").row();
+        }
+        await ctx.reply(message, { parse_mode: 'HTML', reply_markup: keyboard });
     }
     catch (error) {
         console.error('Usage command error:', error);
@@ -40,6 +50,8 @@ export async function usageCommand(ctx) {
     }
 }
 function createProgressBar(current, limit) {
+    if (limit <= 0)
+        return '██████████ 100%';
     const percentage = Math.min((current / limit) * 100, 100);
     const filled = Math.floor(percentage / 10);
     const empty = 10 - filled;
