@@ -7,13 +7,12 @@ export const registerOrUpdate = async (from, referrerId) => {
         username: from.username || undefined,
         isPremium: from.is_premium || false,
         isBot: from.is_bot || false,
-        referredBy: referrerId, // set referrer if present
+        referredBy: referrerId,
     };
     try {
         const user = await apiService.createOrUpdateUser(from.id, userData);
-        // Convert IUser to User interface
         return {
-            id: user._id.toString(),
+            id: user.telegramId.toString(),
             telegramId: user.telegramId,
             first_name: user.firstName,
             last_name: user.lastName,
@@ -22,9 +21,9 @@ export const registerOrUpdate = async (from, referrerId) => {
             isMarakiPremium: user.isMarakiPremium,
             isBot: user.isBot,
             referredBy: user.referredBy,
-            referral: user.referral,
+            referral: user.referral ? { count: user.referral.count, usersTelegramId: [] } : undefined,
             subscriptionTier: user.subscriptionTier,
-            subscriptionExpiresAt: user.subscriptionExpiresAt?.toISOString(),
+            subscriptionExpiresAt: user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).toISOString() : undefined,
         };
     }
     catch (error) {
@@ -35,11 +34,8 @@ export const registerOrUpdate = async (from, referrerId) => {
 export const referralCount = async (from) => {
     try {
         const user = await apiService.getUserByTelegramId(from.id);
-        if (!user) {
-            throw new Error("User not found");
-        }
         return {
-            referralCount: user.referral?.count || 0,
+            referralCount: user?.referral?.count || 0,
         };
     }
     catch (error) {
@@ -50,11 +46,8 @@ export const referralCount = async (from) => {
 export const getCurrentLevel = async (from) => {
     try {
         const user = await apiService.getUserByTelegramId(from.id);
-        if (!user) {
-            throw new Error("User not found");
-        }
         return {
-            level: user.level,
+            level: user?.level || 'beginner',
         };
     }
     catch (error) {

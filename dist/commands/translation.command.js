@@ -12,38 +12,8 @@ export async function handleTranslation(ctx) {
     const userId = ctx.from.id;
     const userMessage = ctx.message.text;
     try {
-        // Get user level for personalized responses
-        let userLevel = 'intermediate';
-        try {
-            const user = await apiService.getUserByTelegramId(userId);
-            userLevel = user?.level || 'intermediate';
-        }
-        catch (apiError) {
-            console.warn('API not available, using default user level:', apiError.message);
-        }
-        // Get conversation context from chat history
-        let context = '';
-        try {
-            const conversation = await apiService.getConversation(userId);
-            if (conversation?.chatHistory && conversation.chatHistory.length > 0) {
-                // Get last 5 chat entries for translation context
-                const recentChats = conversation.chatHistory.slice(-5);
-                context = recentChats
-                    .map((chat) => {
-                    const userMsg = chat.userMessage || 'No message';
-                    const aiMsg = chat.aiResponse || 'No response';
-                    return `User: ${userMsg.substring(0, 50)}... | AI: ${aiMsg.substring(0, 50)}...`;
-                })
-                    .join(' | ');
-            }
-        }
-        catch (apiError) {
-            console.warn('API not available, using empty context:', apiError.message);
-        }
         // Generate translation response with context
-        const fullPrompt = `${translationPrompt}
-
-${userMessage}`;
+        const fullPrompt = `${translationPrompt}\n\nUser Input:\n"${userMessage}"`;
         const aiResponse = await callGeminiGenerateContent(fullPrompt);
         // Clean up response
         let cleanResponse = aiResponse;
@@ -51,7 +21,8 @@ ${userMessage}`;
             cleanResponse = aiResponse.replace(/```/g, '').trim();
         }
         cleanResponse = cleanResponse.replace(/\*/g, '');
-        await ctx.reply(`🌐 ${cleanResponse}`, { parse_mode: 'HTML' });
+        const replyPrefix = cleanResponse.startsWith('⚠️') || cleanResponse.startsWith('🌐') ? '' : '🌐 ';
+        await ctx.reply(`${replyPrefix}${cleanResponse}`);
         // Save conversation context
         try {
             await apiService.addChatMessage(userId, {
@@ -73,12 +44,10 @@ export async function startTranslation(ctx) {
     if (!ctx.from)
         return;
     try {
-        // Clear any existing conversation context for this mode
-        // Note: Direct deletion not available via API, conversation will be managed by backend
         console.log('Translation mode started - conversation context will be managed by backend');
     }
     catch (error) {
         console.warn('Could not clear conversation context:', error);
     }
-    await ctx.reply(`Send me your amaric text 🇪🇹`);
+    await ctx.reply(`Send me your Amharic text 🇪🇹`);
 }

@@ -1,6 +1,5 @@
 import express, { Response } from 'express'
 import dotenv from 'dotenv'
-import mongoose from 'mongoose'
 import { connectRedis } from './utils/redis.js'
 import { bot } from './adapters/telegram.adapter.js'
 dotenv.config()
@@ -27,11 +26,6 @@ const initialize = async () => {
 
     initializationPromise = (async () => {
         try {
-            // Connect to MongoDB
-            const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/maraki'
-            await mongoose.connect(mongoUri)
-            console.log('Connected to MongoDB')
-
             await connectRedis()
 
             await bot.init()
