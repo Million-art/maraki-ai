@@ -4,7 +4,6 @@ import { startCommand } from '../commands/start.command.js';
 import { grammarCommand, handleGrammarCorrection } from '../commands/grammar.command.js';
 import { lessonCommand } from '../commands/lesson.comand.js';
 import { chatMode, handleChatConversation, startChatConversation } from '../commands/chat.command.js';
-import { speechCommand } from '../commands/speach.command.js';
 import { levelCommand } from '../commands/level.command.js';
 import { referralCommand } from '../commands/referral.command.js';
 import { helpCommand } from '../commands/help.command.js';
@@ -34,7 +33,6 @@ bot.command('grammar', grammarCommand);
 bot.command('lesson', lessonCommand);
 bot.command('level', levelCommand);
 bot.command('referral_link', referralCommand);
-bot.command('speech_conversation', speechCommand);
 bot.command('translation', translationCommand);
 bot.command('help', helpCommand);
 bot.command('usage', usageCommand);
@@ -144,9 +142,6 @@ bot.on('callback_query:data', async (ctx) => {
             case 'translation':
                 await setSession(ctx.from.id, { mode: data, timestamp: Date.now(), userId: ctx.from.id });
                 await startTranslation(ctx);
-                break;
-            case 'speech_conversation':
-                await ctx.answerCallbackQuery('🗣️ Speech conversation feature is coming soon!');
                 break;
             case 'quiz':
                 await setSession(ctx.from.id, { mode: 'quiz', timestamp: Date.now(), userId: ctx.from.id });

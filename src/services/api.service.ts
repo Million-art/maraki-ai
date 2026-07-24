@@ -111,7 +111,17 @@ export class ApiService {
   }
 
   async addLesson(telegramId: number, lesson: any): Promise<any> {
-    return { success: true };
+    try {
+      const { data } = await axios.post(
+        `${this.backendUrl}/api/student/materials/access`,
+        { telegramId, materialId: lesson?.materialId },
+        { timeout: 5000 }
+      );
+      return data;
+    } catch (error) {
+      console.error('Error recording lesson access:', error);
+      return { success: true };
+    }
   }
 
   async addChatMessage(telegramId: number, chatEntry: any): Promise<any> {
@@ -144,11 +154,14 @@ export class ApiService {
     try {
       const { data } = await axios.post(`${this.backendUrl}/api/student/quizzes/general/attempt`, {
         telegramId,
-        answers: [],
+        score: quizData.score || 0,
+        correctAnswers: quizData.correctAnswers || 0,
+        totalQuestions: quizData.totalQuestions || 5,
       }, { timeout: 5000 });
       return data;
     } catch (error) {
-      return { success: true };
+      console.error('Error in saveQuizResult:', error);
+      return { success: false };
     }
   }
 }
