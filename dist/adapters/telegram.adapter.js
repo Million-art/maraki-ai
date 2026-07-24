@@ -15,9 +15,9 @@ import { handlePaymentCommand, handleReceiptVerification } from '../commands/pay
 import { updateUserLevel } from '../services/user.service.js';
 import { setSession, getSession } from '../utils/redis.js';
 dotenv.config();
-const bot_token = process.env.TOKEN;
+const bot_token = process.env.TKN || process.env.TOKEN;
 if (!bot_token) {
-    throw new Error('TOKEN is not defined in .env');
+    throw new Error('TKN is not defined in .env');
 }
 export const bot = new Bot(bot_token);
 // Middleware for typing indicator
