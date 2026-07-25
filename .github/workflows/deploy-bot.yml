@@ -74,22 +74,28 @@ jobs:
             docker stop compliance-backend || true
             docker rm compliance-backend || true
 
-            # Run pre-compiled container on Port 1000 with NGINX SSL Proxy envs
+            # Target exact existing network: remittance-prod_ptgr-network
+            DOCKER_NET=$(docker network ls --format '{{.Name}}' | grep -E 'remittance-prod_ptgr-network|remittance|nginx' | head -n 1)
+            NET_FLAG=""
+            if [ -n "$DOCKER_NET" ]; then
+              echo "Connecting to EC2 network: $DOCKER_NET"
+              NET_FLAG="--network $DOCKER_NET"
+            fi
+
+            # Run pre-compiled container attached to remittance-prod_ptgr-network on Port 1000
             echo "Starting compliance-backend container on Port 1000..."
             docker run -d \
               --name compliance-backend \
               --restart unless-stopped \
+              $NET_FLAG \
               -p 1000:1000 \
               -e VIRTUAL_HOST=alertmanager.ptgr.io \
               -e VIRTUAL_PORT=1000 \
               --env-file /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend/.env \
               ghcr.io/$REPO_LOWER/maraki-bot:latest
 
-            # Connect container to NGINX Docker network if available
-            docker network connect remittance-backend_default compliance-backend || true
-
-            # Setup Auto-Healing Watchdog (re-creates container automatically if deleted or stopped)
-            CRON_CMD="* * * * * docker ps | grep -q compliance-backend || (docker run -d --name compliance-backend --restart unless-stopped -p 1000:1000 -e VIRTUAL_HOST=alertmanager.ptgr.io -e VIRTUAL_PORT=1000 --env-file /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend/.env ghcr.io/$REPO_LOWER/maraki-bot:latest && docker network connect remittance-backend_default compliance-backend || true)"
+            # Setup Auto-Healing Watchdog (re-creates container automatically on remittance-prod_ptgr-network if deleted)
+            CRON_CMD="* * * * * docker ps | grep -q compliance-backend || docker run -d --name compliance-backend --restart unless-stopped $NET_FLAG -p 1000:1000 -e VIRTUAL_HOST=alertmanager.ptgr.io -e VIRTUAL_PORT=1000 --env-file /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend/.env ghcr.io/$REPO_LOWER/maraki-bot:latest"
             (crontab -l 2>/dev/null | grep -v "compliance-backend"; echo "$CRON_CMD") | crontab -
 
-            echo "✅ Deployment successful! Container active and connected to NGINX network."
+            echo "✅ Deployment successful! Container joined network: $DOCKER_NET."
