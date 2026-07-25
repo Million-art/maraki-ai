@@ -3,13 +3,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies and copy source
 COPY package*.json ./
-RUN npm ci
-
-# Copy source files and build TypeScript
 COPY . .
-RUN npm run build
+RUN npm ci
 
 # Production Stage
 FROM node:20-alpine AS runner
@@ -20,7 +17,7 @@ ENV NODE_ENV=production
 
 # Install only production dependencies
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --only=production --ignore-scripts
 
 # Copy compiled JavaScript code from builder stage
 COPY --from=builder /app/dist ./dist
