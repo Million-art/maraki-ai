@@ -16,7 +16,7 @@ import { hackCommand } from '../commands/hack.command.js';
 import { updateUserLevel } from '../services/user.service.js';
 import { setSession, getSession } from '../utils/redis.js';
 dotenv.config();
-const bot_token = process.env.TKN || process.env.TOKEN;
+const bot_token = process.env.TKN;
 if (!bot_token) {
     throw new Error('TKN is not defined in .env');
 }
