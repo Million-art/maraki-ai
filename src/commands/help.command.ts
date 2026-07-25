@@ -1,18 +1,17 @@
-import { Context } from "grammy";
+import { Context, InlineKeyboard } from "grammy";
 import { help_msg } from "../messages/help.message.js";
 
-export const helpCommand= async(ctx:Context)=>{
-    return ctx.reply(
-      help_msg +
-      `\n\nAvailable commands:\n` +
-      `/start - Main Menu\n` +
-      `/grammar - Correct your sentence\n` +
-      `/lesson - Learn from your previous mistakes\n` +
-      `/chat_conversation - Practice chat conversation\n` +
-      `/translation - Amharic to English translation\n` +
-      `/referral_link - Get your referral link\n` +
-      `/level - Check your level\n` +
-      `/usage - Check your daily usage limits\n` +
-      `/help - Get help\n`
-    );
-}
+export const helpCommand = async (ctx: Context) => {
+  const keyboard = new InlineKeyboard()
+    .text("✨ Learn Lesson", "lesson")
+    .text("🧠 Take Quiz", "quiz").row()
+    .text("⚡ Practice Chat", "chat_conversation")
+    .text("🌐 Translation", "translation").row()
+    .text("🔗 Referral Link", "referral_link")
+    .text("💳 Upgrade VIP", "pay");
+
+  return ctx.reply(help_msg, {
+    parse_mode: 'HTML',
+    reply_markup: keyboard,
+  });
+};

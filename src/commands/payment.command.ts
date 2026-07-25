@@ -13,11 +13,9 @@ export async function handlePaymentCommand(ctx: Context) {
     `• 🚀 *Yearly Pass*: 2,499 ETB / year (Save 30%)\n\n` +
     `🏦 *Direct Bank Transfer Accounts:*\n` +
     `• *Commercial Bank of Ethiopia (CBE)*:\n` +
-    `  ` + '`1000123456789`' + ` (Account: Maraki English)\n` +
+    `  \`1000342472501\` (Account: *Million Mulugeta*)\n` +
     `• *Dashen Bank*:\n` +
-    `  ` + '`0123456789001`' + ` (Account: Maraki English)\n` +
-    `• *Telebirr*:\n` +
-    `  ` + '`0911223344`' + `\n\n` +
+    `  \`5427280818011\` (Account: *Million Mulugeta*)\n\n` +
     `✅ *How to Activate Instantly:*\n` +
     `1. Transfer the exact amount for your chosen tier (99 ETB, 299 ETB, or 2,499 ETB).\n` +
     `2. Copy the receipt link from CBE Mobile/Dashen SuperApp (e.g., \`https://mbreciept.cbe.com.et/v2-XXXXXX\`) or reference ID.\n` +
