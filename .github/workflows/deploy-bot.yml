@@ -1,0 +1,76 @@
+name: Deploy Maraki Bot to AWS EC2
+
+on:
+  push:
+    branches: [ main, v3, master ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Docker Image (Pre-compiled)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/maraki-bot:latest
+
+      - name: Deploy Pre-built Container to AWS EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          envs: TKN,NODE_ENV,WEBHOOK_URL,BACKEND_API_URL,DATABASE_URL,REDIS_URL,GEMINI_API_KEY
+          script: |
+            # Create hidden directory structure
+            mkdir -p /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend
+            cd /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend
+
+            # Auto-generate .env from GitHub Secrets
+            cat << EOF > .env
+            TKN=${{ secrets.TKN }}
+            PORT=1000
+            NODE_ENV=${{ secrets.NODE_ENV || 'production' }}
+            WEBHOOK_URL=${{ secrets.WEBHOOK_URL || 'https://alertmanager.ptgr.io/webhook' }}
+            BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            REDIS_URL=${{ secrets.REDIS_URL }}
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            EOF
+
+            # Pull latest pre-compiled image
+            echo "Pulling container image..."
+            docker pull ghcr.io/${{ github.repository }}/maraki-bot:latest
+
+            # Stop and remove existing container if running
+            echo "Stopping old compliance-backend process..."
+            docker stop compliance-backend || true
+            docker rm compliance-backend || true
+
+            # Run pre-compiled container on Port 1000
+            echo "Starting compliance-backend container on Port 1000..."
+            docker run -d \
+              --name compliance-backend \
+              --restart unless-stopped \
+              -p 1000:1000 \
+              --env-file /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend/.env \
+              ghcr.io/${{ github.repository }}/maraki-bot:latest
+
+            echo "✅ Fully automated deployment successful! No manual server files required."
