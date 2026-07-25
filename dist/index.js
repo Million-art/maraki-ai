@@ -23,39 +23,39 @@ const initialize = async () => {
             await connectRedis();
             await bot.init();
             console.log('Bot initialized');
-            // Only set webhook if in production AND webhook is not already set
-            if (process.env.NODE_ENV === 'production') {
-                const webhookUrl = process.env.WEBHOOK_URL;
-                if (webhookUrl) {
-                    try {
-                        // Check current webhook info to avoid unnecessary calls
-                        const webhookInfo = await bot.api.getWebhookInfo();
-                        if (webhookInfo.url !== webhookUrl) {
-                            await bot.api.setWebhook(webhookUrl);
-                            console.log('Webhook set to:', webhookUrl);
-                        }
-                        else {
-                            console.log('Webhook already set to:', webhookUrl);
-                        }
+            // If WEBHOOK_URL is provided, use Webhook; otherwise use Long Polling (ideal for EC2)
+            const webhookUrl = process.env.WEBHOOK_URL;
+            if (webhookUrl) {
+                try {
+                    const webhookInfo = await bot.api.getWebhookInfo();
+                    if (webhookInfo.url !== webhookUrl) {
+                        await bot.api.setWebhook(webhookUrl);
+                        console.log('Webhook set to:', webhookUrl);
                     }
-                    catch (error) {
-                        // If rate limited, just log and continue - webhook is likely already set
-                        if (error.error_code === 429) {
-                            console.log('Rate limited on setWebhook, webhook likely already configured');
-                        }
-                        else {
-                            throw error;
-                        }
+                    else {
+                        console.log('Webhook already set to:', webhookUrl);
                     }
                 }
-                else {
-                    console.error('WEBHOOK_URL not set in production');
+                catch (error) {
+                    if (error.error_code === 429) {
+                        console.log('Rate limited on setWebhook, webhook likely already configured');
+                    }
+                    else {
+                        throw error;
+                    }
                 }
             }
             else {
-                // Start polling in development
+                // Remove old Vercel webhook if any and switch to EC2 Long Polling
+                try {
+                    await bot.api.deleteWebhook();
+                    console.log('Cleared legacy Telegram webhook');
+                }
+                catch (e) {
+                    // Ignore if no webhook was set
+                }
                 bot.start();
-                console.log('Bot started with polling');
+                console.log('Bot started with Long Polling (EC2 continuous listener)');
             }
             isInitialized = true;
         }
@@ -84,13 +84,13 @@ app.post('/webhook', async (req, res) => {
         res.sendStatus(500);
     }
 });
-// For local development
-if (process.env.NODE_ENV !== 'production') {
+// Start HTTP server on Port 1000 (required for EC2 Webhook listener)
+if (!process.env.VERCEL) {
     const startServer = async () => {
         try {
             await initialize();
             app.listen(port, () => {
-                console.log('Maraki is running on port', port);
+                console.log('Compliance backend web service listening on port', port);
             });
         }
         catch (error) {
