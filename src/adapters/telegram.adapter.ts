@@ -162,6 +162,10 @@ bot.on('callback_query:data', async (ctx) => {
         await setSession(ctx.from.id, { mode: 'quiz', timestamp: Date.now(), userId: ctx.from.id });
         await quizCommand(ctx);
         break;
+      case 'referral':
+      case 'referral_link':
+        await referralCommand(ctx);
+        break;
       case 'hack':
       case 'hack_bot':
         await hackCommand(ctx);

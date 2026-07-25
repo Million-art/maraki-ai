@@ -236,7 +236,17 @@ const showQuizResults = async (ctx: Context) => {
     console.error('Error saving quiz result:', error);
   }
 
-  await ctx.reply(resultMessage);
+  resultMessage += `\n\nWhat would you like to do next? 🚀`;
+
+  // Attach Call-to-Action inline keyboard to keep user engaged
+  const keyboard = new InlineKeyboard()
+    .text("🧠 Take Another Quiz", "quiz")
+    .text("📖 Learn a Lesson", "lesson").row()
+    .text("⚡ Practice Chat", "chat_conversation")
+    .text("🔗 Referral Link", "referral_link").row()
+    .text("💳 Upgrade to VIP", "pay");
+
+  await ctx.reply(resultMessage, { reply_markup: keyboard });
 
   // Clear quiz session
   await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
