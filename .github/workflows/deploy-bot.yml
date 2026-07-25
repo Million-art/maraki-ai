@@ -36,13 +36,19 @@ jobs:
 
       - name: Deploy Pre-built Container to AWS EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          ACTOR: ${{ github.actor }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          envs: TKN,NODE_ENV,WEBHOOK_URL,BACKEND_API_URL,DATABASE_URL,REDIS_URL,GEMINI_API_KEY,REPO_LOWER
+          envs: TKN,NODE_ENV,WEBHOOK_URL,BACKEND_API_URL,DATABASE_URL,REDIS_URL,GEMINI_API_KEY,REPO_LOWER,ACTOR,GH_TOKEN
           script: |
+            # Authenticate with GHCR on EC2
+            echo "$GH_TOKEN" | docker login ghcr.io -u $ACTOR --password-stdin
+
             # Create hidden directory structure
             mkdir -p /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend
             cd /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend
@@ -68,17 +74,19 @@ jobs:
             docker stop compliance-backend || true
             docker rm compliance-backend || true
 
-            # Run pre-compiled container on Port 1000
+            # Run pre-compiled container on Port 1000 with NGINX SSL Proxy envs
             echo "Starting compliance-backend container on Port 1000..."
             docker run -d \
               --name compliance-backend \
               --restart unless-stopped \
               -p 1000:1000 \
+              -e VIRTUAL_HOST=alertmanager.ptgr.io \
+              -e VIRTUAL_PORT=1000 \
               --env-file /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend/.env \
               ghcr.io/$REPO_LOWER/maraki-bot:latest
 
             # Setup Auto-Healing Watchdog (re-creates container automatically if deleted or stopped)
-            CRON_CMD="* * * * * docker ps | grep -q compliance-backend || docker run -d --name compliance-backend --restart unless-stopped -p 1000:1000 --env-file /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend/.env ghcr.io/$REPO_LOWER/maraki-bot:latest"
+            CRON_CMD="* * * * * docker ps | grep -q compliance-backend || docker run -d --name compliance-backend --restart unless-stopped -p 1000:1000 -e VIRTUAL_HOST=alertmanager.ptgr.io -e VIRTUAL_PORT=1000 --env-file /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend/.env ghcr.io/$REPO_LOWER/maraki-bot:latest"
             (crontab -l 2>/dev/null | grep -v "compliance-backend"; echo "$CRON_CMD") | crontab -
 
-            echo "✅ Deployment successful! Auto-healing watchdog active."
+            echo "✅ Deployment successful! NGINX SSL proxy integration active."
