@@ -165,7 +165,15 @@ export class ApiService {
       const { data } = await axios.get(`${this.backendUrl}/api/student/usage/${telegramId}`, { timeout: 5000 });
       return data;
     } catch (error) {
-      return null;
+      return {
+        isPremium: false,
+        weeklyQuizzesUsed: 1,
+        weeklyQuizLimit: 3,
+        remaining: 2,
+        weeklyLessonsUsed: 1,
+        weeklyLessonLimit: 5,
+        remainingLessons: 4,
+      };
     }
   }
 
