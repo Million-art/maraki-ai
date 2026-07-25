@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for Maraki Telegram Bot
-FROM node:20-alpine AS builder
+FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ COPY . .
 RUN npm ci
 
 # Production Stage
-FROM node:20-alpine AS runner
+FROM public.ecr.aws/docker/library/node:20-alpine AS runner
 
 WORKDIR /app
 
