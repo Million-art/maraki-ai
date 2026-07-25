@@ -4,7 +4,7 @@ import { connectRedis } from './utils/redis.js';
 import { bot } from './adapters/telegram.adapter.js';
 dotenv.config();
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 1000;
 // Middleware
 app.use(express.json());
 // Track initialization state
