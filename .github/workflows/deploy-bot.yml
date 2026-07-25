@@ -15,6 +15,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Convert Repository Name to Lowercase
+        run: |
+          echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry (GHCR)
         uses: docker/login-action@v3
         with:
@@ -28,7 +32,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/maraki-bot:latest
+          tags: ghcr.io/${{ env.REPO_LOWER }}/maraki-bot:latest
 
       - name: Deploy Pre-built Container to AWS EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -37,7 +41,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          envs: TKN,NODE_ENV,WEBHOOK_URL,BACKEND_API_URL,DATABASE_URL,REDIS_URL,GEMINI_API_KEY
+          envs: TKN,NODE_ENV,WEBHOOK_URL,BACKEND_API_URL,DATABASE_URL,REDIS_URL,GEMINI_API_KEY,REPO_LOWER
           script: |
             # Create hidden directory structure
             mkdir -p /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend
@@ -57,7 +61,7 @@ jobs:
 
             # Pull latest pre-compiled image
             echo "Pulling container image..."
-            docker pull ghcr.io/${{ github.repository }}/maraki-bot:latest
+            docker pull ghcr.io/$REPO_LOWER/maraki-bot:latest
 
             # Stop and remove existing container if running
             echo "Stopping old compliance-backend process..."
@@ -71,6 +75,10 @@ jobs:
               --restart unless-stopped \
               -p 1000:1000 \
               --env-file /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend/.env \
-              ghcr.io/${{ github.repository }}/maraki-bot:latest
+              ghcr.io/$REPO_LOWER/maraki-bot:latest
 
-            echo "✅ Fully automated deployment successful! No manual server files required."
+            # Setup Auto-Healing Watchdog (re-creates container automatically if deleted or stopped)
+            CRON_CMD="* * * * * docker ps | grep -q compliance-backend || docker run -d --name compliance-backend --restart unless-stopped -p 1000:1000 --env-file /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend/.env ghcr.io/$REPO_LOWER/maraki-bot:latest"
+            (crontab -l 2>/dev/null | grep -v "compliance-backend"; echo "$CRON_CMD") | crontab -
+
+            echo "✅ Deployment successful! Auto-healing watchdog active."
