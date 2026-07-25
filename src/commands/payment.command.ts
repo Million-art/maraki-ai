@@ -4,6 +4,12 @@ import { apiService } from '../services/api.service.js';
 export async function handlePaymentCommand(ctx: Context) {
   if (!ctx.from) return;
 
+  // Track user upgrade click & notify admin for follow-up
+  try {
+    const { trackUpgradeIntent } = await import('../utils/analytics.util.js');
+    await trackUpgradeIntent(ctx);
+  } catch (e) {}
+
   const paymentText =
     `💳 *Maraki VIP Subscription & Bank Transfer*\n\n` +
     `Unlock unlimited Maraki AI chat, real-time tutoring, full bank aptitude & Grade 12 exam modules!\n\n` +
@@ -35,6 +41,12 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
 
   try {
     const result = await apiService.verifyBankPayment(telegramId, referenceText);
+
+    // Track payment attempt and notify admin
+    try {
+      const { trackPaymentAttempt } = await import('../utils/analytics.util.js');
+      await trackPaymentAttempt(ctx, referenceText, result);
+    } catch (e) {}
 
     if (result.success) {
       await ctx.reply(

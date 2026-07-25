@@ -21,6 +21,9 @@ export async function startCommand(ctx: Context) {
       user = await registerOrUpdate(ctx.from, referrerId);
       // Store user in session
       await setSession(ctx.from.id, { ...session, user });
+      // Notify Admin of new user registration
+      const { trackNewUser } = await import("../utils/analytics.util.js");
+      await trackNewUser(ctx);
     }
 
     // Clear any active session mode when starting fresh
