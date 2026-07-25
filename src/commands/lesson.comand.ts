@@ -262,7 +262,18 @@ export const handleLessonFollowup = async(ctx: Context) => {
     // Call AI to get answer
     const answer = await callGeminiGenerateContent(prompt);
 
-    await ctx.reply(answer, { parse_mode: 'HTML' });
+    // Send answer with follow-up keyboard options
+    const { InlineKeyboard } = await import("grammy");
+    const keyboard = new InlineKeyboard()
+      .text("❓ Ask Question", "lesson_followup_ask")
+      .text("📚 New Lesson", "lesson_back_to_parts")
+      .text("❌ Exit", "close");
+
+    try {
+      await ctx.reply(answer, { reply_markup: keyboard, parse_mode: 'HTML' });
+    } catch (e) {
+      await ctx.reply(answer.replace(/<[^>]*>/g, ''), { reply_markup: keyboard });
+    }
 
   } catch (error) {
     console.error('Lesson follow-up error:', error);

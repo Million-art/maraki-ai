@@ -142,8 +142,13 @@ bot.on('callback_query:data', async (ctx) => {
         await grammarCommand(ctx);
         break;
       case 'lesson':
+      case 'lesson_back_to_parts':
         await setSession(ctx.from.id, { mode: 'lesson', timestamp: Date.now(), userId: ctx.from.id });
         await lessonCommand(ctx);
+        break;
+      case 'lesson_followup_ask':
+        await setSession(ctx.from.id, { mode: 'lesson_followup', timestamp: Date.now(), userId: ctx.from.id });
+        await ctx.reply('❓ *Ask a Question about this Lesson*\n\nPlease type your question below and I will explain it for you! 😊', { parse_mode: 'Markdown' });
         break;
       case 'chat_conversation':
         await setSession(ctx.from.id, { mode: data, timestamp: Date.now(), userId: ctx.from.id });
