@@ -39,25 +39,35 @@ export const registerOrUpdate = async (
 };
 
 export const referralCount = async (from: TelegramUser) => {
+  let dbCount = 0;
   try {
     const stats = await apiService.getReferralStats(from.id);
-    return {
-      referralCount: stats?.totalReferred ?? 0,
-      target: stats?.target || 10,
-      remaining: stats?.remaining !== undefined ? stats.remaining : 10,
-      progressPercentage: stats?.progressPercentage || 0,
-      rewardUnlocked: stats?.rewardUnlocked || false,
-    };
+    if (stats?.totalReferred) {
+      dbCount = stats.totalReferred;
+    }
   } catch (error) {
-    console.error("Error getting referral count:", error);
-    return {
-      referralCount: 0,
-      target: 10,
-      remaining: 10,
-      progressPercentage: 0,
-      rewardUnlocked: false,
-    };
+    console.error("Error getting referral count from API:", error);
   }
+
+  // Combine with local Redis/memory referral tracker
+  let localCount = 0;
+  try {
+    const { getLocalReferralCount } = await import('../utils/analytics.util.js');
+    localCount = await getLocalReferralCount(from.id);
+  } catch (e) {}
+
+  const finalCount = Math.max(dbCount, localCount);
+  const target = 10;
+  const remaining = Math.max(0, target - finalCount);
+  const progressPercentage = Math.min(100, Math.round((finalCount / target) * 100));
+
+  return {
+    referralCount: finalCount,
+    target,
+    remaining,
+    progressPercentage,
+    rewardUnlocked: finalCount >= target,
+  };
 };
 
 export const getCurrentLevel = async(from: TelegramUser) => {

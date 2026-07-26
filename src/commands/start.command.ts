@@ -19,6 +19,13 @@ export async function startCommand(ctx: Context) {
     // Check session for user data
     const session = await getSession(ctx.from.id);
 
+    if (referrerId) {
+      try {
+        const { trackReferralJoin } = await import("../utils/analytics.util.js");
+        await trackReferralJoin(referrerId, ctx.from.id);
+      } catch (e) {}
+    }
+
     // Always register or update user via service layer to record referrer
     const user = await registerOrUpdate(ctx.from, referrerId);
 

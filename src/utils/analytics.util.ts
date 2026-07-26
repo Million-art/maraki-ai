@@ -154,3 +154,39 @@ export async function getAnalyticsStats() {
     paymentSuccesses,
   };
 }
+
+// Track referral join in local store / Redis
+const localReferralMap = new Map<number, Set<number>>();
+
+export async function trackReferralJoin(referrerId: number, newUserId: number) {
+  if (!referrerId || referrerId === newUserId) return;
+
+  // Local memory tracking
+  if (!localReferralMap.has(referrerId)) {
+    localReferralMap.set(referrerId, new Set<number>());
+  }
+  localReferralMap.get(referrerId)!.add(newUserId);
+
+  // Redis persistent tracking
+  try {
+    if (redis.isOpen) {
+      await redis.sAdd(`referrals:${referrerId}`, String(newUserId));
+    }
+  } catch (e) {}
+}
+
+export async function getLocalReferralCount(referrerId: number): Promise<number> {
+  let count = 0;
+  if (localReferralMap.has(referrerId)) {
+    count = localReferralMap.get(referrerId)!.size;
+  }
+
+  try {
+    if (redis.isOpen) {
+      const redisCount = await redis.sCard(`referrals:${referrerId}`);
+      if (redisCount > count) count = redisCount;
+    }
+  } catch (e) {}
+
+  return count;
+}
