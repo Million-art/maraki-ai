@@ -7,21 +7,23 @@ export async function startCommand(ctx: Context) {
   if (!ctx.from) return;
 
   try {
-    // Extract referrerId from the start payload
-    const referrerId = ctx.match ? Number(ctx.match) : undefined;
+    // Extract valid numerical referrerId from start payload (ignoring self-referrals)
+    let referrerId: number | undefined = undefined;
+    if (ctx.match) {
+      const parsed = parseInt(String(ctx.match).trim(), 10);
+      if (!isNaN(parsed) && parsed !== ctx.from.id) {
+        referrerId = parsed;
+      }
+    }
 
     // Check session for user data
     const session = await getSession(ctx.from.id);
-    let user;
-    console.log('sesion', session)
-    if (session && session.user) {
-      user = session.user;
-    } else {
-      // Register or update user via service layer
-      user = await registerOrUpdate(ctx.from, referrerId);
-      // Store user in session
-      await setSession(ctx.from.id, { ...session, user });
-      // Notify Admin of new user registration
+
+    // Always register or update user via service layer to record referrer
+    const user = await registerOrUpdate(ctx.from, referrerId);
+
+    // Notify Admin of new user registration if new
+    if (!session || !session.user) {
       const { trackNewUser } = await import("../utils/analytics.util.js");
       await trackNewUser(ctx);
     }

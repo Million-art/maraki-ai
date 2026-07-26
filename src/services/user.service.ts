@@ -40,13 +40,23 @@ export const registerOrUpdate = async (
 
 export const referralCount = async (from: TelegramUser) => {
   try {
-    const user = await apiService.getUserByTelegramId(from.id);
+    const stats = await apiService.getReferralStats(from.id);
     return {
-      referralCount: user?.referral?.count || 0,
+      referralCount: stats?.totalReferred ?? 0,
+      target: stats?.target || 10,
+      remaining: stats?.remaining !== undefined ? stats.remaining : 10,
+      progressPercentage: stats?.progressPercentage || 0,
+      rewardUnlocked: stats?.rewardUnlocked || false,
     };
   } catch (error) {
     console.error("Error getting referral count:", error);
-    return { referralCount: 0 };
+    return {
+      referralCount: 0,
+      target: 10,
+      remaining: 10,
+      progressPercentage: 0,
+      rewardUnlocked: false,
+    };
   }
 };
 
