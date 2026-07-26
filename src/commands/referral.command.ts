@@ -1,7 +1,7 @@
 import { Context } from "grammy";
 import { referralCount } from "../services/user.service.js";
 
-const BOT_USERNAME = process.env.BOT_USERNAME || "MarakiBot";
+const BOT_USERNAME = process.env.BOT_USERNAME || "marakiai_bot";
 
 export const referralCommand = async (ctx: Context) => {
   if (!ctx.from) {

@@ -66,7 +66,7 @@ export class ApiService {
         remaining: 10,
         progressPercentage: 0,
         rewardUnlocked: false,
-        referralLink: `https://t.me/maraki_english_bot?start=${telegramId}`,
+        referralLink: `https://t.me/marakiai_bot?start=${telegramId}`,
       };
     }
   }
