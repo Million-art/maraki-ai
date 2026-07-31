@@ -10,13 +10,34 @@ export const lessonCommand = async(ctx: Context) => {
     return ctx.reply("⚠️ Could not get your Telegram ID.");
   }
 
-  const session = await getSession(ctx.from.id);
+  // ─── USAGE GATE ──────────────────────────────────────────────────
+  // Check before starting — blocks all entry paths:
+  // /lesson command, CTA "Learn a Lesson" button, lesson callback
+  const usage = await apiService.getUsageStatus(ctx.from.id);
+
+  if (!usage.isPremium) {
+    const lessonsUsed = usage.weeklyLessonsUsed ?? 0;
+    const lessonLimit = usage.weeklyLessonLimit ?? 5;
+    const remaining  = lessonLimit - lessonsUsed;
+
+    if (remaining <= 0) {
+      const keyboard = new InlineKeyboard().text("💳 Upgrade to VIP — Unlimited Access", "pay");
+      await ctx.reply(
+        `🚫 <b>Weekly Lesson Limit Reached!</b>\n\n` +
+        `You have used all <b>${lessonLimit} free lessons</b> this week.\n\n` +
+        `⏳ Your quota resets every <b>Monday</b>.\n\n` +
+        `🔓 <b>Upgrade to VIP</b> for unlimited lessons, quizzes, and AI chat — 299 ETB/month!`,
+        { parse_mode: 'HTML', reply_markup: keyboard }
+      );
+      return;
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────
+
   await setSession(ctx.from.id, { mode: 'lesson', timestamp: Date.now() });
 
   try {
-    // Directly start lesson recommendation instead of showing menu
     await startLessonRecommendation(ctx);
-
   } catch (error) {
     console.error('Lesson command error:', error);
     await ctx.reply("❌ An error occurred while starting the lesson. Please try again later.");
