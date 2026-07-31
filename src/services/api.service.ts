@@ -81,7 +81,8 @@ export class ApiService {
         reason: data.reason || 'Usage check',
       };
     } catch (error) {
-      return { hasAccess: true, remaining: 5, reason: 'Fallback default' };
+      // Fail closed: deny access when the backend is unreachable to prevent free unlimited usage
+      return { hasAccess: false, remaining: 0, reason: 'Service temporarily unavailable. Please try again shortly.' };
     }
   }
 
@@ -165,14 +166,17 @@ export class ApiService {
       const { data } = await axios.get(`${this.backendUrl}/api/student/usage/${telegramId}`, { timeout: 5000 });
       return data;
     } catch (error) {
+      // Fail closed: deny quiz/lesson access when backend is unreachable
       return {
         isPremium: false,
-        weeklyQuizzesUsed: 1,
+        weeklyQuizzesUsed: 99,   // Exceeds limit intentionally
         weeklyQuizLimit: 3,
-        remaining: 2,
-        weeklyLessonsUsed: 1,
+        remaining: 0,
+        weeklyLessonsUsed: 99,
         weeklyLessonLimit: 5,
-        remainingLessons: 4,
+        remainingLessons: 0,
+        hasAccess: false,
+        reason: 'Service temporarily unavailable. Please try again shortly.',
       };
     }
   }
