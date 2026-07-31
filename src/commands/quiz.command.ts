@@ -11,12 +11,10 @@ export const quizCommand = async (ctx: Context) => {
   // /quiz command, CTA button, callback query
   const usage = await apiService.getUsageStatus(ctx.from.id);
 
-  if (usage.isPremium) {
-    // Premium: unlimited access
-  } else {
-    const quizzesUsed  = usage.weeklyQuizzesUsed  ?? 0;
-    const quizLimit   = usage.weeklyQuizLimit    ?? 3;
-    const remaining   = quizLimit - quizzesUsed;
+  if (!usage.isPremium) {
+    const quizzesUsed = usage.weeklyQuizzesUsed ?? 0;
+    const quizLimit = usage.weeklyQuizLimit ?? 3;
+    const remaining = quizLimit - quizzesUsed;
 
     if (remaining <= 0) {
       const keyboard = new InlineKeyboard().text("💳 Upgrade to VIP — Unlimited Access", "pay");
@@ -33,7 +31,7 @@ export const quizCommand = async (ctx: Context) => {
   // ─────────────────────────────────────────────────────────────────
 
   await setSession(ctx.from.id, { mode: 'quiz', timestamp: Date.now(), quizState: { currentQuestion: 0, answers: [], questions: [] } });
-  await ctx.reply(`🧠 Starting your English quiz! I'll ask you 5 questions based on your recent mistakes or your level.\n\nLet's begin!`);
+  await ctx.reply("🧠 Starting your English quiz! I'll ask you 5 questions based on your recent mistakes or your level.\n\nLet's begin!");
   await sendNextQuestion(ctx);
 };
 

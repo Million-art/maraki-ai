@@ -47,28 +47,28 @@ export async function handleChatConversation(ctx: Context) {
     try {
       const conversation = await apiService.getConversation(userId);
       if (conversation?.chatHistory && conversation.chatHistory.length > 0) {
-          // Get last 5 chat entries for context
-          const recentChats = conversation.chatHistory.slice(-5);
-          context = recentChats
-            .map((chat: any) => {
-              const userMsg = chat.userMessage || 'No message';
-              const aiMsg = chat.aiResponse || 'No response';
+        // Get last 5 chat entries for context
+        const recentChats = conversation.chatHistory.slice(-5);
+        context = recentChats
+          .map((chat: any) => {
+            const userMsg = chat.userMessage || 'No message';
+            const aiMsg = chat.aiResponse || 'No response';
 
-              // Smart truncation: take first 100 chars, but don't cut words
-              const truncateSmart = (text: string, maxLength: number) => {
-                if (text.length <= maxLength) return text;
-                const truncated = text.substring(0, maxLength);
-                const lastSpace = truncated.lastIndexOf(' ');
-                return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...';
-              };
+            // Smart truncation: take first 100 chars, but don't cut words
+            const truncateSmart = (text: string, maxLength: number) => {
+              if (text.length <= maxLength) return text;
+              const truncated = text.substring(0, maxLength);
+              const lastSpace = truncated.lastIndexOf(' ');
+              return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...';
+            };
 
-              const truncatedUserMsg = truncateSmart(userMsg, 100);
-              const truncatedAiMsg = truncateSmart(aiMsg, 100);
+            const truncatedUserMsg = truncateSmart(userMsg, 100);
+            const truncatedAiMsg = truncateSmart(aiMsg, 100);
 
-              return `User: ${truncatedUserMsg} | AI: ${truncatedAiMsg}`;
-            })
-            .join(' | ');
-        }
+            return `User: ${truncatedUserMsg} | AI: ${truncatedAiMsg}`;
+          })
+          .join(' | ');
+      }
     } catch (apiError) {
       console.warn('API not available, using empty context:', (apiError as Error).message);
     }
@@ -80,7 +80,7 @@ User Level: ${userLevel}
 Previous Conversation Context: ${context}
 Current User Message: "${userMessage}"
 
-Respond naturally and engagingly to continue the conversation. Include gentle grammar corrections if needed.`;
+Respond naturally and engagingly to continue the conversation.`;
 
     const aiResponse = await callGeminiGenerateContent(fullPrompt);
 

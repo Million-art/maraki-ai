@@ -24,12 +24,30 @@ if (!bot_token) {
 }
 export const bot = new Bot(bot_token);
 
-// Middleware for typing indicator
+// Global middleware for continuous typing indicator
 bot.use(async (ctx, next) => {
   if (ctx.chat?.id) {
-    await ctx.api.sendChatAction(ctx.chat.id, 'typing');
+    const chatId = ctx.chat.id;
+    // Send typing action immediately
+    try {
+      await ctx.api.sendChatAction(chatId, 'typing');
+    } catch (e) {}
+
+    // Continuously refresh typing status every 4 seconds while handler is running
+    const interval = setInterval(async () => {
+      try {
+        await ctx.api.sendChatAction(chatId, 'typing');
+      } catch (e) {}
+    }, 4000);
+
+    try {
+      await next();
+    } finally {
+      clearInterval(interval);
+    }
+  } else {
+    await next();
   }
-  return next();
 });
 
 // COMMANDS
@@ -85,19 +103,19 @@ bot.on('message:text', async (ctx) => {
     if (text?.startsWith('/')) {
       await ctx.reply(
         `❓ Unknown command: "${text}"\n\n` +
-          `Here are the available commands:\n` +
-          `/start - Main Menu\n` +
-          `/pay - 💳 Subscription & Bank Transfer\n` +
-          `/grammar - 🧹 Correct your sentence\n` +
-          `/lesson - ✨ Learn English\n` +
-          `/quiz - 🧠 Take a quiz\n` +
-          `/chat_conversation - ⚡ Practice chat conversation\n` +
-          `/translation - 🌐 Amharic to English translation\n` +
-          `/referral_link - 🔗 Get your referral link\n` +
-          `/level - 📊 Check your level\n` +
-          `/usage - 📊 Check usage limits\n` +
-          `/help - ❓ Get help\n\n` +
-          `Or paste your CBE/Dashen receipt link here to activate Maraki VIP! 🚀`
+        `Here are the available commands:\n` +
+        `/start - Main Menu\n` +
+        `/pay - 💳 Subscription & Bank Transfer\n` +
+        `/grammar - 🧹 Correct your sentence\n` +
+        `/lesson - ✨ Learn English\n` +
+        `/quiz - 🧠 Take a quiz\n` +
+        `/chat_conversation - ⚡ Practice chat conversation\n` +
+        `/translation - 🌐 Amharic to English translation\n` +
+        `/referral_link - 🔗 Get your referral link\n` +
+        `/level - 📊 Check your level\n` +
+        `/usage - 📊 Check usage limits\n` +
+        `/help - ❓ Get help\n\n` +
+        `Or paste your CBE/Dashen receipt link here to activate Maraki VIP! 🚀`
       );
     } else {
       await chatMode(ctx);
