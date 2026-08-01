@@ -18,9 +18,9 @@ import { setSession, getSession } from '../utils/redis.js';
 
 dotenv.config();
 
-const bot_token = process.env.TKN;
+const bot_token = process.env.TOKEN || process.env.TKN || process.env.BOT_TOKEN;
 if (!bot_token) {
-  throw new Error('TKN is not defined in .env');
+  throw new Error('TOKEN is not defined in .env (Set TOKEN, TKN, or BOT_TOKEN)');
 }
 export const bot = new Bot(bot_token);
 
