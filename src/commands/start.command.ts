@@ -48,7 +48,7 @@ export async function startCommand(ctx: Context) {
       .row()
       .text("🌐 Amharic → English", "translation")
       .row()
-      .text("🔓 Hack the Bot (Free Premium)", "hack_bot");
+      .text("🔗 Referral Link (Earn Free VIP)", "referral_link");
 
     await ctx.reply(`👋 Hello ${ctx.from.first_name || "there"}.\n${start_msg}`, { reply_markup: keyboard });
   } catch (error) {

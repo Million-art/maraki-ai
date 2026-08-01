@@ -12,7 +12,6 @@ import { usageCommand } from '../commands/usage.command.js';
 import { quizCommand, handleQuizAnswer } from '../commands/quiz.command.js';
 import { adminStatusCommand } from '../commands/admin.command.js';
 import { handlePaymentCommand, handleReceiptVerification } from '../commands/payment.command.js';
-import { hackCommand } from '../commands/hack.command.js';
 import { updateUserLevel } from '../services/user.service.js';
 import { setSession, getSession } from '../utils/redis.js';
 
@@ -56,8 +55,9 @@ bot.command('grammar', grammarCommand);
 bot.command('lesson', lessonCommand);
 bot.command('level', levelCommand);
 bot.command('referral_link', referralCommand);
-bot.command('hack', hackCommand);
-bot.command('hack_bot', hackCommand);
+bot.command('referral', referralCommand);
+bot.command('hack', referralCommand);
+bot.command('hack_bot', referralCommand);
 bot.command('translation', translationCommand);
 bot.command('help', helpCommand);
 bot.command('usage', usageCommand);
@@ -182,11 +182,9 @@ bot.on('callback_query:data', async (ctx) => {
         break;
       case 'referral':
       case 'referral_link':
-        await referralCommand(ctx);
-        break;
       case 'hack':
       case 'hack_bot':
-        await hackCommand(ctx);
+        await referralCommand(ctx);
         break;
       case 'close':
         return ctx.deleteMessage();
