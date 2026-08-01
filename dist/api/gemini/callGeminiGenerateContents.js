@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 export async function callGeminiGenerateContent(promptText) {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.VITE_GEMINI_API_KEY;
     if (!apiKey)
-        throw new Error("GEMINI_API_KEY is not set");
+        throw new Error("GEMINI_API_KEY is not set in environment");
     const genAI = new GoogleGenerativeAI(apiKey);
     const modelsToTry = [
         'gemini-1.5-flash-8b',
