@@ -18,6 +18,8 @@ export interface IUser {
     code: string;
     count: number;
   };
+  totalQuizzesCompleted?: number;
+  quizAttempts?: any[];
 }
 
 export class ApiService {

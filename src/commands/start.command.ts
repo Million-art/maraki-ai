@@ -38,19 +38,22 @@ export async function startCommand(ctx: Context) {
     // Clear any active session mode when starting fresh
     await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
 
-    // Send welcome message
+    // Send welcome message with optimized button arrangement & Daily Challenge
     const keyboard = new InlineKeyboard()
-      .text("🧹 Correct sentence", "grammar")
+      .text("🔥 Daily Challenge", "daily_challenge")
+      .row()
+      .text("💬 Practice Speaking", "chat_conversation")
+      .text("✍️ Fix My English", "grammar")
+      .row()
+      .text("📚 Lessons", "lesson")
       .text("🧠 Quiz", "quiz")
       .row()
-      .text("📚 Lesson", "lesson")
-      .text("⚡ Chat Conversation", "chat_conversation")
+      .text("🌍 English ↔ Amharic", "translation")
+      .text("⚙️ My Progress", "level")
       .row()
-      .text("🌐 Amharic → English", "translation")
-      .row()
-      .text("🔗 Referral Link (Earn Free VIP)", "referral_link");
+      .text("🎁 Invite Friends", "referral_link");
 
-    await ctx.reply(`👋 Hello ${ctx.from.first_name || "there"}.\n${start_msg}`, { reply_markup: keyboard });
+    await ctx.reply(`👋 Hello <b>${ctx.from.first_name || "there"}</b>!\n\n${start_msg}`, { parse_mode: 'HTML', reply_markup: keyboard });
   } catch (error) {
     console.error("Error in /start command:", error);
     await ctx.reply("⚠️ Something went wrong while starting the bot.");

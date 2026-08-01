@@ -12,6 +12,7 @@ import { usageCommand } from '../commands/usage.command.js';
 import { quizCommand, handleQuizAnswer } from '../commands/quiz.command.js';
 import { adminStatusCommand } from '../commands/admin.command.js';
 import { handlePaymentCommand, handleReceiptVerification } from '../commands/payment.command.js';
+import { challengeCommand } from '../commands/challenge.command.js';
 import { updateUserLevel } from '../services/user.service.js';
 import { setSession, getSession } from '../utils/redis.js';
 
@@ -62,6 +63,8 @@ bot.command('translation', translationCommand);
 bot.command('help', helpCommand);
 bot.command('usage', usageCommand);
 bot.command('quiz', quizCommand);
+bot.command('challenge', challengeCommand);
+bot.command('daily_challenge', challengeCommand);
 bot.command('pay', handlePaymentCommand);
 bot.command('subscribe', handlePaymentCommand);
 
@@ -180,11 +183,9 @@ bot.on('callback_query:data', async (ctx) => {
         await setSession(ctx.from.id, { mode: 'quiz', timestamp: Date.now(), userId: ctx.from.id });
         await quizCommand(ctx);
         break;
-      case 'referral':
-      case 'referral_link':
-      case 'hack':
-      case 'hack_bot':
-        await referralCommand(ctx);
+      case 'daily_challenge':
+      case 'challenge':
+        await challengeCommand(ctx);
         break;
       case 'close':
         return ctx.deleteMessage();
@@ -195,6 +196,11 @@ bot.on('callback_query:data', async (ctx) => {
             await handleQuizAnswer(ctx, answerIndex);
             return;
           }
+        }
+        if (data.startsWith('challenge_ans_')) {
+          const isCorrect = data.startsWith('challenge_ans_correct_');
+          await ctx.answerCallbackQuery(isCorrect ? "✅ Correct! Great job! 🎉" : "❌ Incorrect! Keep trying!");
+          return;
         }
         return ctx.answerCallbackQuery('❓ Unknown action.');
     }

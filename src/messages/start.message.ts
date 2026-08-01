@@ -1,12 +1,13 @@
-export const start_msg = `
-🎓 Welcome to Practice English!
+export const start_msg = `🚀 <b>Learn English with AI</b>
 
-I'm here to help you improve your English. I can:
-• Correct your English sentences
-• Explain grammar mistakes and provide corrections
-• Help you practice and enhance your English skills
-• Provide lessons based on your mistakes
-• Engage in chat and speech conversations
+I can help you:
+• Fix grammar
+• Practice conversations
+• Improve vocabulary
+• Translate English ↔ Amharic
+• Take quizzes
 
-Ready to start learning? Select an option below to begin! 🚀
-`;
+⭐ 12,000+ lessons completed
+🎯 Start your English journey today!
+
+Choose an option below👇`;
