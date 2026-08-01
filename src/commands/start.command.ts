@@ -39,10 +39,19 @@ export async function startCommand(ctx: Context) {
     await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
 
     // Send welcome message with optimized button arrangement & Daily Challenge
+    const miniAppUrl = process.env.MINI_APP_URL || 'https://t.me/marakiai_bot/app';
+
     const keyboard = new InlineKeyboard()
       .text("🔥 Daily Challenge", "daily_challenge")
-      .row()
-      .text("💬 Practice Speaking", "chat_conversation")
+      .row();
+
+    if (miniAppUrl.includes('t.me/')) {
+      keyboard.url("💬 Practice Speaking", miniAppUrl);
+    } else {
+      keyboard.webApp("💬 Practice Speaking", miniAppUrl);
+    }
+
+    keyboard
       .text("✍️ Fix My English", "grammar")
       .row()
       .text("📚 Lessons", "lesson")

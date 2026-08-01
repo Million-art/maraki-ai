@@ -1,4 +1,4 @@
-import { Context } from 'grammy';
+import { Context, InlineKeyboard } from 'grammy';
 import { callGeminiGenerateContent } from '../api/gemini/callGeminiGenerateContents.js';
 import { apiService } from '../services/api.service.js';
 import { chatPrompt } from '../prompt/conversation.prompt.js';
@@ -115,22 +115,19 @@ Respond naturally and engagingly to continue the conversation.`;
 export async function startChatConversation(ctx: Context) {
   if (!ctx.from) return;
 
-  try {
-    // Note: Conversation clearing would need to be implemented in the API
-    // For now, we'll skip this functionality
-    console.log('Starting new chat conversation for user:', ctx.from.id);
-  } catch (error) {
-    console.warn('Could not clear conversation context:', error);
+  const miniAppUrl = process.env.MINI_APP_URL || 'https://t.me/marakiai_bot/app';
+  const keyboard = new InlineKeyboard();
+
+  if (miniAppUrl.includes('t.me/')) {
+    keyboard.url("🎙️ Launch Voice Practice Mini App", miniAppUrl);
+  } else {
+    keyboard.webApp("🎙️ Launch Voice Practice Mini App", miniAppUrl);
   }
 
   await ctx.reply(
-    `Let's have a friendly conversation to practice your English! 🎉\n\n` +
-    `Feel free to talk about:\n` +
-    `• Your hobbies and interests\n` +
-    `• Your daily life\n` +
-    `• Current events\n` +
-    `• Travel experiences\n` +
-    `• Or anything else you'd like!\n\n` +
-    ` What would you like to talk about? 😊`
+    `🎙️ <b>AI Voice Conversation</b> 🎉\n\n` +
+    `Practice real-time English speaking and listening inside our interactive <b>Telegram Mini App</b>!\n\n` +
+    `👇 <b>Tap below to launch:</b>`,
+    { parse_mode: 'HTML', reply_markup: keyboard }
   );
 }
