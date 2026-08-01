@@ -39,7 +39,7 @@ export async function startCommand(ctx: Context) {
     await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
 
     // Send welcome message with optimized button arrangement & Daily Challenge
-    const miniAppUrl = process.env.MINI_APP_URL || 'https://t.me/marakiai_bot/app';
+    const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
 
     const keyboard = new InlineKeyboard()
       .text("🔥 Daily Challenge", "daily_challenge")
