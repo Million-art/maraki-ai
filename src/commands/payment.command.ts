@@ -58,11 +58,17 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
         { parse_mode: 'Markdown' }
       );
     } else {
+      const { InlineKeyboard } = await import('grammy');
+      const keyboard = new InlineKeyboard().url("💬 Contact Admin (@miilla021)", "https://t.me/miilla021");
+
       await ctx.reply(
         `❌ *Payment Verification Failed*\n\n` +
         `Reason: ${result.message || 'Transaction could not be verified'}.\n\n` +
-        `Please ensure you pasted a valid CBE or Dashen receipt link/reference number, or contact support if you need assistance.`,
-        { parse_mode: 'Markdown' }
+        `📌 *Under-Payment or Transfer Issue?*\n` +
+        `If you transferred a partial amount (e.g. 50 ETB) or need manual assistance, please contact our Admin directly:\n` +
+        `👉 *@miilla021*\n\n` +
+        `Our team will verify your transfer and assist you immediately!`,
+        { parse_mode: 'Markdown', reply_markup: keyboard }
       );
     }
   } catch (error: any) {
