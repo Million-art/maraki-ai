@@ -2,6 +2,8 @@ export async function callGeminiGenerateContent(promptText: string) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.VITE_GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set in environment");
 
+  console.log(`[Maraki Bot Key Debug]: length=${apiKey.length}, prefix="${apiKey.substring(0, 6)}..."`);
+
   const modelsToTry = [
     'gemini-1.5-flash',
     'gemini-2.0-flash',
