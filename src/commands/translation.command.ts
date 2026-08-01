@@ -46,6 +46,8 @@ export async function handleTranslation(ctx: Context) {
 
   } catch (error) {
     console.error('Translation error:', error);
+    const { notifyAdminOnError } = await import('../utils/admin-notify.util.js');
+    await notifyAdminOnError(ctx, error, 'Amharic <-> English Translation');
     await ctx.reply("❌ Sorry, I'm having trouble with the translation right now. Let's try again later!");
   }
 }

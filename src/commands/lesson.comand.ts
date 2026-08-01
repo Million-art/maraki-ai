@@ -298,6 +298,8 @@ export const handleLessonFollowup = async(ctx: Context) => {
 
   } catch (error) {
     console.error('Lesson follow-up error:', error);
+    const { notifyAdminOnError } = await import('../utils/admin-notify.util.js');
+    await notifyAdminOnError(ctx, error, 'Lesson Follow-up');
     await ctx.reply("❌ An error occurred while answering your question. Please try again later.");
   }
 };

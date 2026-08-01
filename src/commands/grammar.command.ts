@@ -82,6 +82,8 @@ export const handleGrammarCorrection = async(ctx: Context) => {
 
   } catch (error) {
     console.error('Grammar correction error:', error);
+    const { notifyAdminOnError } = await import('../utils/admin-notify.util.js');
+    await notifyAdminOnError(ctx, error, 'Grammar Correction');
     await ctx.reply("❌ An error occurred while correcting your sentence. Please try again later.");
   }
 

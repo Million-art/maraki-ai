@@ -106,6 +106,8 @@ Respond naturally and engagingly to continue the conversation.`;
 
   } catch (error) {
     console.error('Chat conversation error:', error);
+    const { notifyAdminOnError } = await import('../utils/admin-notify.util.js');
+    await notifyAdminOnError(ctx, error, 'AI Practice Chat');
     await ctx.reply("❌ Sorry, I'm having trouble with our conversation right now. Let's try again later!");
   }
 }

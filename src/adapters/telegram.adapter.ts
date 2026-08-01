@@ -208,33 +208,11 @@ bot.on('callback_query:data', async (ctx) => {
   }
 });
 
-// Admin Notification for User Errors
-export const ADMIN_TELEGRAM_ID = 386095768;
-
-export const notifyAdminOnError = async (ctx: any, error: any) => {
-  try {
-    const user = ctx?.from;
-    const name = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Unknown User';
-    const username = user?.username ? `@${user.username}` : 'No username';
-    const userId = user?.id || 'N/A';
-    const errorMessage = error?.message || String(error);
-
-    const alertMessage =
-      `⚠️ <b>Bot User Error Alert!</b>\n\n` +
-      `👤 <b>User:</b> ${name} (${username})\n` +
-      `🆔 <b>User ID:</b> <code>${userId}</code>\n` +
-      `❌ <b>Error:</b> <code>${errorMessage.slice(0, 500)}</code>`;
-
-    if (ctx?.api) {
-      await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMessage, { parse_mode: 'HTML' });
-    }
-  } catch (notifyErr) {
-    console.error('Failed to send error notification to admin:', notifyErr);
-  }
-};
+import { notifyAdminOnError, ADMIN_TELEGRAM_ID } from '../utils/admin-notify.util.js';
+export { notifyAdminOnError, ADMIN_TELEGRAM_ID };
 
 // Global error handler for all bot operations
 bot.catch(async (err) => {
   console.error(`Error while handling update ${err.ctx.update?.update_id}:`, err.error);
-  await notifyAdminOnError(err.ctx, err.error);
+  await notifyAdminOnError(err.ctx, err.error, `Global Handler (Update ${err.ctx.update?.update_id})`);
 });
