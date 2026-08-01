@@ -7,10 +7,10 @@ export async function callGeminiGenerateContent(promptText: string) {
   const genAI = new GoogleGenerativeAI(apiKey);
 
   const modelsToTry = [
-    'gemini-3.1-flash-lite',
-    'gemini-flash-lite-latest',
-    'gemini-3.5-flash-lite',
-    'gemini-3.6-flash'
+    'gemini-1.5-flash-8b',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash',
+    'gemini-2.0-flash'
   ];
 
   for (const modelName of modelsToTry) {
@@ -27,9 +27,9 @@ export async function callGeminiGenerateContent(promptText: string) {
     }
   }
 
-  // Direct REST fallback with gemini-3.1-flash-lite
+  // Direct REST fallback with gemini-1.5-flash
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
