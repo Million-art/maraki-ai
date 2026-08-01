@@ -40,5 +40,5 @@ export async function callGeminiGenerateContent(promptText) {
     catch (e) {
         // Ignore fallback error
     }
-    return "No response from Gemini.";
+    return "No response from Maraki.";
 }
