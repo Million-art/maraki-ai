@@ -18,6 +18,7 @@ export const adminStatusCommand = async (ctx: Context) => {
     return;
   }
 
+
   try {
     await ctx.reply("📊 Fetching admin status... Please wait...");
 
