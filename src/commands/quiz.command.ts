@@ -2,7 +2,7 @@ import { Context, InlineKeyboard } from "grammy";
 import { setSession, getSession } from "../utils/redis.js";
 import { apiService } from "../services/api.service.js";
 import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
-import { FALLBACK_QUIZ_QUESTIONS, getFallbackMistakeQuestion } from "../config/fallbacks.config.js";
+import { getFallbackQuizQuestions, getFallbackMistakeQuestion } from "../config/fallbacks.config.js";
 
 export const quizCommand = async (ctx: Context) => {
   if (!ctx.from) return;
@@ -83,33 +83,36 @@ const generateQuizQuestions = async (userId: number) => {
     const conversation = await apiService.getConversation(userId);
     const recentMistakes = conversation?.grammarMistakes?.slice(-10) || [];
 
-    let questions = [];
+    let questions: any[] = [];
 
-    if (recentMistakes.length >= 3) {
-      // Generate questions from mistakes
-      const selectedMistakes = recentMistakes.slice(-5); // Use last 5 mistakes
+    if (recentMistakes.length > 0) {
+      // Prioritize questions generated directly from user's past mistakes
+      const selectedMistakes = recentMistakes.slice(-5);
       for (const mistake of selectedMistakes) {
         const question = await generateQuestionFromMistake(mistake, userLevel);
         questions.push(question);
       }
-    } else {
-      // Generate general questions based on level
-      questions = await generateGeneralQuestions(userLevel);
+    }
+
+    // Fill remaining slots up to 5 with questions tailored to user level and weak areas
+    if (questions.length < 5) {
+      const remainingCount = 5 - questions.length;
+      const extraQuestions = await generateGeneralQuestions(userLevel, remainingCount, recentMistakes);
+      questions = [...questions, ...extraQuestions];
     }
 
     return questions;
   } catch (error) {
     console.error('Error generating quiz questions:', error);
-    // Fallback to general questions
-    return await generateGeneralQuestions('intermediate');
+    return await generateGeneralQuestions('intermediate', 5);
   }
 };
 
 const generateQuestionFromMistake = async (mistake: any, userLevel: string) => {
-  const prompt = `Create a multiple-choice question about the grammar rule "${mistake.grammarType}" based on this mistake:
+  const prompt = `Create a multiple-choice question about the grammar rule "${mistake.grammarType || 'grammar'}" based on this user mistake:
 
-Original: "${mistake.mistake}"
-Corrected: "${mistake.correction}"
+Original Mistake: "${mistake.mistake}"
+Correct Explanation: "${mistake.correction}"
 
 User level: ${userLevel}
 
@@ -137,14 +140,36 @@ Return a JSON object with:
   }
 };
 
-const generateGeneralQuestions = async (userLevel: string) => {
-  const prompt = `Generate 5 multiple-choice questions for an English learner at ${userLevel} level. Focus on grammar, vocabulary, and sentence structure appropriate for this level.
+const generateGeneralQuestions = async (userLevel: string, count: number = 5, userMistakes: any[] = []) => {
+  const topics = [
+    "Phrasal Verbs & Everyday Idioms",
+    "Past Continuous vs Past Simple Tenses",
+    "Prepositions of Time, Direction & Place",
+    "Essential Vocabulary for Travel & Socializing",
+    "Conditionals & Hypotheses (If clauses)",
+    "Business, Career & Office English",
+    "Articles (a, an, the) & Quantifiers",
+    "Commonly Confused Words (their/there/they're, lie/lay)",
+    "Present Perfect vs Past Simple Tenses",
+    "Modal Verbs (can, should, must, might, could)"
+  ];
+  const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+  const randomSeed = Math.floor(Math.random() * 1000000);
 
-Return a JSON array of 5 objects, each with:
+  const mistakeContext = userMistakes.length > 0
+    ? `User's past mistake history: ${JSON.stringify(userMistakes.map(m => m.mistake || m.correction))}. Focus questions on similar weak areas.`
+    : `Focus on typical grammar and vocabulary mistakes made by ${userLevel} level English learners.`;
+
+  const prompt = `Generate ${count} UNIQUE, FRESH multiple-choice questions for an English learner at ${userLevel} level.
+${mistakeContext}
+Primary Focus Topic: ${randomTopic} (Random Seed: ${randomSeed}).
+Ensure questions are completely unique and test different grammar rules or vocabulary.
+
+Return a JSON array of ${count} objects, each with:
 {
   "question": "The question text",
   "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
-  "correctAnswer": 0 (index of correct option),
+  "correctAnswer": 0 (index of correct option: 0, 1, 2, or 3),
   "explanation": "Brief explanation"
 }`;
 
@@ -154,7 +179,7 @@ Return a JSON array of 5 objects, each with:
     return questions.map((q: any) => ({ ...q, type: 'general' }));
   } catch (error) {
     console.error('Error generating general questions:', error);
-    return FALLBACK_QUIZ_QUESTIONS;
+    return getFallbackQuizQuestions();
   }
 };
 
@@ -174,6 +199,18 @@ export const handleQuizAnswer = async (ctx: Context, answerIndex: number) => {
     isCorrect,
     explanation: currentQ.explanation
   });
+
+  // If user made a mistake, automatically record it so future quizzes personalize questions around it!
+  if (!isCorrect) {
+    try {
+      await apiService.addGrammarMistake(ctx.from.id, {
+        mistake: currentQ.question,
+        correction: currentQ.explanation,
+        grammarType: 'Quiz Mistake',
+        createdAt: new Date()
+      });
+    } catch (e) { }
+  }
 
   session.quizState.currentQuestion = currentQuestion + 1;
   await setSession(ctx.from.id, session);

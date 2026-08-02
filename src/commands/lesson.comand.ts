@@ -157,6 +157,7 @@ export const handleLessonResponse = async(ctx: Context) => {
     }
 
     let selectedTopic = '';
+    let conversationContext = '';
 
     // Determine the topic based on user response
     if (userResponse.includes('yes') || userResponse.includes('agree') || userResponse.includes('ok')) {
@@ -178,7 +179,7 @@ export const handleLessonResponse = async(ctx: Context) => {
             contextParts.push(...recentLessons.map((l: any) => `Lesson topic: ${l.topic}`));
           }
 
-          const conversationContext = contextParts.join(' | ');
+          conversationContext = contextParts.join(' | ');
 
           if (conversationContext.trim()) {
             const analysisPrompt = `Analyze this user's learning history and suggest the most appropriate English grammar topic they should focus on for their next lesson. Consider their grammar mistakes, previous lesson topics, and areas they've been working on.
@@ -209,12 +210,14 @@ Respond with just the topic name, nothing else.`;
       selectedTopic = userResponse.trim();
     }
 
-    // Generate lesson using Gemini
+    // Generate lesson using Gemini tailored to user's mistakes
     const lessonRequest = `${lessonPrompt}
 
 User Level: ${userLevel}
 Selected Topic: ${selectedTopic}
-User's Previous Focus Areas: Based on conversation history, focus on areas where the user has shown interest or made mistakes.`;
+User's Past Mistakes & Weak Areas: ${conversationContext || 'No recorded mistakes yet.'}
+
+IMPORTANT INSTRUCTION: Explicitly design this lesson to address and correct the user's specific past mistakes listed above while teaching "${selectedTopic}". Provide clear "Incorrect vs Correct" examples.`;
 
     const lessonContent = await callGeminiGenerateContent(lessonRequest);
 

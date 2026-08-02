@@ -23,7 +23,7 @@ export const FALLBACK_DAILY_CHALLENGE = {
   }
 };
 
-export const FALLBACK_QUIZ_QUESTIONS = [
+export const QUIZ_FALLBACK_POOL = [
   {
     question: "Choose the correct form: 'She ___ to school every day.'",
     options: ["A) go", "B) goes", "C) going", "D) went"],
@@ -58,8 +58,62 @@ export const FALLBACK_QUIZ_QUESTIONS = [
     correctAnswer: 2,
     explanation: "With plural subject 'They' in present continuous, we use 'are'.",
     type: 'general'
+  },
+  {
+    question: "Select the correct past tense of 'buy':",
+    options: ["A) buyed", "B) bought", "C) buying", "D) buys"],
+    correctAnswer: 1,
+    explanation: "The irregular past tense of 'buy' is 'bought'.",
+    type: 'general'
+  },
+  {
+    question: "Which sentence uses the preposition 'at' correctly?",
+    options: ["A) I will arrive at Monday.", "B) She lives at Addis Ababa.", "C) We met at 5 o'clock.", "D) He is at home on July."],
+    correctAnswer: 2,
+    explanation: "We use 'at' for specific times (e.g. at 5 o'clock).",
+    type: 'general'
+  },
+  {
+    question: "Choose the correct antonym for 'ancient':",
+    options: ["A) modern", "B) old", "C) historical", "D) traditional"],
+    correctAnswer: 0,
+    explanation: "'Modern' is the opposite (antonym) of 'ancient'.",
+    type: 'general'
+  },
+  {
+    question: "Fill in the blank: 'If it rains, we ___ at home.'",
+    options: ["A) will stay", "B) stayed", "C) staying", "D) stays"],
+    correctAnswer: 0,
+    explanation: "First conditional structure: If + present simple, will + base verb.",
+    type: 'general'
+  },
+  {
+    question: "Which word is spelled correctly?",
+    options: ["A) Receive", "B) Recieve", "C) Receve", "D) Receeve"],
+    correctAnswer: 0,
+    explanation: "'Receive' follows the rule: 'i before e except after c'.",
+    type: 'general'
+  },
+  {
+    question: "Complete: 'She has been working here ___ 3 years.'",
+    options: ["A) since", "B) for", "C) during", "D) from"],
+    correctAnswer: 1,
+    explanation: "Use 'for' to indicate a period or duration of time (for 3 years).",
+    type: 'general'
+  },
+  {
+    question: "What does the idiom 'Piece of cake' mean?",
+    options: ["A) A delicious dessert", "B) Something very easy", "C) A birthday celebration", "D) Something very expensive"],
+    correctAnswer: 1,
+    explanation: "'Piece of cake' is an idiom that means something is very easy to do.",
+    type: 'general'
   }
 ];
+
+export function getFallbackQuizQuestions() {
+  const shuffled = [...QUIZ_FALLBACK_POOL].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 5);
+}
 
 export function getFallbackMistakeQuestion(mistakeText: string, correctionText: string) {
   return {

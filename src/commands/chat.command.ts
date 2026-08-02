@@ -42,45 +42,55 @@ export async function handleChatConversation(ctx: Context) {
       console.warn('API not available, using default user level:', (apiError as Error).message);
     }
 
-    // Get conversation context (last 5 chat entries for memory)
+    // Get conversation context and past grammar mistakes for memory
     let context = '';
+    let mistakesContext = '';
     try {
       const conversation = await apiService.getConversation(userId);
-      if (conversation?.chatHistory && conversation.chatHistory.length > 0) {
-        // Get last 5 chat entries for context
-        const recentChats = conversation.chatHistory.slice(-5);
-        context = recentChats
-          .map((chat: any) => {
-            const userMsg = chat.userMessage || 'No message';
-            const aiMsg = chat.aiResponse || 'No response';
+      if (conversation) {
+        if (conversation.grammarMistakes && conversation.grammarMistakes.length > 0) {
+          const recentMistakes = conversation.grammarMistakes.slice(-5);
+          mistakesContext = recentMistakes
+            .map((m: any) => `Mistake: "${m.mistake || m.question}" → Correction: "${m.correction || m.explanation}"`)
+            .join(' | ');
+        }
 
-            // Smart truncation: take first 100 chars, but don't cut words
-            const truncateSmart = (text: string, maxLength: number) => {
-              if (text.length <= maxLength) return text;
-              const truncated = text.substring(0, maxLength);
-              const lastSpace = truncated.lastIndexOf(' ');
-              return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...';
-            };
+        if (conversation.chatHistory && conversation.chatHistory.length > 0) {
+          const recentChats = conversation.chatHistory.slice(-5);
+          context = recentChats
+            .map((chat: any) => {
+              const userMsg = chat.userMessage || 'No message';
+              const aiMsg = chat.aiResponse || 'No response';
 
-            const truncatedUserMsg = truncateSmart(userMsg, 100);
-            const truncatedAiMsg = truncateSmart(aiMsg, 100);
+              const truncateSmart = (text: string, maxLength: number) => {
+                if (text.length <= maxLength) return text;
+                const truncated = text.substring(0, maxLength);
+                const lastSpace = truncated.lastIndexOf(' ');
+                return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...';
+              };
 
-            return `User: ${truncatedUserMsg} | AI: ${truncatedAiMsg}`;
-          })
-          .join(' | ');
+              return `User: ${truncateSmart(userMsg, 100)} | AI: ${truncateSmart(aiMsg, 100)}`;
+            })
+            .join(' | ');
+        }
       }
     } catch (apiError) {
       console.warn('API not available, using empty context:', (apiError as Error).message);
     }
 
-    // Generate chat response with context
+    // Generate chat response with context and mistake awareness
     const fullPrompt = `${chatPrompt}
 
 User Level: ${userLevel}
+User's Recorded Weak Areas & Past Mistakes: ${mistakesContext || 'None recorded yet'}
 Previous Conversation Context: ${context}
 Current User Message: "${userMessage}"
 
-Respond naturally and engagingly to continue the conversation.`;
+INSTRUCTIONS FOR AI TUTOR:
+1. Act as a warm, supportive personalized English tutor.
+2. If the user made a grammar or phrasing mistake in "${userMessage}", gently provide a friendly correction at the end of your message.
+3. Keep their past weak areas in mind to encourage proper usage.
+4. Respond naturally and engagingly to continue the conversation.`;
 
     const aiResponse = await callGeminiGenerateContent(fullPrompt);
 
