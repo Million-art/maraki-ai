@@ -7,23 +7,8 @@ export async function challengeCommand(ctx: Context) {
   if (!ctx.from) return;
 
   const userId = ctx.from.id;
+  // Record daily streak activity (increments streak once per calendar day)
   const { streak, isNewDay } = await updateDailyStreak(userId);
-
-  // If user already completed/viewed today's challenge, ask them to come back tomorrow!
-  if (!isNewDay) {
-    const keyboard = new InlineKeyboard()
-      .text("🧠 Full Quiz (5 Questions)", "quiz")
-      .text("📚 Lessons", "lesson");
-
-    await ctx.reply(
-      `🎉 <b>You've already completed today's Daily Challenge!</b>\n\n` +
-      `🔥 <b>Current Streak: ${streak} ${streak === 1 ? 'Day' : 'Days'} Active</b>\n\n` +
-      `⏰ <b>Come back tomorrow for your next Daily Challenge!</b>\n\n` +
-      `<i>In the meantime, keep practicing your English skills below:</i>`,
-      { parse_mode: 'HTML', reply_markup: keyboard }
-    );
-    return;
-  }
 
   // Send initial typing status
   if (ctx.chat?.id) {

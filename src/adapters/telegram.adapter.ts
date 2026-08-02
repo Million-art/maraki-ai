@@ -131,6 +131,10 @@ bot.on('callback_query:data', async (ctx) => {
     return ctx.answerCallbackQuery('⚠️ Could not get your Telegram ID.');
   }
 
+  try {
+    await ctx.answerCallbackQuery();
+  } catch (e) {}
+
   if (['beginner', 'intermediate', 'advanced'].includes(data)) {
     let newLevel = 'beginner';
     switch (data) {
@@ -180,6 +184,13 @@ bot.on('callback_query:data', async (ctx) => {
       case 'quiz':
         await setSession(ctx.from.id, { mode: 'quiz', timestamp: Date.now(), userId: ctx.from.id });
         await quizCommand(ctx);
+        break;
+      case 'level':
+        await levelCommand(ctx);
+        break;
+      case 'referral':
+      case 'referral_link':
+        await referralCommand(ctx);
         break;
       case 'daily_challenge':
       case 'challenge':

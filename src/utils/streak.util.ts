@@ -8,14 +8,14 @@ interface StreakData {
 const memoryStreakStore = new Map<number, StreakData>();
 
 function getTodayString(): string {
-  const now = new Date();
-  return now.toISOString().split('T')[0];
+  const d = new Date();
+  return d.toLocaleDateString('sv-SE', { timeZone: 'Africa/Addis_Ababa' });
 }
 
 function getYesterdayString(): string {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  return d.toISOString().split('T')[0];
+  return d.toLocaleDateString('sv-SE', { timeZone: 'Africa/Addis_Ababa' });
 }
 
 /**
