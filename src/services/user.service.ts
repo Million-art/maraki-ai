@@ -18,20 +18,21 @@ export const registerOrUpdate = async (
 
   try {
     const user = await apiService.createOrUpdateUser(from.id, userData);
+    const telegramId = user?.telegramId ?? from.id;
     return {
-      id: user.telegramId.toString(),
-      telegramId: user.telegramId,
-      first_name: user.firstName,
-      last_name: user.lastName,
-      level: user.level,
-      isPremium: user.isPremium,
-      isMarakiPremium: user.isMarakiPremium,
-      isBot: user.isBot,
-      referredBy: user.referredBy,
-      referral: user.referral ? { count: user.referral.count, usersTelegramId: [] } : undefined,
-      subscriptionTier: user.subscriptionTier,
-      subscriptionExpiresAt: user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).toISOString() : undefined,
-      isNewUser: (user as any).isNewUser !== undefined ? (user as any).isNewUser : undefined,
+      id: telegramId.toString(),
+      telegramId,
+      first_name: user?.firstName,
+      last_name: user?.lastName,
+      level: user?.level,
+      isPremium: user?.isPremium,
+      isMarakiPremium: user?.isMarakiPremium,
+      isBot: user?.isBot,
+      referredBy: user?.referredBy,
+      referral: user?.referral ? { count: user.referral.count, usersTelegramId: [] } : undefined,
+      subscriptionTier: user?.subscriptionTier,
+      subscriptionExpiresAt: user?.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).toISOString() : undefined,
+      isNewUser: (user as any)?.isNewUser !== undefined ? (user as any).isNewUser : undefined,
     };
   } catch (error) {
     console.error("Error registering/updating user:", error);

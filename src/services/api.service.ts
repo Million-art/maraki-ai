@@ -57,6 +57,10 @@ export class ApiService {
     }
   }
 
+  async registerStudent(studentData: { telegramId: number; firstName?: string; lastName?: string; username?: string; level?: string; referredBy?: number }): Promise<any> {
+    return this.createOrUpdateUser(studentData.telegramId, studentData);
+  }
+
   async getReferralStats(telegramId: number): Promise<any> {
     try {
       const { data } = await axios.get(`${this.backendUrl}/api/student/referral-stats/${telegramId}`, { timeout: 5000 });
