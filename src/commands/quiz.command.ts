@@ -231,12 +231,22 @@ const showQuizResults = async (ctx: Context) => {
 
   resultMessage += `\n\nWhat would you like to do next? 🚀`;
 
-  // Attach Call-to-Action inline keyboard to keep user engaged
+  // Attach Call-to-Action inline keyboard with direct Talk with Maraki Mini App button
+  const miniAppUrl = process.env.MINI_APP_URL || 'https://t.me/marakiai_bot/app';
   const keyboard = new InlineKeyboard()
     .text("🧠 Take Another Quiz", "quiz")
-    .text("📖 Learn a Lesson", "lesson").row()
-    .text("⚡ Practice Chat", "chat_conversation")
-    .text("🔗 Referral Link", "referral_link").row()
+    .text("📖 Learn a Lesson", "lesson")
+    .row();
+
+  if (miniAppUrl.includes('t.me/')) {
+    keyboard.url("🎙️ Talk with Maraki", miniAppUrl);
+  } else {
+    keyboard.webApp("🎙️ Talk with Maraki", miniAppUrl);
+  }
+
+  keyboard
+    .text("🔗 Referral Link", "referral_link")
+    .row()
     .text("💳 Upgrade to VIP", "pay");
 
   await ctx.reply(resultMessage, { reply_markup: keyboard });
