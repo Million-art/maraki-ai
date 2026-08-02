@@ -250,7 +250,12 @@ const showQuizResults = async (ctx: Context) => {
     resultMessage += `💪 Keep learning! Practice makes perfect!`;
   }
 
-  // Save quiz result to database
+  // Save quiz result locally & to database
+  try {
+    const { recordQuizCompletion } = await import('../utils/quiz-stats.util.js');
+    await recordQuizCompletion(ctx.from.id, correctAnswers, 5);
+  } catch (e) {}
+
   try {
     await apiService.saveQuizResult(ctx.from.id, {
       score,

@@ -2,6 +2,7 @@ import { Context, InlineKeyboard } from "grammy";
 import { getCurrentLevel } from "../services/user.service.js";
 import { getDailyStreak } from "../utils/streak.util.js";
 import { apiService } from "../services/api.service.js";
+import { getLocalQuizStats } from '../utils/quiz-stats.util.js';
 
 export const levelCommand = async (ctx: Context) => {
   if (!ctx.from) {
@@ -12,25 +13,37 @@ export const levelCommand = async (ctx: Context) => {
   const currentLevel = await getCurrentLevel(ctx.from);
   const streak = await getDailyStreak(userId);
 
-  // Default stats fallback
   let totalQuizzes = 0;
   let totalCorrect = 0;
   let totalQuestions = 0;
-  let accuracy = 75; // Default initial accuracy percentage
+  let accuracy = 0; // Default initial accuracy percentage is 0%
 
   try {
+    const localStats = await getLocalQuizStats(userId);
+    totalQuizzes = localStats.totalQuizzesCompleted;
+    totalQuestions = localStats.totalQuestions;
+    totalCorrect = localStats.totalCorrect;
+
     const user: any = await apiService.getUserByTelegramId(userId);
     if (user) {
-      totalQuizzes = user.totalQuizzesCompleted || 0;
+      const apiQuizzes = user.totalQuizzesCompleted || 0;
+      if (apiQuizzes > totalQuizzes) {
+        totalQuizzes = apiQuizzes;
+      }
       if (user.quizAttempts && Array.isArray(user.quizAttempts) && user.quizAttempts.length > 0) {
-        totalQuestions = user.quizAttempts.reduce((acc: number, q: any) => acc + (q.totalQuestions || 5), 0);
-        totalCorrect = user.quizAttempts.reduce((acc: number, q: any) => acc + (q.correctAnswers || 0), 0);
-        if (totalQuestions > 0) {
-          accuracy = Math.round((totalCorrect / totalQuestions) * 100);
+        const apiQuestions = user.quizAttempts.reduce((acc: number, q: any) => acc + (q.totalQuestions || 5), 0);
+        const apiCorrect = user.quizAttempts.reduce((acc: number, q: any) => acc + (q.correctAnswers || 0), 0);
+        if (apiQuestions > totalQuestions) {
+          totalQuestions = apiQuestions;
+          totalCorrect = apiCorrect;
         }
       }
     }
-  } catch (e) {}
+
+    if (totalQuestions > 0) {
+      accuracy = Math.round((totalCorrect / totalQuestions) * 100);
+    }
+  } catch (e) { }
 
   const levelName = (currentLevel.level || 'Intermediate').toUpperCase();
 

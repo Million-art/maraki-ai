@@ -4,7 +4,7 @@ I can help you:
 • Fix grammar
 • Practice conversations
 • Improve vocabulary
-• Translate English ↔ Amharic
+• Translate Amharic 🇪🇹 → English 🇬🇧
 • Take quizzes
 
 ⭐ 12,000+ lessons completed
