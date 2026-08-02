@@ -1,6 +1,6 @@
 import { Context, InlineKeyboard } from 'grammy';
 import { apiService } from '../services/api.service.js';
-import { getLocalQuizStats } from '../utils/quiz-stats.util.js';
+import { quizStatsService } from '../utils/quiz-stats.util.js';
 
 export type ProtectedResource = 'lesson' | 'quiz' | 'chat';
 
@@ -61,7 +61,7 @@ export async function checkCentralAuthAndAccess(
     } else if (resource === 'quiz') {
       let quizzesUsed = usage?.weeklyQuizzesUsed ?? 0;
       try {
-        const local = await getLocalQuizStats(userId);
+        const local = await quizStatsService.getLocalQuizStats(userId);
         if (local && local.totalQuizzesCompleted > quizzesUsed) {
           quizzesUsed = local.totalQuizzesCompleted;
         }
@@ -88,7 +88,7 @@ export async function checkCentralAuthAndAccess(
     // Strict Fail-Closed Security: if an error occurs while evaluating quiz limits, block access
     if (resource === 'quiz') {
       try {
-        const local = await getLocalQuizStats(userId);
+        const local = await quizStatsService.getLocalQuizStats(userId);
         if (local && local.totalQuizzesCompleted >= 3) {
           const keyboard = new InlineKeyboard().text("💳 Upgrade to VIP — Unlimited Access", "pay");
           await ctx.reply(

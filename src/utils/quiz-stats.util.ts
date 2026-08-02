@@ -73,3 +73,8 @@ export async function getLocalQuizStats(userId: number): Promise<LocalQuizStats>
 
   return stats;
 }
+
+export const quizStatsService = {
+  getLocalQuizStats,
+  recordQuizCompletion,
+};
