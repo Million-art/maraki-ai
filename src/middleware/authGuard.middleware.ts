@@ -1,5 +1,6 @@
 import { Context, InlineKeyboard } from 'grammy';
 import { apiService } from '../services/api.service.js';
+import { getLocalQuizStats } from '../utils/quiz-stats.util.js';
 
 export type ProtectedResource = 'lesson' | 'quiz' | 'chat';
 
@@ -36,16 +37,16 @@ export async function checkCentralAuthAndAccess(
     const usage = await apiService.getUsageStatus(userId);
 
     // VIP Users have unlimited access to all features
-    if (usage.isPremium) {
+    if (usage && usage.isPremium) {
       return true;
     }
 
     const keyboard = new InlineKeyboard().text("💳 Upgrade to VIP — Unlimited Access", "pay");
 
     if (resource === 'lesson') {
-      const lessonsUsed = usage.weeklyLessonsUsed ?? 0;
-      const lessonLimit = usage.weeklyLessonLimit ?? 5;
-      const remainingLessons = usage.remainingLessons ?? (lessonLimit - lessonsUsed);
+      const lessonsUsed = usage?.weeklyLessonsUsed ?? 0;
+      const lessonLimit = usage?.weeklyLessonLimit ?? 5;
+      const remainingLessons = usage?.remainingLessons ?? (lessonLimit - lessonsUsed);
 
       if (remainingLessons <= 0) {
         await ctx.reply(
@@ -58,15 +59,17 @@ export async function checkCentralAuthAndAccess(
         return false;
       }
     } else if (resource === 'quiz') {
-      let quizzesUsed = usage.weeklyQuizzesUsed ?? 0;
+      let quizzesUsed = usage?.weeklyQuizzesUsed ?? 0;
       try {
         const local = await getLocalQuizStats(userId);
-        if (local.totalQuizzesCompleted > quizzesUsed) {
-          quizzesUsed = Math.min(local.totalQuizzesCompleted, 3);
+        if (local && local.totalQuizzesCompleted > quizzesUsed) {
+          quizzesUsed = local.totalQuizzesCompleted;
         }
-      } catch (e) { }
+      } catch (e) {
+        console.warn(`[CentralAuth] Local quiz stats lookup failed for user ${userId}:`, e);
+      }
 
-      const quizLimit = usage.weeklyQuizLimit ?? 3;
+      const quizLimit = usage?.weeklyQuizLimit ?? 3;
       const remainingQuizzes = Math.max(0, quizLimit - quizzesUsed);
 
       if (remainingQuizzes <= 0) {
@@ -82,6 +85,23 @@ export async function checkCentralAuthAndAccess(
     }
   } catch (error) {
     console.error(`[CentralAuth] Error checking usage status for ${userId}:`, error);
+    // Strict Fail-Closed Security: if an error occurs while evaluating quiz limits, block access
+    if (resource === 'quiz') {
+      try {
+        const local = await getLocalQuizStats(userId);
+        if (local && local.totalQuizzesCompleted >= 3) {
+          const keyboard = new InlineKeyboard().text("💳 Upgrade to VIP — Unlimited Access", "pay");
+          await ctx.reply(
+            `🚫 <b>Weekly Quiz Limit Reached!</b>\n\n` +
+            `You have used all <b>3 free quizzes</b> this week.\n\n` +
+            `⏳ Your quota resets every <b>Monday</b>.\n\n` +
+            `🔓 <b>Upgrade to VIP</b> for unlimited quizzes, lessons, and AI practice — 299 ETB/month!`,
+            { parse_mode: 'HTML', reply_markup: keyboard }
+          );
+          return false;
+        }
+      } catch (e) { }
+    }
   }
 
   return true;
