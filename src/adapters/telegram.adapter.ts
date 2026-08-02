@@ -24,7 +24,9 @@ if (!bot_token) {
 }
 export const bot = new Bot(bot_token);
 
-// Global per-user deduplication lock map
+import { redis } from '../utils/redis.js';
+
+// Global per-user deduplication lock map for single-instance
 const userActionLocks = new Set<string>();
 
 // Global middleware for continuous typing indicator & duplicate request suppression
@@ -34,17 +36,36 @@ bot.use(async (ctx, next) => {
   }
 
   const userId = ctx.from.id;
-  const updateKey = ctx.callbackQuery?.data 
-    ? `cb_${userId}_${ctx.callbackQuery.data}` 
+  const actionName = ctx.callbackQuery?.data 
+    ? ctx.callbackQuery.data 
     : (ctx.message?.text && ctx.message.text.startsWith('/')) 
-      ? `cmd_${userId}_${ctx.message.text.split(' ')[0]}`
+      ? ctx.message.text.split(' ')[0]
       : null;
 
+  const updateKey = actionName ? `action_${userId}_${actionName}` : null;
+
+  // 1. Atomic Redis Distributed Lock (prevents duplicate execution across multiple processes/PM2)
+  if (actionName) {
+    try {
+      if (redis.isOpen) {
+        const redisLockKey = `lock:user_action:${userId}:${actionName}`;
+        const acquired = await redis.set(redisLockKey, 'locked', { NX: true, EX: 5 });
+        if (!acquired) {
+          if (ctx.callbackQuery) {
+            try { await ctx.answerCallbackQuery(); } catch (e) {}
+          }
+          return; // Suppress duplicate execution from concurrent processes
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 2. In-Memory Fallback Lock
   if (updateKey && userActionLocks.has(updateKey)) {
     if (ctx.callbackQuery) {
       try { await ctx.answerCallbackQuery(); } catch (e) {}
     }
-    return; // Suppress duplicate concurrent click/command execution
+    return;
   }
 
   if (updateKey) {
