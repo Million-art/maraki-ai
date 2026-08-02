@@ -35,6 +35,13 @@ bot.use(async (ctx, next) => {
     return next();
   }
 
+  // Answer callback queries immediately to prevent Telegram from auto-retrying unacknowledged requests
+  if (ctx.callbackQuery) {
+    try {
+      await ctx.answerCallbackQuery();
+    } catch (e) {}
+  }
+
   const userId = ctx.from.id;
   const actionName = ctx.callbackQuery?.data 
     ? ctx.callbackQuery.data 
@@ -44,17 +51,14 @@ bot.use(async (ctx, next) => {
 
   const updateKey = actionName ? `action_${userId}_${actionName}` : null;
 
-  // 1. Atomic Redis Distributed Lock (prevents duplicate execution across multiple processes/PM2)
+  // 1. Atomic Redis Distributed Lock (15s cooldown prevents duplicate execution & retries)
   if (actionName) {
     try {
       if (redis.isOpen) {
         const redisLockKey = `lock:user_action:${userId}:${actionName}`;
-        const acquired = await redis.set(redisLockKey, 'locked', { NX: true, EX: 5 });
+        const acquired = await redis.set(redisLockKey, 'locked', { NX: true, EX: 15 });
         if (!acquired) {
-          if (ctx.callbackQuery) {
-            try { await ctx.answerCallbackQuery(); } catch (e) {}
-          }
-          return; // Suppress duplicate execution from concurrent processes
+          return; // Suppress duplicate execution from concurrent processes or retries
         }
       }
     } catch (e) {}
