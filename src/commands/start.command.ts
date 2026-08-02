@@ -1,7 +1,8 @@
 import { Context, InlineKeyboard } from "grammy";
-import { start_msg } from "../messages/start.message.js";
+import { getPersonalizedStartMsg } from "../messages/start.message.js";
 import { registerOrUpdate } from "../services/user.service.js";
 import { getSession, setSession } from "../utils/redis.js";
+import { getDailyStreak } from "../utils/streak.util.js";
 
 export async function startCommand(ctx: Context) {
   if (!ctx.from) return;
@@ -21,6 +22,7 @@ export async function startCommand(ctx: Context) {
 
     // Always register or update user via service layer to record referrer
     const user = await registerOrUpdate(ctx.from, referrerId);
+    const streak = await getDailyStreak(ctx.from.id);
 
     const isBrandNewUser = user.isNewUser || (!session || !session.user);
 
@@ -64,7 +66,9 @@ export async function startCommand(ctx: Context) {
       .row()
       .text("🎁 Invite Friends", "referral_link");
 
-    await ctx.reply(`👋 Hello <b>${ctx.from.first_name || "there"}</b>!\n\n${start_msg}`, { parse_mode: 'HTML', reply_markup: keyboard });
+    const welcomeMsg = getPersonalizedStartMsg(ctx.from.first_name || "there");
+
+    await ctx.reply(welcomeMsg, { parse_mode: 'HTML', reply_markup: keyboard });
   } catch (error) {
     console.error("Error in /start command:", error);
     await ctx.reply("⚠️ Something went wrong while starting the bot.");
