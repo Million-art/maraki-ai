@@ -107,6 +107,53 @@ export const QUIZ_FALLBACK_POOL = [
     correctAnswer: 1,
     explanation: "'Piece of cake' is an idiom that means something is very easy to do.",
     type: 'general'
+  },
+  {
+    question: "Choose the correct option: 'Neither of the answers ___ correct.'",
+    options: ["A) is", "B) are", "C) were", "D) be"],
+    correctAnswer: 0,
+    explanation: "'Neither' is singular in formal grammar and takes 'is'.",
+    type: 'general'
+  },
+  {
+    question: "Select the sentence with correct punctuation:",
+    options: [
+      "A) Lets go to the market",
+      "B) Let's go to the market.",
+      "C) Lets' go to the market.",
+      "D) Let go to the market."
+    ],
+    correctAnswer: 1,
+    explanation: "'Let's' is a contraction of 'Let us' and requires an apostrophe.",
+    type: 'general'
+  },
+  {
+    question: "Complete: 'He is interested ___ learning web development.'",
+    options: ["A) on", "B) at", "C) in", "D) about"],
+    correctAnswer: 2,
+    explanation: "The adjective 'interested' is followed by the preposition 'in'.",
+    type: 'general'
+  },
+  {
+    question: "Which word means 'to make something better'?",
+    options: ["A) Impair", "B) Improve", "C) Ignore", "D) Impose"],
+    correctAnswer: 1,
+    explanation: "'Improve' means to make or become better.",
+    type: 'general'
+  },
+  {
+    question: "Choose the correct modal verb: 'You ___ drive without a seatbelt.'",
+    options: ["A) shouldn't", "B) mustn't", "C) couldn't", "D) needn't"],
+    correctAnswer: 1,
+    explanation: "'Mustn't' expresses strict prohibition or law.",
+    type: 'general'
+  },
+  {
+    question: "Complete: 'By next year, I ___ my degree.'",
+    options: ["A) finish", "B) will have finished", "C) am finishing", "D) finished"],
+    correctAnswer: 1,
+    explanation: "Use Future Perfect ('will have finished') for actions completed before a future time.",
+    type: 'general'
   }
 ];
 

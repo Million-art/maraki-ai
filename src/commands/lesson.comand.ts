@@ -6,34 +6,16 @@ import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateConte
 import { FALLBACK_LESSON } from "../config/fallbacks.config.js";
 import { lessonFollowupPrompt } from "../prompt/lesson.prompt.js";
 
+import { checkCentralAuthAndAccess } from "../middleware/authGuard.middleware.js";
+
 export const lessonCommand = async(ctx: Context) => {
   if (!ctx.from) {
     return ctx.reply("⚠️ Could not get your Telegram ID.");
   }
 
-  // ─── USAGE GATE ──────────────────────────────────────────────────
-  // Check before starting — blocks all entry paths:
-  // /lesson command, CTA "Learn a Lesson" button, lesson callback
-  const usage = await apiService.getUsageStatus(ctx.from.id);
-
-  if (!usage.isPremium) {
-    const lessonsUsed = usage.weeklyLessonsUsed ?? 0;
-    const lessonLimit = usage.weeklyLessonLimit ?? 5;
-    const remaining  = lessonLimit - lessonsUsed;
-
-    if (remaining <= 0) {
-      const keyboard = new InlineKeyboard().text("💳 Upgrade to VIP — Unlimited Access", "pay");
-      await ctx.reply(
-        `🚫 <b>Weekly Lesson Limit Reached!</b>\n\n` +
-        `You have used all <b>${lessonLimit} free lessons</b> this week.\n\n` +
-        `⏳ Your quota resets every <b>Monday</b>.\n\n` +
-        `🔓 <b>Upgrade to VIP</b> for unlimited lessons, quizzes, and AI chat — 299 ETB/month!`,
-        { parse_mode: 'HTML', reply_markup: keyboard }
-      );
-      return;
-    }
-  }
-  // ─────────────────────────────────────────────────────────────────
+  // Centralized authentication & access verification
+  const allowed = await checkCentralAuthAndAccess(ctx, 'lesson');
+  if (!allowed) return;
 
   await setSession(ctx.from.id, { mode: 'lesson', timestamp: Date.now() });
 

@@ -4,33 +4,15 @@ import { apiService } from "../services/api.service.js";
 import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
 import { getFallbackQuizQuestions, getFallbackMistakeQuestion } from "../config/fallbacks.config.js";
 
+import { checkCentralAuthAndAccess } from "../middleware/authGuard.middleware.js";
+
 export const quizCommand = async (ctx: Context) => {
   if (!ctx.from) return;
 
   try {
-    // ─── USAGE GATE ──────────────────────────────────────────────────
-    // Check before starting the quiz — blocks all entry paths:
-    // /quiz command, CTA button, callback query
-    const usage = await apiService.getUsageStatus(ctx.from.id);
-
-    if (!usage.isPremium) {
-      const quizzesUsed = usage.weeklyQuizzesUsed ?? 0;
-      const quizLimit = usage.weeklyQuizLimit ?? 3;
-      const remaining = quizLimit - quizzesUsed;
-
-      if (remaining <= 0) {
-        const keyboard = new InlineKeyboard().text("💳 Upgrade to VIP — Unlimited Access", "pay");
-        await ctx.reply(
-          `🚫 <b>Weekly Quiz Limit Reached!</b>\n\n` +
-          `You have used all <b>${quizLimit} free quizzes</b> this week.\n\n` +
-          `⏳ Your quota resets every <b>Monday</b>.\n\n` +
-          `🔓 <b>Upgrade to VIP</b> for unlimited quizzes, lessons, and AI chat — 299 ETB/month!`,
-          { parse_mode: 'HTML', reply_markup: keyboard }
-        );
-        return;
-      }
-    }
-    // ─────────────────────────────────────────────────────────────────
+    // Centralized authentication & access verification
+    const allowed = await checkCentralAuthAndAccess(ctx, 'quiz');
+    if (!allowed) return;
 
     await setSession(ctx.from.id, { mode: 'quiz', timestamp: Date.now(), quizState: { currentQuestion: 0, answers: [], questions: [] } });
     await ctx.reply("🧠 Starting your English quiz! I'll ask you 5 questions based on your recent mistakes or your level.\n\nLet's begin!");
@@ -175,12 +157,16 @@ Return a JSON array of ${count} objects, each with:
 
   try {
     const response = await callGeminiGenerateContent(prompt);
-    const questions = JSON.parse(response.replace(/```json\s*|\s*```/g, ''));
-    return questions.map((q: any) => ({ ...q, type: 'general' }));
+    const jsonMatch = response.match(/\[[\s\S]*\]/);
+    const jsonString = jsonMatch ? jsonMatch[0] : response.replace(/```json\s*|\s*```/g, '');
+    const questions = JSON.parse(jsonString);
+    if (Array.isArray(questions) && questions.length > 0) {
+      return questions.map((q: any) => ({ ...q, type: 'general' }));
+    }
   } catch (error) {
     console.error('Error generating general questions:', error);
-    return getFallbackQuizQuestions();
   }
+  return getFallbackQuizQuestions();
 };
 
 export const handleQuizAnswer = async (ctx: Context, answerIndex: number) => {
