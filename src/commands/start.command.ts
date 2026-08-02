@@ -19,18 +19,21 @@ export async function startCommand(ctx: Context) {
     // Check session for user data
     const session = await getSession(ctx.from.id);
 
-    if (referrerId) {
+    // Always register or update user via service layer to record referrer
+    const user = await registerOrUpdate(ctx.from, referrerId);
+
+    const isBrandNewUser = user.isNewUser || (!session || !session.user);
+
+    // Track referral join ONLY if user is brand new (ignore existing users clicking referral links)
+    if (referrerId && isBrandNewUser) {
       try {
         const { trackReferralJoin } = await import("../utils/analytics.util.js");
         await trackReferralJoin(referrerId, ctx.from.id);
       } catch (e) { }
     }
 
-    // Always register or update user via service layer to record referrer
-    const user = await registerOrUpdate(ctx.from, referrerId);
-
-    // Notify Admin of new user registration if new
-    if (!session || !session.user) {
+    // Notify Admin ONLY for brand new user registrations
+    if (isBrandNewUser) {
       const { trackNewUser } = await import("../utils/analytics.util.js");
       await trackNewUser(ctx);
     }

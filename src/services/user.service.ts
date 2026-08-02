@@ -31,6 +31,7 @@ export const registerOrUpdate = async (
       referral: user.referral ? { count: user.referral.count, usersTelegramId: [] } : undefined,
       subscriptionTier: user.subscriptionTier,
       subscriptionExpiresAt: user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).toISOString() : undefined,
+      isNewUser: (user as any).isNewUser !== undefined ? (user as any).isNewUser : undefined,
     };
   } catch (error) {
     console.error("Error registering/updating user:", error);

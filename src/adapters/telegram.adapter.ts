@@ -209,9 +209,16 @@ bot.on('callback_query:data', async (ctx) => {
     }
     try {
       await updateUserLevel(ctx.from.id, newLevel);
-      await ctx.answerCallbackQuery(`✅ Level updated to ${newLevel}`);
+      const formattedLevel = newLevel.toUpperCase();
+      await ctx.reply(
+        `🎯 <b>English Level Updated!</b>\n\n` +
+        `Your level is now set to <b>${formattedLevel}</b>. All future AI quizzes, lessons, and daily challenges will adapt to your new difficulty! 🚀`,
+        { parse_mode: 'HTML' }
+      );
+      // Re-render level progress dashboard to visually reflect the change
+      await levelCommand(ctx);
     } catch (error) {
-      await ctx.answerCallbackQuery('❌ Failed to update level.');
+      await ctx.reply('❌ Failed to update level. Please try again.');
     }
   } else {
     switch (data) {

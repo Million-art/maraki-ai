@@ -55,12 +55,14 @@ export const levelCommand = async (ctx: Context) => {
     `🧠 <b>Quizzes Completed:</b> ${totalQuizzes}\n\n` +
     `⚙️ <i>Want to change your English difficulty level? Select below:</i>`;
 
-  // Build the inline keyboard
+  const normLevel = (currentLevel.level || 'intermediate').toLowerCase();
+
+  // Build the inline keyboard with active level indicator
   const keyboard = new InlineKeyboard()
-    .text("🟢 Beginner", "beginner")
-    .text("🟡 Intermediate", "intermediate")
+    .text(normLevel === 'beginner' ? "✅ Beginner" : "🟢 Beginner", "beginner")
+    .text(normLevel === 'intermediate' ? "✅ Intermediate" : "🟡 Intermediate", "intermediate")
     .row()
-    .text("🔴 Advanced", "advanced")
+    .text(normLevel === 'advanced' ? "✅ Advanced" : "🔴 Advanced", "advanced")
     .row()
     .text("🔥 Daily Challenge", "daily_challenge")
     .text("🧠 Practice Quiz", "quiz");
