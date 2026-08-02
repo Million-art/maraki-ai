@@ -4,12 +4,10 @@ export const GEMINI_CONFIG = {
    * Requests will try models from top to bottom if a model is unavailable or rate-limited.
    */
   models: [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash-lite',
     'gemini-2.0-flash',
-    'gemini-2.0-flash-exp',
-    'gemini-1.5-pro',
-    'gemini-pro',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-8b',
   ],
 
   /**
@@ -20,6 +18,8 @@ export const GEMINI_CONFIG = {
     const rawKeys = [
       process.env.GEMINI_API_KEY,
       process.env.GEMINI_API_KEY_2,
+      process.env.GEMINI_API_KEY_3,
+      process.env.GEMINI_API_KEY_4,
       process.env.GOOGLE_API_KEY,
       process.env.VITE_GEMINI_API_KEY,
     ]

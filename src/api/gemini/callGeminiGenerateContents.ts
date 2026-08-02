@@ -18,13 +18,15 @@ export async function callGeminiGenerateContent(promptText: string) {
           },
           body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
         });
+
         const data = await res.json();
 
         if (data?.error) {
           const errMsg = data.error.message || JSON.stringify(data.error);
-          console.warn(`Model ${modelName} (Key ${apiKey.substring(0, 6)}...) error: ${errMsg}`);
-          
-          // If quota exceeded or model not found, try next model/key
+          // Only log warnings if it's not an expected rate-limit cascade
+          if (!errMsg.includes('Quota exceeded')) {
+            console.warn(`Model ${modelName} (Key ${apiKey.substring(0, 6)}...): ${errMsg}`);
+          }
           continue;
         }
 
