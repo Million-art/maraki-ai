@@ -61,7 +61,7 @@ export async function startCommand(ctx: Context) {
       .text("📚 Lessons", "lesson")
       .text("🧠 Quiz", "quiz")
       .row()
-      .text("🌐 Amharic 🇪🇹 → English 🇬🇧", "translation")
+      .text("🌐 Amharic-English", "translation")
       .text("⚙️ My Progress", "level")
       .row()
       .text("🎁 Invite Friends", "referral_link");
