@@ -1,11 +1,11 @@
 export const getPersonalizedStartMsg = (name: string) => {
   return (
     `👋 Welcome to <b>Maraki AI</b>, <b>${name}</b>! 🌟\n\n` +
-    `I am your personal AI English tutor. Here is what we can do:\n\n` +
-    `• 🎙️ <b>Practice speaking & listening</b>\n` +
-    `• 🔥 <b>Daily Challenge</b> — Daily word, idiom & quick quiz\n` +
-    `• 📚 <b>Lessons</b> — Learn grammar & vocabulary\n` +
-    `• 🧠 <b>Quizzes</b> — Test & level up your skills\n` +
+    `Your personal AI English tutor.\n\n` +
+    `🎙️ Real-time English speaking\n` +
+    `📚 Daily grammar & vocabulary\n` +
+    `🧠 Test & level up your skills\n` +
+    `🔥 Idiom & word of the day\n\n` +
     `Choose an option below 👇`
   );
 };
