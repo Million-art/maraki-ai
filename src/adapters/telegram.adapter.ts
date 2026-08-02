@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { Bot } from 'grammy';
 import { startCommand } from '../commands/start.command.js';
-import { grammarCommand, handleGrammarCorrection } from '../commands/grammar.command.js';
+import { grammarCommand } from '../commands/grammar.command.js';
 import { lessonCommand } from '../commands/lesson.comand.js';
 import { chatMode, handleChatConversation, startChatConversation } from '../commands/chat.command.js';
 import { levelCommand } from '../commands/level.command.js';
@@ -90,9 +90,7 @@ bot.on('message:text', async (ctx) => {
   const session = await getSession(ctx.from.id);
 
   // Handle session modes
-  if (session?.mode === 'grammar') {
-    await handleGrammarCorrection(ctx);
-  } else if (session?.mode === 'lesson') {
+  if (session?.mode === 'lesson') {
     const { handleLessonResponse } = await import('../commands/lesson.comand.js');
     await handleLessonResponse(ctx);
   } else if (session?.mode === 'lesson_followup') {

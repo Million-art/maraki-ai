@@ -6,9 +6,9 @@ export const help_msg = `✨ <b>Welcome to Maraki AI English Help Center</b> �
 • /lesson - Get AI-generated lessons tailored to your level & weak areas.
 • Tap ❓ <b>Ask Question</b> under any lesson to get instant AI explanations!
 
-2️⃣ <b>Grammar Correction & Chat Practice</b>
-• /grammar - Paste any sentence to receive instant corrections & grammar tips.
-• /chat_conversation - Practice natural, real-time English conversations.
+2️⃣ <b>Voice & Grammar Practice</b>
+• Tap 💬 <b>Practice Voice & Grammar</b> to launch the interactive Mini App with live speech recognition, strikethrough corrections & audio!
+• /grammar - Open the Voice & Grammar Mini App directly.
 
 3️⃣ <b>Interactive Quizzes</b>
 • /quiz - Test your skills with 5 personalized AI multiple-choice questions.

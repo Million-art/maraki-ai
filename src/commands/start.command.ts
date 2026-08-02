@@ -23,7 +23,7 @@ export async function startCommand(ctx: Context) {
       try {
         const { trackReferralJoin } = await import("../utils/analytics.util.js");
         await trackReferralJoin(referrerId, ctx.from.id);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // Always register or update user via service layer to record referrer
@@ -46,13 +46,12 @@ export async function startCommand(ctx: Context) {
       .row();
 
     if (miniAppUrl.includes('t.me/')) {
-      keyboard.url("💬 Practice Speaking", miniAppUrl);
+      keyboard.url("🎙️ Talk with Maraki", miniAppUrl);
     } else {
-      keyboard.webApp("💬 Practice Speaking", miniAppUrl);
+      keyboard.webApp("🎙️ Talk with Maraki", miniAppUrl);
     }
 
     keyboard
-      .text("✍️ Fix My English", "grammar")
       .row()
       .text("📚 Lessons", "lesson")
       .text("🧠 Quiz", "quiz")
