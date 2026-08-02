@@ -223,6 +223,7 @@ bot.on('callback_query:data', async (ctx) => {
   } else {
     switch (data) {
       case 'subscribe':
+      case 'pay':
         await handlePaymentCommand(ctx);
         break;
       case 'grammar':

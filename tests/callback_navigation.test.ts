@@ -4,6 +4,7 @@ import { lessonCommand } from '../src/commands/lesson.comand.js';
 import { levelCommand } from '../src/commands/level.command.js';
 import { referralCommand } from '../src/commands/referral.command.js';
 import { challengeCommand } from '../src/commands/challenge.command.js';
+import { handlePaymentCommand } from '../src/commands/payment.command.js';
 import { apiService } from '../src/services/api.service.js';
 import { quizStatsService } from '../src/utils/quiz-stats.util.js';
 
@@ -140,7 +141,16 @@ describe('Callback Navigation & All Menu Option Buttons Test Suite', () => {
     });
   });
 
-  describe('Menu Button 4: "🎁 Invite Friends" & "🔥 Daily Challenge"', () => {
+  describe('Menu Button 4: "💳 Upgrade to VIP" & Payment Actions', () => {
+    test('Clicking "💳 Upgrade to VIP" ("pay" callback) should render payment instructions & bank details', async () => {
+      await handlePaymentCommand(mockCtx);
+
+      expect(mockCtx.reply).toHaveBeenCalledWith(
+        expect.stringContaining('Maraki VIP Subscription & Bank Transfer'),
+        expect.objectContaining({ parse_mode: 'Markdown' })
+      );
+    });
+
     test('Clicking "🎁 Invite Friends" button should return personalized referral link', async () => {
       jest.spyOn(apiService, 'getReferralStats').mockResolvedValueOnce({
         totalReferred: 2,
