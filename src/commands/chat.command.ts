@@ -115,18 +115,18 @@ Respond naturally and engagingly to continue the conversation.`;
 export async function startChatConversation(ctx: Context) {
   if (!ctx.from) return;
 
-  const miniAppUrl = process.env.MINI_APP_URL || 'https://t.me/marakiai_bot/app';
+  const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
   const keyboard = new InlineKeyboard();
 
   if (miniAppUrl.includes('t.me/')) {
-    keyboard.url("🎙️ Launch Voice Practice Mini App", miniAppUrl);
+    keyboard.url("Talk with Maraki", miniAppUrl);
   } else {
-    keyboard.webApp("🎙️ Launch Voice Practice Mini App", miniAppUrl);
+    keyboard.webApp("Talk with Maraki", miniAppUrl);
   }
 
   await ctx.reply(
-    `🎙️ <b>AI Voice Conversation</b> 🎉\n\n` +
-    `Practice real-time English speaking and listening inside our interactive <b>Telegram Mini App</b>!\n\n` +
+    `🎙️ <b>Personalized Conversation</b> 🎉\n\n` +
+    `Practice real-time English speaking and listening !\n\n` +
     `👇 <b>Tap below to launch:</b>`,
     { parse_mode: 'HTML', reply_markup: keyboard }
   );

@@ -15,6 +15,9 @@ import { handlePaymentCommand, handleReceiptVerification } from '../commands/pay
 import { challengeCommand } from '../commands/challenge.command.js';
 import { updateUserLevel } from '../services/user.service.js';
 import { setSession, getSession } from '../utils/redis.js';
+import { redis } from '../utils/redis.js';
+import { notifyAdminOnError, ADMIN_TELEGRAM_ID } from '../utils/admin-notify.util.js';
+
 
 dotenv.config();
 
@@ -24,7 +27,6 @@ if (!bot_token) {
 }
 export const bot = new Bot(bot_token);
 
-import { redis } from '../utils/redis.js';
 
 // Global per-user deduplication lock map for single-instance
 const userActionLocks = new Set<string>();
@@ -39,13 +41,13 @@ bot.use(async (ctx, next) => {
   if (ctx.callbackQuery) {
     try {
       await ctx.answerCallbackQuery();
-    } catch (e) {}
+    } catch (e) { }
   }
 
   const userId = ctx.from.id;
-  const actionName = ctx.callbackQuery?.data 
-    ? ctx.callbackQuery.data 
-    : (ctx.message?.text && ctx.message.text.startsWith('/')) 
+  const actionName = ctx.callbackQuery?.data
+    ? ctx.callbackQuery.data
+    : (ctx.message?.text && ctx.message.text.startsWith('/'))
       ? ctx.message.text.split(' ')[0]
       : null;
 
@@ -61,13 +63,13 @@ bot.use(async (ctx, next) => {
           return; // Suppress duplicate execution from concurrent processes or retries
         }
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // 2. In-Memory Fallback Lock
   if (updateKey && userActionLocks.has(updateKey)) {
     if (ctx.callbackQuery) {
-      try { await ctx.answerCallbackQuery(); } catch (e) {}
+      try { await ctx.answerCallbackQuery(); } catch (e) { }
     }
     return;
   }
@@ -80,12 +82,12 @@ bot.use(async (ctx, next) => {
     const chatId = ctx.chat.id;
     try {
       await ctx.api.sendChatAction(chatId, 'typing');
-    } catch (e) {}
+    } catch (e) { }
 
     const interval = setInterval(async () => {
       try {
         await ctx.api.sendChatAction(chatId, 'typing');
-      } catch (e) {}
+      } catch (e) { }
     }, 4000);
 
     try {
@@ -190,7 +192,7 @@ bot.on('callback_query:data', async (ctx) => {
 
   try {
     await ctx.answerCallbackQuery();
-  } catch (e) {}
+  } catch (e) { }
 
   if (['beginner', 'intermediate', 'advanced'].includes(data)) {
     let newLevel = 'beginner';
@@ -213,7 +215,6 @@ bot.on('callback_query:data', async (ctx) => {
     }
   } else {
     switch (data) {
-      case 'pay':
       case 'subscribe':
         await handlePaymentCommand(ctx);
         break;
@@ -274,7 +275,6 @@ bot.on('callback_query:data', async (ctx) => {
   }
 });
 
-import { notifyAdminOnError, ADMIN_TELEGRAM_ID } from '../utils/admin-notify.util.js';
 export { notifyAdminOnError, ADMIN_TELEGRAM_ID };
 
 // Global error handler for all bot operations
