@@ -58,9 +58,16 @@ export async function checkCentralAuthAndAccess(
         return false;
       }
     } else if (resource === 'quiz') {
-      const quizzesUsed = usage.weeklyQuizzesUsed ?? 0;
+      let quizzesUsed = usage.weeklyQuizzesUsed ?? 0;
+      try {
+        const local = await getLocalQuizStats(userId);
+        if (local.totalQuizzesCompleted > quizzesUsed) {
+          quizzesUsed = Math.min(local.totalQuizzesCompleted, 3);
+        }
+      } catch (e) { }
+
       const quizLimit = usage.weeklyQuizLimit ?? 3;
-      const remainingQuizzes = usage.remaining ?? (quizLimit - quizzesUsed);
+      const remainingQuizzes = Math.max(0, quizLimit - quizzesUsed);
 
       if (remainingQuizzes <= 0) {
         await ctx.reply(
