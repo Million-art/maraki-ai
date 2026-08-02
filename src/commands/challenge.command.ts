@@ -3,12 +3,23 @@ import { callGeminiGenerateContent } from '../api/gemini/callGeminiGenerateConte
 import { updateDailyStreak } from '../utils/streak.util.js';
 import { apiService } from '../services/api.service.js';
 
+const activeChallengeLocks = new Set<number>();
+
 export async function challengeCommand(ctx: Context) {
   if (!ctx.from) return;
 
   const userId = ctx.from.id;
-  // Record daily streak activity (increments streak once per calendar day)
-  const { streak, isNewDay } = await updateDailyStreak(userId);
+
+  // Prevent duplicate concurrent execution (e.g. double clicks or rapid events)
+  if (activeChallengeLocks.has(userId)) {
+    return;
+  }
+
+  activeChallengeLocks.add(userId);
+
+  try {
+    // Record daily streak activity (increments streak once per calendar day)
+    const { streak, isNewDay } = await updateDailyStreak(userId);
 
   // Send initial typing status
   if (ctx.chat?.id) {
@@ -97,5 +108,7 @@ Return JSON format with:
       .text("📚 Start Lesson", "lesson");
 
     await ctx.reply(fallbackText, { parse_mode: 'HTML', reply_markup: keyboard });
+  } finally {
+    activeChallengeLocks.delete(userId);
   }
 }

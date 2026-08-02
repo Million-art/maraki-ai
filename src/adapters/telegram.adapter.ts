@@ -24,16 +24,39 @@ if (!bot_token) {
 }
 export const bot = new Bot(bot_token);
 
-// Global middleware for continuous typing indicator
+// Global per-user deduplication lock map
+const userActionLocks = new Set<string>();
+
+// Global middleware for continuous typing indicator & duplicate request suppression
 bot.use(async (ctx, next) => {
+  if (!ctx.from) {
+    return next();
+  }
+
+  const userId = ctx.from.id;
+  const updateKey = ctx.callbackQuery?.data 
+    ? `cb_${userId}_${ctx.callbackQuery.data}` 
+    : (ctx.message?.text && ctx.message.text.startsWith('/')) 
+      ? `cmd_${userId}_${ctx.message.text.split(' ')[0]}`
+      : null;
+
+  if (updateKey && userActionLocks.has(updateKey)) {
+    if (ctx.callbackQuery) {
+      try { await ctx.answerCallbackQuery(); } catch (e) {}
+    }
+    return; // Suppress duplicate concurrent click/command execution
+  }
+
+  if (updateKey) {
+    userActionLocks.add(updateKey);
+  }
+
   if (ctx.chat?.id) {
     const chatId = ctx.chat.id;
-    // Send typing action immediately
     try {
       await ctx.api.sendChatAction(chatId, 'typing');
     } catch (e) {}
 
-    // Continuously refresh typing status every 4 seconds while handler is running
     const interval = setInterval(async () => {
       try {
         await ctx.api.sendChatAction(chatId, 'typing');
@@ -44,9 +67,18 @@ bot.use(async (ctx, next) => {
       await next();
     } finally {
       clearInterval(interval);
+      if (updateKey) {
+        userActionLocks.delete(updateKey);
+      }
     }
   } else {
-    await next();
+    try {
+      await next();
+    } finally {
+      if (updateKey) {
+        userActionLocks.delete(updateKey);
+      }
+    }
   }
 });
 
