@@ -2,6 +2,7 @@ import { Context, InlineKeyboard } from "grammy";
 import { setSession, getSession } from "../utils/redis.js";
 import { apiService } from "../services/api.service.js";
 import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
+import { FALLBACK_QUIZ_QUESTIONS, getFallbackMistakeQuestion } from "../config/fallbacks.config.js";
 
 export const quizCommand = async (ctx: Context) => {
   if (!ctx.from) return;
@@ -132,14 +133,7 @@ Return a JSON object with:
     };
   } catch (error) {
     console.error('Error generating question from mistake:', error);
-    // Fallback question
-    return {
-      question: `Which of these is the correct version of: "${mistake.mistake}"?`,
-      options: ["A) " + mistake.mistake, "B) " + mistake.correction, "C) Neither", "D) Both"],
-      correctAnswer: 1,
-      explanation: `The correct answer is: ${mistake.correction}`,
-      type: 'mistake'
-    };
+    return getFallbackMistakeQuestion(mistake.mistake, mistake.correction);
   }
 };
 
@@ -160,44 +154,7 @@ Return a JSON array of 5 objects, each with:
     return questions.map((q: any) => ({ ...q, type: 'general' }));
   } catch (error) {
     console.error('Error generating general questions:', error);
-    // Fallback questions
-    return [
-      {
-        question: "Choose the correct form: 'She ___ to school every day.'",
-        options: ["A) go", "B) goes", "C) going", "D) went"],
-        correctAnswer: 1,
-        explanation: "With 'she', we use 'goes' in present simple.",
-        type: 'general'
-      },
-      {
-        question: "What is the plural of 'child'?",
-        options: ["A) childs", "B) children", "C) childes", "D) childrens"],
-        correctAnswer: 1,
-        explanation: "'Child' becomes 'children' in plural.",
-        type: 'general'
-      },
-      {
-        question: "Which word is a synonym of 'happy'?",
-        options: ["A) sad", "B) joyful", "C) angry", "D) tired"],
-        correctAnswer: 1,
-        explanation: "'Joyful' means the same as 'happy'.",
-        type: 'general'
-      },
-      {
-        question: "Complete: 'I ___ a student.'",
-        options: ["A) am", "B) is", "C) are", "D) be"],
-        correctAnswer: 0,
-        explanation: "With 'I', we use 'am' in present simple.",
-        type: 'general'
-      },
-      {
-        question: "What is the past tense of 'run'?",
-        options: ["A) runned", "B) ran", "C) running", "D) runs"],
-        correctAnswer: 1,
-        explanation: "'Run' becomes 'ran' in past tense.",
-        type: 'general'
-      }
-    ];
+    return FALLBACK_QUIZ_QUESTIONS;
   }
 };
 

@@ -3,6 +3,7 @@ import { getSession, setSession } from "../utils/redis.js";
 import lessonPrompt from "../prompt/lesson.prompt.js";
 import { apiService } from "../services/api.service.js";
 import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
+import { FALLBACK_LESSON } from "../config/fallbacks.config.js";
 import { lessonFollowupPrompt } from "../prompt/lesson.prompt.js";
 
 export const lessonCommand = async(ctx: Context) => {
@@ -248,7 +249,16 @@ User's Previous Focus Areas: Based on conversation history, focus on areas where
 
   } catch (error) {
     console.error('Lesson response error:', error);
-    await ctx.reply("❌ An error occurred while generating your lesson. Please try again later.");
+    const { InlineKeyboard } = await import("grammy");
+    const keyboard = new InlineKeyboard()
+      .text("❓ Ask Question", "lesson_followup_ask")
+      .text("📚 New Lesson", "lesson_back_to_parts")
+      .text("❌ Exit", "close");
+
+    await ctx.reply(
+      `📖 <b>Lesson: ${FALLBACK_LESSON.topic.toUpperCase()}</b>\n\n${FALLBACK_LESSON.content}`,
+      { parse_mode: 'HTML', reply_markup: keyboard }
+    );
   }
 };
 
