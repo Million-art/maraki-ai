@@ -1,33 +1,14 @@
-export async function callGeminiGenerateContent(promptText: string) {
-  const rawKeys = [
-    process.env.GEMINI_API_KEY,
-    process.env.GEMINI_API_KEY_2,
-    process.env.GOOGLE_API_KEY,
-    process.env.VITE_GEMINI_API_KEY,
-  ]
-    .filter(Boolean)
-    .flatMap(k => String(k).split(','))
-    .map(k => k.trim().replace(/^["']|["']$/g, ''))
-    .filter(k => k.length > 10);
+import { GEMINI_CONFIG } from '../../config/gemini.config.js';
 
-  // Remove duplicates
-  const apiKeys = Array.from(new Set(rawKeys));
+export async function callGeminiGenerateContent(promptText: string) {
+  const apiKeys = GEMINI_CONFIG.getApiKeys();
 
   if (apiKeys.length === 0) {
     throw new Error("GEMINI_API_KEY is not set in environment");
   }
 
-  const modelsToTry = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash-lite',
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-exp',
-    'gemini-1.5-pro',
-    'gemini-pro',
-  ];
-
   for (const apiKey of apiKeys) {
-    for (const modelName of modelsToTry) {
+    for (const modelName of GEMINI_CONFIG.models) {
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`, {
           method: 'POST',

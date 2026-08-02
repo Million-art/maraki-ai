@@ -2,6 +2,7 @@ import { Context, InlineKeyboard } from 'grammy';
 import { callGeminiGenerateContent } from '../api/gemini/callGeminiGenerateContents.js';
 import { updateDailyStreak } from '../utils/streak.util.js';
 import { apiService } from '../services/api.service.js';
+import { FALLBACK_DAILY_CHALLENGE } from '../config/fallbacks.config.js';
 
 export async function challengeCommand(ctx: Context) {
   if (!ctx.from) return;
@@ -82,15 +83,16 @@ Return JSON format with:
   } catch (err) {
     console.error('Challenge command error:', err);
     // Fallback static challenge if AI fails
+    const fb = FALLBACK_DAILY_CHALLENGE;
     const fallbackText =
       `🔥 <b>MARAKI AI DAILY CHALLENGE</b>\n` +
       `🔥 <b>Current Streak: ${streak} Days</b>\n\n` +
-      `💡 <b>WORD OF THE DAY: Resilient (adj)</b>\n` +
-      `📖 <i>Able to recover quickly from difficult conditions.</i>\n` +
-      `💬 <code>"She is resilient and never gives up on learning."</code>\n\n` +
-      `🗣️ <b>IDIOM: Break the ice</b>\n` +
-      `🎯 <i>Make people feel more comfortable in a social setting.</i>\n` +
-      `💬 <code>"A friendly smile helps break the ice."</code>`;
+      `💡 <b>WORD OF THE DAY: ${fb.wordOfTheDay.word} (${fb.wordOfTheDay.partOfSpeech})</b>\n` +
+      `📖 <i>${fb.wordOfTheDay.definition}</i>\n` +
+      `💬 <code>"${fb.wordOfTheDay.example}"</code>\n\n` +
+      `🗣️ <b>IDIOM: ${fb.idiomOfTheDay.idiom}</b>\n` +
+      `🎯 <i>${fb.idiomOfTheDay.meaning}</i>\n` +
+      `💬 <code>"${fb.idiomOfTheDay.example}"</code>`;
 
     const keyboard = new InlineKeyboard()
       .text("🧠 Start Quiz", "quiz")
