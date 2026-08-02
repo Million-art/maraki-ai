@@ -211,7 +211,7 @@ const showQuizResults = async (ctx: Context) => {
   try {
     const { recordQuizCompletion } = await import('../utils/quiz-stats.util.js');
     await recordQuizCompletion(ctx.from.id, correctAnswers, 5);
-  } catch (e) {}
+  } catch (e) { }
 
   try {
     await apiService.saveQuizResult(ctx.from.id, {
@@ -232,7 +232,7 @@ const showQuizResults = async (ctx: Context) => {
   resultMessage += `\n\nWhat would you like to do next? 🚀`;
 
   // Attach Call-to-Action inline keyboard with direct Talk with Maraki Mini App button
-  const miniAppUrl = process.env.MINI_APP_URL || 'https://t.me/marakiai_bot/app';
+  const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app';
   const keyboard = new InlineKeyboard()
     .text("🧠 Take Another Quiz", "quiz")
     .text("📖 Learn a Lesson", "lesson")

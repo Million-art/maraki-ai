@@ -2,7 +2,7 @@ import { Context, InlineKeyboard } from "grammy";
 import { help_msg } from "../messages/help.message.js";
 
 export const helpCommand = async (ctx: Context) => {
-  const miniAppUrl = process.env.MINI_APP_URL || 'https://t.me/marakiai_bot/app';
+  const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app';
   const keyboard = new InlineKeyboard()
     .text("✨ Learn Lesson", "lesson")
     .text("🧠 Take Quiz", "quiz")
