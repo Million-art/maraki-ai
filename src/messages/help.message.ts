@@ -1,28 +1,20 @@
-export const help_msg = `✨ <b>Welcome to Maraki AI English Help Center</b> 🚀
+export const help_msg = `🤖 <b>Maraki AI — Quick Guide</b>
 
-<b>How to use Maraki AI Tutor:</b>
+📚 <b>Learn</b>
+/lesson — AI lesson tailored to your level
+/quiz — 5-question personalized quiz
 
-1️⃣ <b>Interactive Lessons & AI Tutoring</b>
-• /lesson - Get AI-generated lessons tailored to your level & weak areas.
-• Tap ❓ <b>Ask Question</b> under any lesson to get instant AI explanations!
+💬 <b>Practice</b>
+/grammar — Grammar correction
+/translation — Amharic → English
 
-2️⃣ <b>Voice & Grammar Practice</b>
-• Tap 💬 <b>Practice Voice & Grammar</b> to launch the interactive Mini App with live speech recognition, strikethrough corrections & audio!
-• /grammar - Open the Voice & Grammar Mini App directly.
+🔥 <b>Daily</b>
+/challenge — Daily word &amp; idiom
+/stop_daily — Stop morning notifications
 
-3️⃣ <b>Interactive Quizzes</b>
-• /quiz - Test your skills with 5 personalized AI multiple-choice questions.
+📊 <b>Account</b>
+/level — Change your level
+/usage — Check weekly allowance
+/pay — Upgrade to VIP
 
-4️⃣ <b>Translation & Skill Level</b>
-• /translation - Translate Amharic 🇪🇹 into fluent English 🇬🇧.
-• /level - Adjust your learning level (Beginner, Intermediate, Advanced).
-
-5️⃣ <b>Maraki VIP & Bank Transfer Activation</b>
-• /pay - Upgrade to VIP for unlimited lessons, quizzes & real-time tutoring.
-• 💳 <b>Instant Auto-Activation:</b> Simply paste your <b>CBE</b> or <b>Dashen Bank</b> receipt link directly into chat!
-
-6️⃣ <b>Referrals & Usage Allowance</b>
-• /referral_link - Share your invite link with friends to earn free access.
-• /usage - Check your remaining weekly allowance & subscription status.
-
-💡 <i>Type /start anytime to bring up the main menu!</i>`;
+💡 Paste your <b>CBE or Dashen</b> receipt link after sending the /pay command to activate VIP instantly.`;
