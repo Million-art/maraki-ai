@@ -64,10 +64,10 @@ async function setCachedChallenge(userId: number, content: string): Promise<void
   memoryDailyChallengeStore.set(key, value);
 }
 
-function buildShareKeyboard(word: string, idiom: string): InlineKeyboard {
+function buildShareKeyboard(word: string, idiom: string, userId: number): InlineKeyboard {
   const botUsername = process.env.BOT_USERNAME || 'marakiai_bot';
   const shareText = encodeURIComponent(
-    `🎯 MARAKI AI Daily English Challenge!\n\n💡 Word of the Day: ${word}\n🗣️ Idiom of the Day: ${idiom}\n\nJoin the challenge → t.me/${botUsername}?start=challenge`
+    `🎯 MARAKI AI Daily English Challenge!\n\n💡 Word of the Day: ${word}\n🗣️ Idiom of the Day: ${idiom}\n\nJoin the challenge → t.me/${botUsername}?start=${userId}`
   );
   const shareUrl = `https://t.me/share/url?url=t.me%2F${botUsername}&text=${shareText}`;
   return new InlineKeyboard()
@@ -97,7 +97,7 @@ export async function challengeCommand(ctx: Context) {
     const idiomMatch = cached.match(/🗣️.*?\n• <b>(.+?)<\/b>/);
     const cachedWord = wordMatch?.[1] ?? 'Word of the Day';
     const cachedIdiom = idiomMatch?.[1] ?? 'Idiom of the Day';
-    const keyboard = buildShareKeyboard(cachedWord, cachedIdiom);
+    const keyboard = buildShareKeyboard(cachedWord, cachedIdiom, userId);
 
     const messageText =
       `🎯 <b>MARAKI AI DAILY CHALLENGE</b> 🌟\n` +
@@ -148,7 +148,7 @@ Return JSON format with:
     // Save to cache (replaces any previous day's entry for this user)
     await setCachedChallenge(userId, challengeContent);
 
-    const keyboard = buildShareKeyboard(data.wordOfTheDay.word, data.idiomOfTheDay.idiom);
+    const keyboard = buildShareKeyboard(data.wordOfTheDay.word, data.idiomOfTheDay.idiom, userId);
 
     const messageText =
       `🎯 <b>MARAKI AI DAILY CHALLENGE</b> 🌟\n` +
