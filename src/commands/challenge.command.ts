@@ -64,6 +64,17 @@ async function setCachedChallenge(userId: number, content: string): Promise<void
   memoryDailyChallengeStore.set(key, value);
 }
 
+function buildShareKeyboard(word: string, idiom: string): InlineKeyboard {
+  const botUsername = process.env.BOT_USERNAME || 'marakiai_bot';
+  const shareText = encodeURIComponent(
+    `🎯 MARAKI AI Daily English Challenge!\n\n💡 Word of the Day: ${word}\n🗣️ Idiom of the Day: ${idiom}\n\nJoin the challenge → t.me/${botUsername}?start=challenge`
+  );
+  const shareUrl = `https://t.me/share/url?url=t.me%2F${botUsername}&text=${shareText}`;
+  return new InlineKeyboard()
+    .url("📤 Share Challenge", shareUrl)
+    .text("📚 Lessons", "lesson");
+}
+
 export async function challengeCommand(ctx: Context) {
   if (!ctx.from) return;
 
@@ -78,17 +89,16 @@ export async function challengeCommand(ctx: Context) {
     ? `🔥 <b>${streak}-Day Streak Active!</b> Keep it up!`
     : `🔥 <b>Current Streak: ${streak} ${streak === 1 ? 'Day' : 'Days'}</b>`;
 
-  const botUsername = process.env.BOT_USERNAME || 'marakiai_bot';
-  const shareText = encodeURIComponent(`🎯 I'm doing the MARAKI AI Daily English Challenge!\nJoin me and improve your English every day 🚀\n\nt.me/${botUsername}?start=challenge`);
-  const shareUrl = `https://t.me/share/url?url=t.me%2F${botUsername}&text=${shareText}`;
-
-  const keyboard = new InlineKeyboard()
-    .url("📤 Share Challenge", shareUrl)
-    .text("📚 Lessons", "lesson");
-
   // ── 1. Serve from cache if already generated today ──────────────────────────
   const cached = await getCachedChallenge(userId);
   if (cached) {
+    // Extract word and idiom from cached HTML for the share URL
+    const wordMatch = cached.match(/• <b>(.+?)<\/b>/);
+    const idiomMatch = cached.match(/🗣️.*?\n• <b>(.+?)<\/b>/);
+    const cachedWord = wordMatch?.[1] ?? 'Word of the Day';
+    const cachedIdiom = idiomMatch?.[1] ?? 'Idiom of the Day';
+    const keyboard = buildShareKeyboard(cachedWord, cachedIdiom);
+
     const messageText =
       `🎯 <b>MARAKI AI DAILY CHALLENGE</b> 🌟\n` +
       `${streakHeader}\n\n` +
@@ -138,6 +148,8 @@ Return JSON format with:
     // Save to cache (replaces any previous day's entry for this user)
     await setCachedChallenge(userId, challengeContent);
 
+    const keyboard = buildShareKeyboard(data.wordOfTheDay.word, data.idiomOfTheDay.idiom);
+
     const messageText =
       `🎯 <b>MARAKI AI DAILY CHALLENGE</b> 🌟\n` +
       `${streakHeader}\n\n` +
@@ -148,11 +160,12 @@ Return JSON format with:
 
   } catch (err) {
     console.error('Challenge command error:', err);
+    const fallbackKeyboard = new InlineKeyboard().text("📚 Lessons", "lesson");
     await ctx.reply(
       `🎯 <b>MARAKI AI DAILY CHALLENGE</b> 🌟\n` +
       `${streakHeader}\n\n` +
       `⚠️ Could not load today's challenge. Please try again in a moment.`,
-      { parse_mode: 'HTML', reply_markup: keyboard }
+      { parse_mode: 'HTML', reply_markup: fallbackKeyboard }
     );
   }
 }
