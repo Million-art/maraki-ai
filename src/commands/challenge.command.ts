@@ -3,12 +3,33 @@ import { callGeminiGenerateContent } from '../api/gemini/callGeminiGenerateConte
 import { updateDailyStreak } from '../utils/streak.util.js';
 import { apiService } from '../services/api.service.js';
 import { redis } from '../utils/redis.js';
+import { hasBeenAsked, markAsAsked, getNotifyPreference } from '../utils/daily-notify.util.js';
 
 // In-memory fallback for when Redis is offline
 const memoryDailyChallengeStore = new Map<string, string>();
 
 function getTodayString(): string {
   return new Date().toLocaleDateString('sv-SE', { timeZone: 'Africa/Addis_Ababa' });
+}
+
+// Send opt-in prompt ONLY if the user has never been asked before
+async function maybeAskForOptIn(ctx: Context, userId: number): Promise<void> {
+  const asked = await hasBeenAsked(userId);
+  if (asked) return;
+
+  const pref = await getNotifyPreference(userId);
+  if (pref !== null) return; // already decided
+
+  await markAsAsked(userId);
+
+  const optInKeyboard = new InlineKeyboard()
+    .text('✅ Yes, send me daily!', 'daily_notify_yes')
+    .text('❌ No thanks', 'daily_notify_no');
+
+  await ctx.reply(
+    `📬 <b>Liked today's challenge?</b> Get it delivered every morning — for free!`,
+    { parse_mode: 'HTML', reply_markup: optInKeyboard }
+  );
 }
 
 async function getCachedChallenge(userId: number): Promise<string | null> {
@@ -57,8 +78,12 @@ export async function challengeCommand(ctx: Context) {
     ? `🔥 <b>${streak}-Day Streak Active!</b> Keep it up!`
     : `🔥 <b>Current Streak: ${streak} ${streak === 1 ? 'Day' : 'Days'}</b>`;
 
+  const botUsername = process.env.BOT_USERNAME || 'marakiai_bot';
+  const shareText = encodeURIComponent(`🎯 I'm doing the MARAKI AI Daily English Challenge!\nJoin me and improve your English every day 🚀\n\nt.me/${botUsername}?start=challenge`);
+  const shareUrl = `https://t.me/share/url?url=t.me%2F${botUsername}&text=${shareText}`;
+
   const keyboard = new InlineKeyboard()
-    .text("🧠 Full Quiz (5 Questions)", "quiz")
+    .url("📤 Share Challenge", shareUrl)
     .text("📚 Lessons", "lesson");
 
   // ── 1. Serve from cache if already generated today ──────────────────────────
@@ -69,6 +94,7 @@ export async function challengeCommand(ctx: Context) {
       `${streakHeader}\n\n` +
       cached;
     await ctx.reply(messageText, { parse_mode: 'HTML', reply_markup: keyboard });
+    await maybeAskForOptIn(ctx, userId);
     return;
   }
 
@@ -118,6 +144,7 @@ Return JSON format with:
       challengeContent;
 
     await ctx.reply(messageText, { parse_mode: 'HTML', reply_markup: keyboard });
+    await maybeAskForOptIn(ctx, userId);
 
   } catch (err) {
     console.error('Challenge command error:', err);
@@ -130,4 +157,68 @@ Return JSON format with:
   }
 }
 
+// ── Exported builder for the broadcast endpoint ───────────────────────────────
+// Returns the message text + keyboard so the broadcast can send directly via bot.api
+export async function buildDailyChallengeMessage(userId: number): Promise<{ text: string; keyboard: InlineKeyboard }> {
+  const { streak } = await import('../utils/streak.util.js').then(m => m.updateDailyStreak(userId));
 
+  const botUsername = process.env.BOT_USERNAME || 'marakiai_bot';
+  const shareText = encodeURIComponent(`🎯 I'm doing the MARAKI AI Daily English Challenge!\nJoin me and improve your English every day 🚀\n\nt.me/${botUsername}?start=challenge`);
+  const shareUrl = `https://t.me/share/url?url=t.me%2F${botUsername}&text=${shareText}`;
+
+  const keyboard = new InlineKeyboard()
+    .url("📤 Share Challenge", shareUrl)
+    .text("📚 Lessons", "lesson");
+
+  // Serve from cache if already generated today
+  const cached = await getCachedChallenge(userId);
+  if (cached) {
+    return {
+      text: `🎯 <b>MARAKI AI DAILY CHALLENGE</b> 🌟\n🔥 <b>Streak: ${streak} ${streak === 1 ? 'Day' : 'Days'}</b>\n\n` + cached,
+      keyboard,
+    };
+  }
+
+  // Generate fresh
+  let userLevel = 'intermediate';
+  try {
+    const user = await apiService.getUserByTelegramId(userId);
+    userLevel = user?.level || 'intermediate';
+  } catch (e) {}
+
+  const prompt = `Generate a Daily English Challenge for an English learner at ${userLevel} level.
+Return JSON format with:
+{
+  "wordOfTheDay": {
+    "word": "Word",
+    "partOfSpeech": "noun/verb/adj",
+    "definition": "Clear simple definition",
+    "example": "Sample sentence showing usage"
+  },
+  "idiomOfTheDay": {
+    "idiom": "Idiom phrase",
+    "meaning": "Simple explanation",
+    "example": "Sample sentence using the idiom"
+  }
+}`;
+
+  const aiRaw = await callGeminiGenerateContent(prompt, 'complex');
+  const data = JSON.parse(aiRaw.replace(/```json\s*|\s*```/g, ''));
+
+  const challengeContent =
+    `💡 <b>WORD OF THE DAY</b>\n` +
+    `• <b>${data.wordOfTheDay.word}</b> (<i>${data.wordOfTheDay.partOfSpeech}</i>)\n` +
+    `📖 <i>${data.wordOfTheDay.definition}</i>\n` +
+    `💬 <i>"${data.wordOfTheDay.example}"</i>\n\n` +
+    `🗣️ <b>IDIOM OF THE DAY</b>\n` +
+    `• <b>${data.idiomOfTheDay.idiom}</b>\n` +
+    `🎯 <i>${data.idiomOfTheDay.meaning}</i>\n` +
+    `💬 <i>"${data.idiomOfTheDay.example}"</i>`;
+
+  await setCachedChallenge(userId, challengeContent);
+
+  return {
+    text: `🎯 <b>MARAKI AI DAILY CHALLENGE</b> 🌟\n🔥 <b>Streak: ${streak} ${streak === 1 ? 'Day' : 'Days'}</b>\n\n` + challengeContent,
+    keyboard,
+  };
+}

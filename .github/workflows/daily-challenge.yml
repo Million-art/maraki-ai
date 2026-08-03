@@ -1,0 +1,30 @@
+name: Daily Challenge Broadcast
+
+on:
+  schedule:
+    # 5:00 AM UTC = 8:00 AM EAT (Africa/Addis_Ababa, UTC+3)
+    - cron: '0 5 * * *'
+  # Allow manual trigger from GitHub Actions UI for testing
+  workflow_dispatch:
+
+jobs:
+  broadcast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Trigger Daily Challenge Broadcast
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "${{ secrets.BOT_API_URL }}/cron/daily-challenge" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+
+          echo "Response status: $response"
+
+          if [ "$response" -ne 200 ]; then
+            echo "❌ Broadcast failed with status $response"
+            exit 1
+          fi
+
+          echo "✅ Daily challenge broadcast triggered successfully"

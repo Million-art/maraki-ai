@@ -17,6 +17,7 @@ import { updateUserLevel } from '../services/user.service.js';
 import { setSession, getSession } from '../utils/redis.js';
 import { redis } from '../utils/redis.js';
 import { notifyAdminOnError, ADMIN_TELEGRAM_ID } from '../utils/admin-notify.util.js';
+import { setNotifyPreference } from '../utils/daily-notify.util.js';
 
 
 dotenv.config();
@@ -127,8 +128,17 @@ bot.command('daily_challenge', challengeCommand);
 bot.command('pay', handlePaymentCommand);
 bot.command('subscribe', handlePaymentCommand);
 
-// Hidden admin command
 bot.command('admin_status', adminStatusCommand);
+
+// Stop daily challenge notifications
+bot.command('stop_daily', async (ctx) => {
+  if (!ctx.from) return;
+  await setNotifyPreference(ctx.from.id, 'no');
+  await ctx.reply(
+    `🔕 <b>Daily challenge notifications stopped.</b>\n\nYou can always re-enable them by clicking <b>🔥 Daily Challenge</b> and opting in again.`,
+    { parse_mode: 'HTML' }
+  );
+});
 
 // Catch all text messages
 bot.on('message:text', async (ctx) => {
@@ -275,6 +285,22 @@ bot.on('callback_query:data', async (ctx) => {
         if (data.startsWith('challenge_ans_')) {
           const isCorrect = data.startsWith('challenge_ans_correct_');
           await ctx.reply(isCorrect ? "✅ Correct! Great job! 🎉" : "❌ Incorrect! Keep trying!");
+          return;
+        }
+        if (data === 'daily_notify_yes') {
+          await setNotifyPreference(ctx.from.id, 'yes');
+          await ctx.reply(
+            `✅ <b>You're all set!</b> Your Daily Challenge will be delivered every morning.\n\nTo stop anytime, use /stop_daily.`,
+            { parse_mode: 'HTML' }
+          );
+          return;
+        }
+        if (data === 'daily_notify_no') {
+          await setNotifyPreference(ctx.from.id, 'no');
+          await ctx.reply(
+            `No problem! You can always come back and tap <b>🔥 Daily Challenge</b> anytime. 😊`,
+            { parse_mode: 'HTML' }
+          );
           return;
         }
         return ctx.answerCallbackQuery('❓ Unknown action.');
