@@ -41,7 +41,7 @@ export async function checkCentralAuthAndAccess(
       return true;
     }
 
-    const keyboard = new InlineKeyboard().text("💳 Upgrade to VIP — Unlimited Access", "pay");
+    const keyboard = new InlineKeyboard().text("💳 Upgrade to VIP  Unlimited Access", "pay");
 
     if (resource === 'lesson') {
       const lessonsUsed = usage?.weeklyLessonsUsed ?? 0;
@@ -53,7 +53,7 @@ export async function checkCentralAuthAndAccess(
           `🚫 <b>Weekly Lesson Limit Reached!</b>\n\n` +
           `You have used all <b>${lessonLimit} free lessons</b> this week.\n\n` +
           `⏳ Your quota resets every <b>Monday</b>.\n\n` +
-          `🔓 <b>Upgrade to VIP</b> for unlimited lessons, quizzes, and AI practice — 299 ETB/month!`,
+          `🔓 <b>Upgrade to VIP</b> for unlimited lessons, quizzes, and AI practice  299 ETB/month!`,
           { parse_mode: 'HTML', reply_markup: keyboard }
         );
         return false;
@@ -77,7 +77,7 @@ export async function checkCentralAuthAndAccess(
           `🚫 <b>Weekly Quiz Limit Reached!</b>\n\n` +
           `You have used all <b>${quizLimit} free quizzes</b> this week.\n\n` +
           `⏳ Your quota resets every <b>Monday</b>.\n\n` +
-          `🔓 <b>Upgrade to VIP</b> for unlimited quizzes, lessons, and AI practice — 299 ETB/month!`,
+          `🔓 <b>Upgrade to VIP</b> for unlimited quizzes, lessons, and AI practice  299 ETB/month!`,
           { parse_mode: 'HTML', reply_markup: keyboard }
         );
         return false;
@@ -90,12 +90,12 @@ export async function checkCentralAuthAndAccess(
       try {
         const local = await quizStatsService.getLocalQuizStats(userId);
         if (local && local.totalQuizzesCompleted >= 3) {
-          const keyboard = new InlineKeyboard().text("💳 Upgrade to VIP — Unlimited Access", "pay");
+          const keyboard = new InlineKeyboard().text("💳 Upgrade to VIP  Unlimited Access", "pay");
           await ctx.reply(
             `🚫 <b>Weekly Quiz Limit Reached!</b>\n\n` +
             `You have used all <b>3 free quizzes</b> this week.\n\n` +
             `⏳ Your quota resets every <b>Monday</b>.\n\n` +
-            `🔓 <b>Upgrade to VIP</b> for unlimited quizzes, lessons, and AI practice — 299 ETB/month!`,
+            `🔓 <b>Upgrade to VIP</b> for unlimited quizzes, lessons, and AI practice  299 ETB/month!`,
             { parse_mode: 'HTML', reply_markup: keyboard }
           );
           return false;

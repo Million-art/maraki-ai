@@ -274,7 +274,7 @@ bot.on('callback_query:data', async (ctx) => {
         }
         if (data.startsWith('challenge_ans_')) {
           const isCorrect = data.startsWith('challenge_ans_correct_');
-          await ctx.answerCallbackQuery(isCorrect ? "✅ Correct! Great job! 🎉" : "❌ Incorrect! Keep trying!");
+          await ctx.reply(isCorrect ? "✅ Correct! Great job! 🎉" : "❌ Incorrect! Keep trying!");
           return;
         }
         return ctx.answerCallbackQuery('❓ Unknown action.');

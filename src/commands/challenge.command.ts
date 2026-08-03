@@ -59,11 +59,11 @@ Return JSON format with:
       `💡 <b>WORD OF THE DAY</b>\n` +
       `• <b>${data.wordOfTheDay.word}</b> (<i>${data.wordOfTheDay.partOfSpeech}</i>)\n` +
       `📖 <i>${data.wordOfTheDay.definition}</i>\n` +
-      `💬 <code>"${data.wordOfTheDay.example}"</code>\n\n` +
+      `💬 <i>"${data.wordOfTheDay.example}"</i>\n\n` +
       `🗣️ <b>IDIOM OF THE DAY</b>\n` +
       `• <b>${data.idiomOfTheDay.idiom}</b>\n` +
       `🎯 <i>${data.idiomOfTheDay.meaning}</i>\n` +
-      `💬 <code>"${data.idiomOfTheDay.example}"</code>\n\n` +
+      `💬 <i>"${data.idiomOfTheDay.example}"</i>\n\n` +
       `❓ <b>MINI DAILY QUIZ</b>\n` +
       `${data.miniQuiz.question}\n\n` +
       `<i>Tap an option below to test your knowledge!</i>`;
@@ -89,10 +89,10 @@ Return JSON format with:
       `🔥 <b>Current Streak: ${streak} Days</b>\n\n` +
       `💡 <b>WORD OF THE DAY: ${fb.wordOfTheDay.word} (${fb.wordOfTheDay.partOfSpeech})</b>\n` +
       `📖 <i>${fb.wordOfTheDay.definition}</i>\n` +
-      `💬 <code>"${fb.wordOfTheDay.example}"</code>\n\n` +
+      `💬 <i>"${fb.wordOfTheDay.example}"</i>\n\n` +
       `🗣️ <b>IDIOM: ${fb.idiomOfTheDay.idiom}</b>\n` +
       `🎯 <i>${fb.idiomOfTheDay.meaning}</i>\n` +
-      `💬 <code>"${fb.idiomOfTheDay.example}"</code>`;
+      `💬 <i>"${fb.idiomOfTheDay.example}"</i>`;
 
     const keyboard = new InlineKeyboard()
       .text("🧠 Start Quiz", "quiz")
