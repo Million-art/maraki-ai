@@ -21,7 +21,7 @@ export async function handleTranslation(ctx: Context) {
     // Generate translation response with context
     const fullPrompt = `${translationPrompt}\n\nUser Input:\n"${userMessage}"`;
 
-    const aiResponse = await callGeminiGenerateContent(fullPrompt);
+    const aiResponse = await callGeminiGenerateContent(fullPrompt, 'basic');
 
     // Clean up response
     let cleanResponse = aiResponse;

@@ -81,7 +81,7 @@ Please suggest ONE specific grammar topic (e.g., "verb tenses", "prepositions", 
 Respond with just the topic name, nothing else.`;
 
           try {
-            const aiSuggestedTopic = await callGeminiGenerateContent(analysisPrompt);
+            const aiSuggestedTopic = await callGeminiGenerateContent(analysisPrompt, 'basic');
             suggestedTopic = aiSuggestedTopic.trim().toLowerCase();
           } catch (aiError) {
             console.warn('AI topic suggestion failed, using default:', (aiError as Error).message);
@@ -174,7 +174,7 @@ Please suggest ONE specific grammar topic (e.g., "verb tenses", "prepositions", 
 Respond with just the topic name, nothing else.`;
 
             try {
-              const aiSuggestedTopic = await callGeminiGenerateContent(analysisPrompt);
+              const aiSuggestedTopic = await callGeminiGenerateContent(analysisPrompt, 'basic');
               selectedTopic = aiSuggestedTopic.trim().toLowerCase();
             } catch (aiError) {
               console.warn('AI topic suggestion failed, using default:', (aiError as Error).message);
@@ -201,7 +201,7 @@ User's Past Mistakes & Weak Areas: ${conversationContext || 'No recorded mistake
 
 IMPORTANT INSTRUCTION: Explicitly design this lesson to address and correct the user's specific past mistakes listed above while teaching "${selectedTopic}". Provide clear "Incorrect vs Correct" examples.`;
 
-    const lessonContent = await callGeminiGenerateContent(lessonRequest);
+    const lessonContent = await callGeminiGenerateContent(lessonRequest, 'complex');
 
     // Parse and format the lesson response
     let formattedLesson = lessonContent;
@@ -276,7 +276,7 @@ export const handleLessonFollowup = async(ctx: Context) => {
       .replace('{user_question}', userQuestion);
 
     // Call AI to get answer
-    const answer = await callGeminiGenerateContent(prompt);
+    const answer = await callGeminiGenerateContent(prompt, 'complex');
 
     // Send answer with follow-up keyboard options
     const { InlineKeyboard } = await import("grammy");

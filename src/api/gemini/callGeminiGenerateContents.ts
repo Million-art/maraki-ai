@@ -1,14 +1,21 @@
 import { GEMINI_CONFIG } from '../../config/gemini.config.js';
 
-export async function callGeminiGenerateContent(promptText: string) {
+export async function callGeminiGenerateContent(
+  promptText: string,
+  taskType: 'basic' | 'complex' | 'fallback' | 'live' = 'complex'
+) {
   const apiKeys = GEMINI_CONFIG.getApiKeys();
 
   if (apiKeys.length === 0) {
     throw new Error("GEMINI_API_KEY is not set in environment");
   }
 
+  const primaryModel = GEMINI_CONFIG.models[taskType];
+  const fallbackModel = GEMINI_CONFIG.models.fallback;
+  const modelsToTry = Array.from(new Set([primaryModel, fallbackModel]));
+
   for (const apiKey of apiKeys) {
-    for (const modelName of GEMINI_CONFIG.models) {
+    for (const modelName of modelsToTry) {
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`, {
           method: 'POST',

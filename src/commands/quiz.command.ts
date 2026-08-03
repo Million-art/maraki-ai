@@ -107,7 +107,7 @@ Return a JSON object with:
 }`;
 
   try {
-    const response = await callGeminiGenerateContent(prompt);
+    const response = await callGeminiGenerateContent(prompt, 'basic');
     const parsed = JSON.parse(response.replace(/```json\s*|\s*```/g, ''));
     return {
       question: parsed.question,
@@ -156,7 +156,7 @@ Return a JSON array of ${count} objects, each with:
 }`;
 
   try {
-    const response = await callGeminiGenerateContent(prompt);
+    const response = await callGeminiGenerateContent(prompt, 'basic');
     const jsonMatch = response.match(/\[[\s\S]*\]/);
     const jsonString = jsonMatch ? jsonMatch[0] : response.replace(/```json\s*|\s*```/g, '');
     const questions = JSON.parse(jsonString);

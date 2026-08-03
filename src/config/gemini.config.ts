@@ -1,19 +1,12 @@
 export const GEMINI_CONFIG = {
-  /**
-   * Ordered Gemini model cascade.
-   * Requests will try models from top to bottom if a model is unavailable or rate-limited.
-   */
-  models: [
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-lite',
-    'gemini-1.5-flash',
-    'gemini-1.5-flash-8b',
-  ],
 
-  /**
-   * Extract & sanitize API keys from environment variables.
-   * Supports comma-separated keys and multiple fallback env variables.
-   */
+  models: {
+    basic: 'gemini-3.5-flash-lite',
+    complex: 'gemini-3.5-flash',
+    fallback: 'gemini-1.5-flash',
+    live: 'gemini-2.0-flash-lite',
+  } as Record<'basic' | 'complex' | 'fallback' | 'live', string>,
+
   getApiKeys: (): string[] => {
     const rawKeys = [
       process.env.GEMINI_API_KEY,

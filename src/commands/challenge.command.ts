@@ -46,7 +46,7 @@ Return JSON format with:
 }`;
 
   try {
-    const aiRaw = await callGeminiGenerateContent(prompt);
+    const aiRaw = await callGeminiGenerateContent(prompt, 'complex');
     const data = JSON.parse(aiRaw.replace(/```json\s*|\s*```/g, ''));
 
     const streakHeader = isNewDay && streak > 1 

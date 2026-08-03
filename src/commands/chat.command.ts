@@ -92,7 +92,7 @@ INSTRUCTIONS FOR AI TUTOR:
 3. Keep their past weak areas in mind to encourage proper usage.
 4. Respond naturally and engagingly to continue the conversation.`;
 
-    const aiResponse = await callGeminiGenerateContent(fullPrompt);
+    const aiResponse = await callGeminiGenerateContent(fullPrompt, 'complex');
 
     // Clean up response
     let cleanResponse = aiResponse;
