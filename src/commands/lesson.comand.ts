@@ -5,10 +5,9 @@ import { apiService } from "../services/api.service.js";
 import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
 import { FALLBACK_LESSON } from "../config/fallbacks.config.js";
 import { lessonFollowupPrompt } from "../prompt/lesson.prompt.js";
-
 import { checkCentralAuthAndAccess } from "../middleware/authGuard.middleware.js";
 
-export const lessonCommand = async(ctx: Context) => {
+export const lessonCommand = async (ctx: Context) => {
   if (!ctx.from) {
     return ctx.reply("⚠️ Could not get your Telegram ID.");
   }
@@ -27,7 +26,7 @@ export const lessonCommand = async(ctx: Context) => {
   }
 }
 
-export const startLessonRecommendation = async(ctx: Context) => {
+export const startLessonRecommendation = async (ctx: Context) => {
   if (!ctx.from) {
     return ctx.reply("⚠️ Could not get your Telegram ID.");
   }
@@ -122,7 +121,7 @@ Respond with just the topic name, nothing else.`;
   }
 }
 
-export const handleLessonResponse = async(ctx: Context) => {
+export const handleLessonResponse = async (ctx: Context) => {
   if (!ctx.from || !ctx.message?.text) return;
 
   const userId = ctx.from.id;
@@ -220,7 +219,11 @@ IMPORTANT INSTRUCTION: Explicitly design this lesson to address and correct the 
 
     await ctx.reply(`📖 Lesson: ${selectedTopic.toUpperCase()}\n\n${formattedLesson}`, { reply_markup: keyboard, parse_mode: 'HTML' });
 
-    // Update conversation context
+    // Save lesson content to session so the follow-up handler can access it as context
+    const currentSession = await getSession(userId) || {};
+    await setSession(userId, { ...currentSession, lastLessonContent: formattedLesson, lastLessonTopic: selectedTopic });
+
+    // Update conversation context via API (best-effort)
     try {
       await apiService.addLesson(userId, {
         topic: selectedTopic,
@@ -247,23 +250,18 @@ IMPORTANT INSTRUCTION: Explicitly design this lesson to address and correct the 
   }
 };
 
-export const handleLessonFollowup = async(ctx: Context) => {
+export const handleLessonFollowup = async (ctx: Context) => {
   if (!ctx.from || !ctx.message?.text) return;
 
   const userId = ctx.from.id;
   const userQuestion = ctx.message.text.trim();
 
   try {
-    // Retrieve last lesson content from conversation history
-    let lastLessonContent = '';
-    try {
-      const conversation = await apiService.getConversation(userId);
-      if (conversation?.lessons && conversation.lessons.length > 0) {
-        lastLessonContent = conversation.lessons[conversation.lessons.length - 1].content || '';
-      }
-    } catch (apiError) {
-      console.warn('API not available, cannot retrieve lesson content:', (apiError as Error).message);
-    }
+    // Read last lesson content from session (saved when lesson was generated)
+    const { getSession } = await import('../utils/redis.js');
+    const session = await getSession(userId);
+    const lastLessonContent = session?.lastLessonContent || '';
+    const lastLessonTopic = session?.lastLessonTopic || 'the lesson';
 
     if (!lastLessonContent) {
       await ctx.reply("❌ Sorry, I don't have the lesson context to answer your question. Please start a new lesson.");
