@@ -1,18 +1,21 @@
-export const help_msg = `
-How to use:
-1. Choose a options to start:
-   Correct sentence - send a sentence and get corrections
-   Learn from your mistake - review your previous mistakes
-   Chat conversation - practice chatting in English
-   Speach conversation - speak and practice your pronunciation
-   Level - change language level
-   Referral_link - share your referral link with friends
+export const help_msg = `🤖 <b>Maraki AI — Quick Guide</b>
 
-2. Share your referral link:
-   - Use /referral_link to get a personalized link
-   - Invite friends to Practice English using your link
-   - Each friend who joins via your link counts toward your referrals
-   - Track your referral rewards and see your impact on the community
+📚 <b>Learn</b>
+/lesson — AI lesson tailored to your level
+/quiz — 5-question personalized quiz
 
-3. Follow the instructions provided by each mode
-4. Send /start anytime to return to the main menu`;
+💬 <b>Practice</b>
+/grammar — Grammar correction
+/translation — Amharic → English
+
+🔥 <b>Daily</b>
+/challenge — Daily word &amp; idiom
+/stop_daily — Stop morning notifications
+
+📊 <b>Account</b>
+/level — Change your level
+/usage — Check weekly allowance
+/pay — Upgrade to VIP
+
+💡 Paste your <b>CBE or Dashen</b> receipt link after sending the /pay command to activate VIP instantly.`;
+

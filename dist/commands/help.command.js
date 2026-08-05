@@ -1,14 +1,25 @@
 import { help_msg } from "../messages/help.message.js";
+import { InlineKeyboard } from "grammy";
 export const helpCommand = async (ctx) => {
-    return ctx.reply(help_msg +
-        `\n\nAvailable commands:\n` +
-        `/start - Main Menu\n` +
-        `/grammar - Correct your sentence\n` +
-        `/lesson - Learn from your previous mistakes\n` +
-        `/chat_conversation - Practice chat conversation\n` +
-        `/translation - Amharic to English translation\n` +
-        `/referral_link - Get your referral link\n` +
-        `/level - Check your level\n` +
-        `/usage - Check your daily usage limits\n` +
-        `/help - Get help\n`);
+    const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app';
+    const keyboard = new InlineKeyboard()
+        .text("✨ Learn Lesson", "lesson")
+        .text("🧠 Take Quiz", "quiz")
+        .row();
+    if (miniAppUrl.includes('t.me/')) {
+        keyboard.url("🎙️ Talk with Maraki", miniAppUrl);
+    }
+    else {
+        keyboard.webApp("🎙️ Talk with Maraki", miniAppUrl);
+    }
+    keyboard
+        .text("🌐 Translation", "translation")
+        .row()
+        .text("🔗 Referral Link", "referral_link")
+        .text("💳 Upgrade VIP", "pay");
+    return ctx.reply(help_msg, {
+        parse_mode: 'HTML',
+        reply_markup: keyboard,
+    });
 };
+
