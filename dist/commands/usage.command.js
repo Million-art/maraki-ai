@@ -11,10 +11,18 @@ export async function usageCommand(ctx) {
         }
         const isPremium = usageStatus.isPremium || false;
         const tier = isPremium ? 'MARAKI PREMIUM' : 'FREE TIER';
-        const weeklyQuizzesUsed = usageStatus.weeklyQuizzesUsed || 0;
+        let weeklyQuizzesUsed = usageStatus.weeklyQuizzesUsed || 0;
+        try {
+            const { getLocalQuizStats } = await import('../utils/quiz-stats.util.js');
+            const local = await getLocalQuizStats(ctx.from.id);
+            if (local.totalQuizzesCompleted > weeklyQuizzesUsed) {
+                weeklyQuizzesUsed = Math.min(local.totalQuizzesCompleted, 3);
+            }
+        }
+        catch (e) { }
         const weeklyQuizLimit = usageStatus.weeklyQuizLimit || 3;
-        const remainingQuizzes = usageStatus.remaining !== undefined && usageStatus.remaining >= 0 ? usageStatus.remaining : (isPremium ? 'Unlimited' : Math.max(0, weeklyQuizLimit - weeklyQuizzesUsed));
-        const weeklyLessonsUsed = usageStatus.weeklyLessonsUsed || 0;
+        const remainingQuizzes = usageStatus.remaining !== undefined && usageStatus.remaining >= 0 ? Math.max(0, weeklyQuizLimit - weeklyQuizzesUsed) : (isPremium ? 'Unlimited' : Math.max(0, weeklyQuizLimit - weeklyQuizzesUsed));
+        let weeklyLessonsUsed = usageStatus.weeklyLessonsUsed || 0;
         const weeklyLessonLimit = usageStatus.weeklyLessonLimit || 5;
         const remainingLessons = usageStatus.remainingLessons !== undefined && usageStatus.remainingLessons >= 0 ? usageStatus.remainingLessons : (isPremium ? 'Unlimited' : Math.max(0, weeklyLessonLimit - weeklyLessonsUsed));
         let message = `📊 <b>Your Usage & Allowance Status</b>\n\n`;

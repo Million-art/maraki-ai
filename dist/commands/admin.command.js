@@ -57,6 +57,13 @@ async function gatherBotStatistics() {
         stats.totalRevenue = 150;
         stats.totalReferrals = 0;
         stats.newUsersToday = 1;
+        try {
+            const { getAnalyticsStats } = await import('../utils/analytics.util.js');
+            stats.analytics = await getAnalyticsStats();
+        }
+        catch (e) {
+            stats.analytics = { newUsers: 0, upgradeClicks: 0, paymentFailures: 0, paymentSuccesses: 0 };
+        }
         stats.nodeVersion = process.version;
         stats.uptime = formatUptime(process.uptime());
         stats.memoryUsage = formatMemoryUsage(process.memoryUsage());
@@ -78,17 +85,12 @@ function formatAdminStatus(stats) {
     message += `├ Node: ${stats.nodeVersion}\n`;
     message += `├ Uptime: ${stats.uptime}\n`;
     message += `└ Memory: ${stats.memoryUsage}\n\n`;
-    // User Statistics
-    message += `👥 <b>USER STATISTICS</b>\n`;
-    message += `├ Total Users: ${stats.totalUsers.toLocaleString()}\n`;
-    message += `├ Premium: ${stats.premiumUsers.toLocaleString()}\n`;
-    message += `├ Free: ${stats.freeUsers.toLocaleString()}\n`;
-    message += `└ Active (24h): ${stats.activeUsersToday.toLocaleString()}\n\n`;
-    // Payment Statistics
-    message += `💰 <b>PAYMENT STATISTICS</b>\n`;
-    message += `├ Total Payments: ${stats.totalPayments.toLocaleString()}\n`;
-    message += `├ Completed: ${stats.completedPayments.toLocaleString()}\n`;
-    message += `└ Revenue: ${stats.totalRevenue.toLocaleString()} ETB\n\n`;
+    // Real-time Conversion Analytics
+    message += `📊 <b>CONVERSION & EVENT ANALYTICS</b>\n`;
+    message += `├ 🆕 New Users Joined: ${stats.analytics?.newUsers || 0}\n`;
+    message += `├ 💳 Upgrade Clicks: ${stats.analytics?.upgradeClicks || 0}\n`;
+    message += `├ 🚨 Payment Failures (Struggle): ${stats.analytics?.paymentFailures || 0}\n`;
+    message += `└ ✅ Verified VIP Payments: ${stats.analytics?.paymentSuccesses || 0}\n\n`;
     message += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     message += `⏰ Generated: ${new Date().toLocaleString('en-US', { timeZone: 'Africa/Addis_Ababa' })} EAT`;
     return message;

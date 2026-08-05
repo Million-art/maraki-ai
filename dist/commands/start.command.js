@@ -1,40 +1,63 @@
 import { InlineKeyboard } from "grammy";
-import { start_msg } from "../messages/start.message.js";
+import { getPersonalizedStartMsg } from "../messages/start.message.js";
 import { registerOrUpdate } from "../services/user.service.js";
 import { getSession, setSession } from "../utils/redis.js";
+import { getDailyStreak } from "../utils/streak.util.js";
 export async function startCommand(ctx) {
     if (!ctx.from)
         return;
     try {
-        // Extract referrerId from the start payload
-        const referrerId = ctx.match ? Number(ctx.match) : undefined;
+        // Extract valid numerical referrerId from start payload (ignoring self-referrals)
+        let referrerId = undefined;
+        if (ctx.match) {
+            const parsed = parseInt(String(ctx.match).trim(), 10);
+            if (!isNaN(parsed) && parsed !== ctx.from.id) {
+                referrerId = parsed;
+            }
+        }
         // Check session for user data
         const session = await getSession(ctx.from.id);
-        let user;
-        console.log('sesion', session);
-        if (session && session.user) {
-            user = session.user;
+        // Always register or update user via service layer to record referrer
+        const user = await registerOrUpdate(ctx.from, referrerId);
+        const streak = await getDailyStreak(ctx.from.id);
+        const isBrandNewUser = user.isNewUser || (!session || !session.user);
+        // Track referral join ONLY if user is brand new (ignore existing users clicking referral links)
+        if (referrerId && isBrandNewUser) {
+            try {
+                const { trackReferralJoin } = await import("../utils/analytics.util.js");
+                await trackReferralJoin(referrerId, ctx.from.id);
+            }
+            catch (e) { }
         }
-        else {
-            // Register or update user via service layer
-            user = await registerOrUpdate(ctx.from, referrerId);
-            // Store user in session
-            await setSession(ctx.from.id, { ...session, user });
+        // Notify Admin ONLY for brand new user registrations
+        if (isBrandNewUser) {
+            const { trackNewUser } = await import("../utils/analytics.util.js");
+            await trackNewUser(ctx);
         }
         // Clear any active session mode when starting fresh
         await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
-        // Send welcome message
+        // Send welcome message with optimized button arrangement & Daily Challenge
+        const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
         const keyboard = new InlineKeyboard()
-            .text("🧹 Correct sentence", "grammar")
+            .text("🔥 Daily Challenge", "daily_challenge")
+            .row();
+        if (miniAppUrl.includes('t.me/')) {
+            keyboard.url("🎙️ Talk with Maraki", miniAppUrl);
+        }
+        else {
+            keyboard.webApp("🎙️ Talk with Maraki", miniAppUrl);
+        }
+        keyboard
+            .row()
+            .text("📚 Lessons", "lesson")
             .text("🧠 Quiz", "quiz")
             .row()
-            .text("📚 Lesson", "lesson")
-            .text("⚡ Chat Conversation", "chat_conversation")
+            .text("🌐 Amharic-English", "translation")
+            .text("⚙️ My Progress", "level")
             .row()
-            .text("🌐 Amharic → English", "translation")
-            .row()
-            .text("🔓 Hack the Bot (Free Premium)", "hack_bot");
-        await ctx.reply(`👋 Hello ${ctx.from.first_name || "there"}.\n${start_msg}`, { reply_markup: keyboard });
+            .text("🎁 Invite Friends", "referral_link");
+        const welcomeMsg = getPersonalizedStartMsg(ctx.from.first_name || "there");
+        await ctx.reply(welcomeMsg, { parse_mode: 'HTML', reply_markup: keyboard });
     }
     catch (error) {
         console.error("Error in /start command:", error);

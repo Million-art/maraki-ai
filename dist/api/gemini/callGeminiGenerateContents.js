@@ -1,38 +1,41 @@
-export async function callGeminiGenerateContent(promptText) {
-    let apiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.VITE_GEMINI_API_KEY || '').trim();
-    apiKey = apiKey.replace(/^["']|["']$/g, '').trim();
-    if (!apiKey)
+import { GEMINI_CONFIG } from '../../config/gemini.config.js';
+export async function callGeminiGenerateContent(promptText, taskType = 'complex') {
+    const apiKeys = GEMINI_CONFIG.getApiKeys();
+    if (apiKeys.length === 0) {
         throw new Error("GEMINI_API_KEY is not set in environment");
-    console.log(`[Maraki Bot Key Debug]: length=${apiKey.length}, prefix="${apiKey.substring(0, 6)}..."`);
-    const modelsToTry = [
-        'gemini-1.5-flash',
-        'gemini-2.0-flash',
-        'gemini-flash-latest',
-        'gemini-1.5-flash-8b',
-    ];
-    for (const modelName of modelsToTry) {
-        try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-goog-api-key': apiKey,
-                },
-                body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
-            });
-            const data = await res.json();
-            if (data?.error) {
-                console.warn(`Model ${modelName} REST error:`, data.error.message || data.error);
-                continue;
+    }
+    const primaryModel = GEMINI_CONFIG.models[taskType];
+    const fallbackModel = GEMINI_CONFIG.models.fallback;
+    const modelsToTry = Array.from(new Set([primaryModel, fallbackModel]));
+    for (const apiKey of apiKeys) {
+        for (const modelName of modelsToTry) {
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-goog-api-key': apiKey,
+                    },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
+                });
+                const data = await res.json();
+                if (data?.error) {
+                    const errMsg = data.error.message || JSON.stringify(data.error);
+                    // Only log warnings if it's not an expected rate-limit cascade
+                    if (!errMsg.includes('Quota exceeded')) {
+                        console.warn(`Model ${modelName} (Key ${apiKey.substring(0, 6)}...): ${errMsg}`);
+                    }
+                    continue;
+                }
+                const restText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (restText && restText.trim().length > 0) {
+                    return restText.trim();
+                }
             }
-            const restText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (restText && restText.trim().length > 0) {
-                return restText.trim();
+            catch (e) {
+                console.warn(`Model ${modelName} fetch error:`, e?.message || e);
             }
-        }
-        catch (e) {
-            console.warn(`Model ${modelName} fetch error:`, e?.message || e);
         }
     }
-    return "No response from Maraki.";
+    return "Sorry, I'm experiencing high traffic right now. Please try again in a moment! ⏳";
 }

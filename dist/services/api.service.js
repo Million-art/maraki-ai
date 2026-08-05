@@ -32,6 +32,9 @@ export class ApiService {
             return { telegramId, ...userData };
         }
     }
+    async registerStudent(studentData) {
+        return this.createOrUpdateUser(studentData.telegramId, studentData);
+    }
     async getReferralStats(telegramId) {
         try {
             const { data } = await axios.get(`${this.backendUrl}/api/student/referral-stats/${telegramId}`, { timeout: 5000 });
@@ -44,7 +47,7 @@ export class ApiService {
                 remaining: 10,
                 progressPercentage: 0,
                 rewardUnlocked: false,
-                referralLink: `https://t.me/maraki_english_bot?start=${telegramId}`,
+                referralLink: `https://t.me/marakiai_bot?start=${telegramId}`,
             };
         }
     }
@@ -59,7 +62,8 @@ export class ApiService {
             };
         }
         catch (error) {
-            return { hasAccess: true, remaining: 5, reason: 'Fallback default' };
+            // Fail closed: deny access when the backend is unreachable to prevent free unlimited usage
+            return { hasAccess: false, remaining: 0, reason: 'Service temporarily unavailable. Please try again shortly.' };
         }
     }
     async incrementUsage(telegramId, feature) {
@@ -132,7 +136,18 @@ export class ApiService {
             return data;
         }
         catch (error) {
-            return null;
+            // Fail closed: deny quiz/lesson access when backend is unreachable
+            return {
+                isPremium: false,
+                weeklyQuizzesUsed: 99, // Exceeds limit intentionally
+                weeklyQuizLimit: 3,
+                remaining: 0,
+                weeklyLessonsUsed: 99,
+                weeklyLessonLimit: 5,
+                remainingLessons: 0,
+                hasAccess: false,
+                reason: 'Service temporarily unavailable. Please try again shortly.',
+            };
         }
     }
     async saveQuizResult(telegramId, quizData) {

@@ -2,15 +2,19 @@ import { getSession, setSession } from "../utils/redis.js";
 import lessonPrompt from "../prompt/lesson.prompt.js";
 import { apiService } from "../services/api.service.js";
 import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
+import { FALLBACK_LESSON } from "../config/fallbacks.config.js";
 import { lessonFollowupPrompt } from "../prompt/lesson.prompt.js";
+import { checkCentralAuthAndAccess } from "../middleware/authGuard.middleware.js";
 export const lessonCommand = async (ctx) => {
     if (!ctx.from) {
         return ctx.reply("⚠️ Could not get your Telegram ID.");
     }
-    const session = await getSession(ctx.from.id);
+    // Centralized authentication & access verification
+    const allowed = await checkCentralAuthAndAccess(ctx, 'lesson');
+    if (!allowed)
+        return;
     await setSession(ctx.from.id, { mode: 'lesson', timestamp: Date.now() });
     try {
-        // Directly start lesson recommendation instead of showing menu
         await startLessonRecommendation(ctx);
     }
     catch (error) {
@@ -63,7 +67,7 @@ Please suggest ONE specific grammar topic (e.g., "verb tenses", "prepositions", 
 
 Respond with just the topic name, nothing else.`;
                     try {
-                        const aiSuggestedTopic = await callGeminiGenerateContent(analysisPrompt);
+                        const aiSuggestedTopic = await callGeminiGenerateContent(analysisPrompt, 'basic');
                         suggestedTopic = aiSuggestedTopic.trim().toLowerCase();
                     }
                     catch (aiError) {
@@ -116,6 +120,7 @@ export const handleLessonResponse = async (ctx) => {
             console.warn('API not available, user level not assigned:', apiError.message);
         }
         let selectedTopic = '';
+        let conversationContext = '';
         // Determine the topic based on user response
         if (userResponse.includes('yes') || userResponse.includes('agree') || userResponse.includes('ok')) {
             // Use AI to suggest topic based on learning history
@@ -132,7 +137,7 @@ export const handleLessonResponse = async (ctx) => {
                         const recentLessons = conversation.lessons.slice(-3);
                         contextParts.push(...recentLessons.map((l) => `Lesson topic: ${l.topic}`));
                     }
-                    const conversationContext = contextParts.join(' | ');
+                    conversationContext = contextParts.join(' | ');
                     if (conversationContext.trim()) {
                         const analysisPrompt = `Analyze this user's learning history and suggest the most appropriate English grammar topic they should focus on for their next lesson. Consider their grammar mistakes, previous lesson topics, and areas they've been working on.
 
@@ -143,7 +148,7 @@ Please suggest ONE specific grammar topic (e.g., "verb tenses", "prepositions", 
 
 Respond with just the topic name, nothing else.`;
                         try {
-                            const aiSuggestedTopic = await callGeminiGenerateContent(analysisPrompt);
+                            const aiSuggestedTopic = await callGeminiGenerateContent(analysisPrompt, 'basic');
                             selectedTopic = aiSuggestedTopic.trim().toLowerCase();
                         }
                         catch (aiError) {
@@ -164,13 +169,15 @@ Respond with just the topic name, nothing else.`;
             // User suggested a different topic
             selectedTopic = userResponse.trim();
         }
-        // Generate lesson using Gemini
+        // Generate lesson using Gemini tailored to user's mistakes
         const lessonRequest = `${lessonPrompt}
 
 User Level: ${userLevel}
 Selected Topic: ${selectedTopic}
-User's Previous Focus Areas: Based on conversation history, focus on areas where the user has shown interest or made mistakes.`;
-        const lessonContent = await callGeminiGenerateContent(lessonRequest);
+User's Past Mistakes & Weak Areas: ${conversationContext || 'No recorded mistakes yet.'}
+
+IMPORTANT INSTRUCTION: Explicitly design this lesson to address and correct the user's specific past mistakes listed above while teaching "${selectedTopic}". Provide clear "Incorrect vs Correct" examples.`;
+        const lessonContent = await callGeminiGenerateContent(lessonRequest, 'complex');
         // Parse and format the lesson response
         let formattedLesson = lessonContent;
         if (lessonContent.includes('```')) {
@@ -185,7 +192,10 @@ User's Previous Focus Areas: Based on conversation history, focus on areas where
             .text("📚 New Lesson", "lesson_back_to_parts")
             .text("❌ Exit", "close");
         await ctx.reply(`📖 Lesson: ${selectedTopic.toUpperCase()}\n\n${formattedLesson}`, { reply_markup: keyboard, parse_mode: 'HTML' });
-        // Update conversation context
+        // Save lesson content to session so the follow-up handler can access it as context
+        const currentSession = await getSession(userId) || {};
+        await setSession(userId, { ...currentSession, lastLessonContent: formattedLesson, lastLessonTopic: selectedTopic });
+        // Update conversation context via API (best-effort)
         try {
             await apiService.addLesson(userId, {
                 topic: selectedTopic,
@@ -200,7 +210,12 @@ User's Previous Focus Areas: Based on conversation history, focus on areas where
     }
     catch (error) {
         console.error('Lesson response error:', error);
-        await ctx.reply("❌ An error occurred while generating your lesson. Please try again later.");
+        const { InlineKeyboard } = await import("grammy");
+        const keyboard = new InlineKeyboard()
+            .text("❓ Ask Question", "lesson_followup_ask")
+            .text("📚 New Lesson", "lesson_back_to_parts")
+            .text("❌ Exit", "close");
+        await ctx.reply(`📖 <b>Lesson: ${FALLBACK_LESSON.topic.toUpperCase()}</b>\n\n${FALLBACK_LESSON.content}`, { parse_mode: 'HTML', reply_markup: keyboard });
     }
 };
 export const handleLessonFollowup = async (ctx) => {
@@ -209,17 +224,11 @@ export const handleLessonFollowup = async (ctx) => {
     const userId = ctx.from.id;
     const userQuestion = ctx.message.text.trim();
     try {
-        // Retrieve last lesson content from conversation history
-        let lastLessonContent = '';
-        try {
-            const conversation = await apiService.getConversation(userId);
-            if (conversation?.lessons && conversation.lessons.length > 0) {
-                lastLessonContent = conversation.lessons[conversation.lessons.length - 1].content || '';
-            }
-        }
-        catch (apiError) {
-            console.warn('API not available, cannot retrieve lesson content:', apiError.message);
-        }
+        // Read last lesson content from session (saved when lesson was generated)
+        const { getSession } = await import('../utils/redis.js');
+        const session = await getSession(userId);
+        const lastLessonContent = session?.lastLessonContent || '';
+        const lastLessonTopic = session?.lastLessonTopic || 'the lesson';
         if (!lastLessonContent) {
             await ctx.reply("❌ Sorry, I don't have the lesson context to answer your question. Please start a new lesson.");
             return;
@@ -229,11 +238,24 @@ export const handleLessonFollowup = async (ctx) => {
             .replace('{lesson_content}', lastLessonContent)
             .replace('{user_question}', userQuestion);
         // Call AI to get answer
-        const answer = await callGeminiGenerateContent(prompt);
-        await ctx.reply(answer, { parse_mode: 'HTML' });
+        const answer = await callGeminiGenerateContent(prompt, 'complex');
+        // Send answer with follow-up keyboard options
+        const { InlineKeyboard } = await import("grammy");
+        const keyboard = new InlineKeyboard()
+            .text("❓ Ask Question", "lesson_followup_ask")
+            .text("📚 New Lesson", "lesson_back_to_parts")
+            .text("❌ Exit", "close");
+        try {
+            await ctx.reply(answer, { reply_markup: keyboard, parse_mode: 'HTML' });
+        }
+        catch (e) {
+            await ctx.reply(answer.replace(/<[^>]*>/g, ''), { reply_markup: keyboard });
+        }
     }
     catch (error) {
         console.error('Lesson follow-up error:', error);
+        const { notifyAdminOnError } = await import('../utils/admin-notify.util.js');
+        await notifyAdminOnError(ctx, error, 'Lesson Follow-up');
         await ctx.reply("❌ An error occurred while answering your question. Please try again later.");
     }
 };

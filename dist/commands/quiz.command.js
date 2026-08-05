@@ -2,12 +2,26 @@ import { InlineKeyboard } from "grammy";
 import { setSession, getSession } from "../utils/redis.js";
 import { apiService } from "../services/api.service.js";
 import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
+import { getFallbackQuizQuestions, getFallbackMistakeQuestion } from "../config/fallbacks.config.js";
+import { checkCentralAuthAndAccess } from "../middleware/authGuard.middleware.js";
 export const quizCommand = async (ctx) => {
     if (!ctx.from)
         return;
-    await setSession(ctx.from.id, { mode: 'quiz', timestamp: Date.now(), quizState: { currentQuestion: 0, answers: [], questions: [] } });
-    await ctx.reply("🧠 Starting your English quiz! I'll ask you 5 questions based on your recent mistakes or your level.\n\nLet's begin!");
-    await sendNextQuestion(ctx);
+    try {
+        // Centralized authentication & access verification
+        const allowed = await checkCentralAuthAndAccess(ctx, 'quiz');
+        if (!allowed)
+            return;
+        await setSession(ctx.from.id, { mode: 'quiz', timestamp: Date.now(), quizState: { currentQuestion: 0, answers: [], questions: [] } });
+        await ctx.reply("🧠 Starting your English quiz! I'll ask you 5 questions based on your recent mistakes or your level.\n\nLet's begin!");
+        await sendNextQuestion(ctx);
+    }
+    catch (error) {
+        console.error('Quiz command error:', error);
+        const { notifyAdminOnError } = await import('../utils/admin-notify.util.js');
+        await notifyAdminOnError(ctx, error, 'Quiz Command');
+        await ctx.reply("❌ An error occurred while starting your quiz. Please try again in a moment.");
+    }
 };
 const sendNextQuestion = async (ctx) => {
     if (!ctx.from)
@@ -42,31 +56,32 @@ const generateQuizQuestions = async (userId) => {
         const conversation = await apiService.getConversation(userId);
         const recentMistakes = conversation?.grammarMistakes?.slice(-10) || [];
         let questions = [];
-        if (recentMistakes.length >= 3) {
-            // Generate questions from mistakes
-            const selectedMistakes = recentMistakes.slice(-5); // Use last 5 mistakes
+        if (recentMistakes.length > 0) {
+            // Prioritize questions generated directly from user's past mistakes
+            const selectedMistakes = recentMistakes.slice(-5);
             for (const mistake of selectedMistakes) {
                 const question = await generateQuestionFromMistake(mistake, userLevel);
                 questions.push(question);
             }
         }
-        else {
-            // Generate general questions based on level
-            questions = await generateGeneralQuestions(userLevel);
+        // Fill remaining slots up to 5 with questions tailored to user level and weak areas
+        if (questions.length < 5) {
+            const remainingCount = 5 - questions.length;
+            const extraQuestions = await generateGeneralQuestions(userLevel, remainingCount, recentMistakes);
+            questions = [...questions, ...extraQuestions];
         }
         return questions;
     }
     catch (error) {
         console.error('Error generating quiz questions:', error);
-        // Fallback to general questions
-        return await generateGeneralQuestions('intermediate');
+        return await generateGeneralQuestions('intermediate', 5);
     }
 };
 const generateQuestionFromMistake = async (mistake, userLevel) => {
-    const prompt = `Create a multiple-choice question about the grammar rule "${mistake.grammarType}" based on this mistake:
+    const prompt = `Create a multiple-choice question about the grammar rule "${mistake.grammarType || 'grammar'}" based on this user mistake:
 
-Original: "${mistake.mistake}"
-Corrected: "${mistake.correction}"
+Original Mistake: "${mistake.mistake}"
+Correct Explanation: "${mistake.correction}"
 
 User level: ${userLevel}
 
@@ -78,7 +93,7 @@ Return a JSON object with:
   "explanation": "Brief explanation"
 }`;
     try {
-        const response = await callGeminiGenerateContent(prompt);
+        const response = await callGeminiGenerateContent(prompt, 'basic');
         const parsed = JSON.parse(response.replace(/```json\s*|\s*```/g, ''));
         return {
             question: parsed.question,
@@ -90,72 +105,52 @@ Return a JSON object with:
     }
     catch (error) {
         console.error('Error generating question from mistake:', error);
-        // Fallback question
-        return {
-            question: `Which of these is the correct version of: "${mistake.mistake}"?`,
-            options: ["A) " + mistake.mistake, "B) " + mistake.correction, "C) Neither", "D) Both"],
-            correctAnswer: 1,
-            explanation: `The correct answer is: ${mistake.correction}`,
-            type: 'mistake'
-        };
+        return getFallbackMistakeQuestion(mistake.mistake, mistake.correction);
     }
 };
-const generateGeneralQuestions = async (userLevel) => {
-    const prompt = `Generate 5 multiple-choice questions for an English learner at ${userLevel} level. Focus on grammar, vocabulary, and sentence structure appropriate for this level.
+const generateGeneralQuestions = async (userLevel, count = 5, userMistakes = []) => {
+    const topics = [
+        "Phrasal Verbs & Everyday Idioms",
+        "Past Continuous vs Past Simple Tenses",
+        "Prepositions of Time, Direction & Place",
+        "Essential Vocabulary for Travel & Socializing",
+        "Conditionals & Hypotheses (If clauses)",
+        "Business, Career & Office English",
+        "Articles (a, an, the) & Quantifiers",
+        "Commonly Confused Words (their/there/they're, lie/lay)",
+        "Present Perfect vs Past Simple Tenses",
+        "Modal Verbs (can, should, must, might, could)"
+    ];
+    const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+    const randomSeed = Math.floor(Math.random() * 1000000);
+    const mistakeContext = userMistakes.length > 0
+        ? `User's past mistake history: ${JSON.stringify(userMistakes.map(m => m.mistake || m.correction))}. Focus questions on similar weak areas.`
+        : `Focus on typical grammar and vocabulary mistakes made by ${userLevel} level English learners.`;
+    const prompt = `Generate ${count} UNIQUE, FRESH multiple-choice questions for an English learner at ${userLevel} level.
+${mistakeContext}
+Primary Focus Topic: ${randomTopic} (Random Seed: ${randomSeed}).
+Ensure questions are completely unique and test different grammar rules or vocabulary.
 
-Return a JSON array of 5 objects, each with:
+Return a JSON array of ${count} objects, each with:
 {
   "question": "The question text",
   "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
-  "correctAnswer": 0 (index of correct option),
+  "correctAnswer": 0 (index of correct option: 0, 1, 2, or 3),
   "explanation": "Brief explanation"
 }`;
     try {
-        const response = await callGeminiGenerateContent(prompt);
-        const questions = JSON.parse(response.replace(/```json\s*|\s*```/g, ''));
-        return questions.map((q) => ({ ...q, type: 'general' }));
+        const response = await callGeminiGenerateContent(prompt, 'basic');
+        const jsonMatch = response.match(/\[[\s\S]*\]/);
+        const jsonString = jsonMatch ? jsonMatch[0] : response.replace(/```json\s*|\s*```/g, '');
+        const questions = JSON.parse(jsonString);
+        if (Array.isArray(questions) && questions.length > 0) {
+            return questions.map((q) => ({ ...q, type: 'general' }));
+        }
     }
     catch (error) {
         console.error('Error generating general questions:', error);
-        // Fallback questions
-        return [
-            {
-                question: "Choose the correct form: 'She ___ to school every day.'",
-                options: ["A) go", "B) goes", "C) going", "D) went"],
-                correctAnswer: 1,
-                explanation: "With 'she', we use 'goes' in present simple.",
-                type: 'general'
-            },
-            {
-                question: "What is the plural of 'child'?",
-                options: ["A) childs", "B) children", "C) childes", "D) childrens"],
-                correctAnswer: 1,
-                explanation: "'Child' becomes 'children' in plural.",
-                type: 'general'
-            },
-            {
-                question: "Which word is a synonym of 'happy'?",
-                options: ["A) sad", "B) joyful", "C) angry", "D) tired"],
-                correctAnswer: 1,
-                explanation: "'Joyful' means the same as 'happy'.",
-                type: 'general'
-            },
-            {
-                question: "Complete: 'I ___ a student.'",
-                options: ["A) am", "B) is", "C) are", "D) be"],
-                correctAnswer: 0,
-                explanation: "With 'I', we use 'am' in present simple.",
-                type: 'general'
-            },
-            {
-                question: "What is the past tense of 'run'?",
-                options: ["A) runned", "B) ran", "C) running", "D) runs"],
-                correctAnswer: 1,
-                explanation: "'Run' becomes 'ran' in past tense.",
-                type: 'general'
-            }
-        ];
     }
+    return getFallbackQuizQuestions();
 };
 export const handleQuizAnswer = async (ctx, answerIndex) => {
     if (!ctx.from)
@@ -172,6 +167,18 @@ export const handleQuizAnswer = async (ctx, answerIndex) => {
         isCorrect,
         explanation: currentQ.explanation
     });
+    // If user made a mistake, automatically record it so future quizzes personalize questions around it!
+    if (!isCorrect) {
+        try {
+            await apiService.addGrammarMistake(ctx.from.id, {
+                mistake: currentQ.question,
+                correction: currentQ.explanation,
+                grammarType: 'Quiz Mistake',
+                createdAt: new Date()
+            });
+        }
+        catch (e) { }
+    }
     session.quizState.currentQuestion = currentQuestion + 1;
     await setSession(ctx.from.id, session);
     // Show feedback
@@ -200,7 +207,12 @@ const showQuizResults = async (ctx) => {
     else {
         resultMessage += `💪 Keep learning! Practice makes perfect!`;
     }
-    // Save quiz result to database
+    // Save quiz result locally & to database
+    try {
+        const { recordQuizCompletion } = await import('../utils/quiz-stats.util.js');
+        await recordQuizCompletion(ctx.from.id, correctAnswers, 5);
+    }
+    catch (e) { }
     try {
         await apiService.saveQuizResult(ctx.from.id, {
             score,
@@ -217,7 +229,24 @@ const showQuizResults = async (ctx) => {
     catch (error) {
         console.error('Error saving quiz result:', error);
     }
-    await ctx.reply(resultMessage);
+    resultMessage += `\n\nWhat would you like to do next? 🚀`;
+    // Attach Call-to-Action inline keyboard with direct Talk with Maraki Mini App button
+    const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app';
+    const keyboard = new InlineKeyboard()
+        .text("🧠 Take Another Quiz", "quiz")
+        .text("📖 Learn a Lesson", "lesson")
+        .row();
+    if (miniAppUrl.includes('t.me/')) {
+        keyboard.url("🎙️ Talk with Maraki", miniAppUrl);
+    }
+    else {
+        keyboard.webApp("🎙️ Talk with Maraki", miniAppUrl);
+    }
+    keyboard
+        .text("🔗 Referral Link", "referral_link")
+        .row()
+        .text("💳 Upgrade to VIP", "pay");
+    await ctx.reply(resultMessage, { reply_markup: keyboard });
     // Clear quiz session
     await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
 };

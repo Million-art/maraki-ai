@@ -14,7 +14,7 @@ export async function handleTranslation(ctx) {
     try {
         // Generate translation response with context
         const fullPrompt = `${translationPrompt}\n\nUser Input:\n"${userMessage}"`;
-        const aiResponse = await callGeminiGenerateContent(fullPrompt);
+        const aiResponse = await callGeminiGenerateContent(fullPrompt, 'basic');
         // Clean up response
         let cleanResponse = aiResponse;
         if (aiResponse.includes('```')) {
@@ -37,6 +37,8 @@ export async function handleTranslation(ctx) {
     }
     catch (error) {
         console.error('Translation error:', error);
+        const { notifyAdminOnError } = await import('../utils/admin-notify.util.js');
+        await notifyAdminOnError(ctx, error, 'Amharic <-> English Translation');
         await ctx.reply("❌ Sorry, I'm having trouble with the translation right now. Let's try again later!");
     }
 }

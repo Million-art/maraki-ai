@@ -1,78 +1,16 @@
-import { setSession } from "../utils/redis.js";
-import grammarPrompt from "../prompt/grammar.prompt.js";
-import { apiService } from "../services/api.service.js";
-import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
+import { InlineKeyboard } from "grammy";
 export const grammarCommand = async (ctx) => {
     if (!ctx.from) {
         return ctx.reply("⚠️ Could not get your Telegram ID.");
     }
-    await setSession(ctx.from.id, { mode: 'grammar', timestamp: Date.now() });
-    await ctx.reply("Ok, send me your sentence");
-};
-export const handleGrammarCorrection = async (ctx) => {
-    if (!ctx.from || !ctx.message?.text)
-        return;
-    const userId = ctx.from.id;
-    const sentence = ctx.message.text;
-    try {
-        // Get user level
-        let userLevel = 'intermediate';
-        try {
-            const user = await apiService.getUserByTelegramId(userId);
-            userLevel = user?.level || 'intermediate';
-        }
-        catch (apiError) {
-            console.warn('API not available, using default user level:', apiError.message);
-        }
-        // Construct full prompt  
-        const fullPrompt = `${grammarPrompt}
-
-          User Level: ${userLevel}
-          Sentence to correct: "${sentence}"`;
-        // Call Gemini API
-        const response = await callGeminiGenerateContent(fullPrompt);
-        // Parse JSON response
-        let parsedResponse;
-        try {
-            // Extract JSON from markdown code blocks if present
-            let jsonString = response;
-            if (response.includes('```json')) {
-                const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
-                if (jsonMatch) {
-                    jsonString = jsonMatch[1].trim();
-                }
-            }
-            parsedResponse = JSON.parse(jsonString);
-        }
-        catch (parseError) {
-            console.error('Failed to parse Gemini response:', response);
-            await ctx.reply("❌ Sorry, I couldn't process your sentence. Please try again.");
-            return;
-        }
-        // Format and send response
-        const { correctedText, explanation, grammarType } = parsedResponse;
-        // Remove any asterisks from the correctedText and explanation
-        const cleanCorrectedText = correctedText.replace(/\*/g, '');
-        const cleanExplanation = explanation.replace(/\*/g, '');
-        let reply = `<b> Corrected Sentence:</b>\n${cleanCorrectedText}\n\n`;
-        reply += `<b> Explanation:</b> ${cleanExplanation}\n\n`;
-        reply += `<b>🏷️ Grammar Type:</b> ${grammarType}`;
-        await ctx.reply(reply, { parse_mode: 'HTML' });
-        // Update conversation context
-        try {
-            await apiService.addGrammarMistake(userId, {
-                mistake: sentence,
-                correction: correctedText,
-                grammarType: grammarType,
-                createdAt: new Date(),
-            });
-        }
-        catch (apiError) {
-            console.warn('API not available, skipping context update:', apiError.message);
-        }
+    const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
+    const keyboard = new InlineKeyboard();
+    if (miniAppUrl.includes('t.me/')) {
+        keyboard.url("🎙️ Talk with Maraki", miniAppUrl);
     }
-    catch (error) {
-        console.error('Grammar correction error:', error);
-        await ctx.reply("❌ An error occurred while correcting your sentence. Please try again later.");
+    else {
+        keyboard.webApp("🎙️ Talk with Maraki", miniAppUrl);
     }
+    await ctx.reply("✨ <b>Voice Practice & Grammar Correction</b> is active in the Maraki Mini App!\n\n" +
+        "Practice speaking or typing sentences to receive real-time strikethrough grammar cards, audio pronunciation, and interactive feedback. 👇", { parse_mode: 'HTML', reply_markup: keyboard });
 };

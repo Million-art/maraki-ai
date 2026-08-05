@@ -1,12 +1,9 @@
-export const start_msg = `
-🎓 Welcome to Practice English!
-
-I'm here to help you improve your English. I can:
-• Correct your English sentences
-• Explain grammar mistakes and provide corrections
-• Help you practice and enhance your English skills
-• Provide lessons based on your mistakes
-• Engage in chat and speech conversations
-
-Ready to start learning? Select an option below to begin! 🚀
-`;
+export const getPersonalizedStartMsg = (name) => {
+    return (`👋 Welcome to <b>Maraki AI</b>, <b>${name}</b>!\n\n` +
+        `Your personal AI English tutor.\n\n` +
+        `🎙️ Real-time English speaking\n` +
+        `📚 Daily grammar & vocabulary\n` +
+        `🧠 Test & level up your skills\n` +
+        `🔥 Idiom & word of the day\n\n` +
+        `Choose an option below 👇`);
+};

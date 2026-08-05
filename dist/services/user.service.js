@@ -11,19 +11,21 @@ export const registerOrUpdate = async (from, referrerId) => {
     };
     try {
         const user = await apiService.createOrUpdateUser(from.id, userData);
+        const telegramId = user?.telegramId ?? from.id;
         return {
-            id: user.telegramId.toString(),
-            telegramId: user.telegramId,
-            first_name: user.firstName,
-            last_name: user.lastName,
-            level: user.level,
-            isPremium: user.isPremium,
-            isMarakiPremium: user.isMarakiPremium,
-            isBot: user.isBot,
-            referredBy: user.referredBy,
-            referral: user.referral ? { count: user.referral.count, usersTelegramId: [] } : undefined,
-            subscriptionTier: user.subscriptionTier,
-            subscriptionExpiresAt: user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).toISOString() : undefined,
+            id: telegramId.toString(),
+            telegramId,
+            first_name: user?.firstName,
+            last_name: user?.lastName,
+            level: user?.level,
+            isPremium: user?.isPremium,
+            isMarakiPremium: user?.isMarakiPremium,
+            isBot: user?.isBot,
+            referredBy: user?.referredBy,
+            referral: user?.referral ? { count: user.referral.count, usersTelegramId: [] } : undefined,
+            subscriptionTier: user?.subscriptionTier,
+            subscriptionExpiresAt: user?.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).toISOString() : undefined,
+            isNewUser: user?.isNewUser !== undefined ? user.isNewUser : undefined,
         };
     }
     catch (error) {
@@ -32,16 +34,34 @@ export const registerOrUpdate = async (from, referrerId) => {
     }
 };
 export const referralCount = async (from) => {
+    let dbCount = 0;
     try {
-        const user = await apiService.getUserByTelegramId(from.id);
-        return {
-            referralCount: user?.referral?.count || 0,
-        };
+        const stats = await apiService.getReferralStats(from.id);
+        if (stats?.totalReferred) {
+            dbCount = stats.totalReferred;
+        }
     }
     catch (error) {
-        console.error("Error getting referral count:", error);
-        return { referralCount: 0 };
+        console.error("Error getting referral count from API:", error);
     }
+    // Combine with local Redis/memory referral tracker
+    let localCount = 0;
+    try {
+        const { getLocalReferralCount } = await import('../utils/analytics.util.js');
+        localCount = await getLocalReferralCount(from.id);
+    }
+    catch (e) { }
+    const finalCount = Math.max(dbCount, localCount);
+    const target = 10;
+    const remaining = Math.max(0, target - finalCount);
+    const progressPercentage = Math.min(100, Math.round((finalCount / target) * 100));
+    return {
+        referralCount: finalCount,
+        target,
+        remaining,
+        progressPercentage,
+        rewardUnlocked: finalCount >= target,
+    };
 };
 export const getCurrentLevel = async (from) => {
     try {

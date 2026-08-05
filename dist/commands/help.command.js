@@ -1,5 +1,5 @@
-import { help_msg } from "../messages/help.message.js";
 import { InlineKeyboard } from "grammy";
+import { help_msg } from "../messages/help.message.js";
 export const helpCommand = async (ctx) => {
     const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app';
     const keyboard = new InlineKeyboard()
@@ -22,4 +22,3 @@ export const helpCommand = async (ctx) => {
         reply_markup: keyboard,
     });
 };
-

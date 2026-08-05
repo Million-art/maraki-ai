@@ -71,6 +71,52 @@ const initialize = async () => {
 app.get('/', (req, res) => {
     res.send('Practice English is running');
 });
+// Secured daily challenge broadcast endpoint — triggered by GitHub Actions cron
+app.post('/cron/daily-challenge', async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    const authHeader = req.headers['authorization'];
+    if (!secret || authHeader !== `Bearer ${secret}`) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+    }
+    try {
+        const { getOptedInUserIds } = await import('./utils/daily-notify.util.js');
+        const { challengeCommand } = await import('./commands/challenge.command.js');
+        const userIds = await getOptedInUserIds();
+        console.log(`[Daily Broadcast] Sending to ${userIds.length} opted-in users`);
+        let sent = 0;
+        let failed = 0;
+        for (const userId of userIds) {
+            try {
+                // Simulate a minimal context to reuse challengeCommand
+                const chat = await bot.api.getChat(userId).catch(() => null);
+                if (!chat) {
+                    failed++;
+                    continue;
+                }
+                // Rate-limit: Telegram allows ~30 msgs/sec. 50ms gap = safe.
+                await new Promise(r => setTimeout(r, 50));
+                // Build a minimal fake context to call existing challenge logic
+                await bot.api.sendChatAction(userId, 'typing').catch(() => { });
+                // Import builder to generate fresh challenge for this user
+                const { buildDailyChallengeMessage } = await import('./commands/challenge.command.js');
+                const { text, keyboard } = await buildDailyChallengeMessage(userId);
+                await bot.api.sendMessage(userId, text, { parse_mode: 'HTML', reply_markup: keyboard });
+                sent++;
+            }
+            catch (e) {
+                // User blocked the bot or account deleted — silently skip
+                failed++;
+            }
+        }
+        console.log(`[Daily Broadcast] Done. Sent: ${sent}, Failed/Skipped: ${failed}`);
+        res.json({ success: true, sent, failed });
+    }
+    catch (error) {
+        console.error('[Daily Broadcast] Error:', error);
+        res.status(500).json({ error: 'Broadcast failed' });
+    }
+});
 // Webhook endpoint for Telegram
 app.post('/webhook', async (req, res) => {
     try {

@@ -18,4 +18,3 @@ export const help_msg = `🤖 <b>Maraki AI — Quick Guide</b>
 /pay — Upgrade to VIP
 
 💡 Paste your <b>CBE or Dashen</b> receipt link after sending the /pay command to activate VIP instantly.`;
-
