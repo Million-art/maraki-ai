@@ -8,7 +8,7 @@ const app = express()
 const port = process.env.PORT || 1000
 
 // Middleware
-app.use(express.json())
+app.use(express.json({ limit: '5mb' }))
 
 // Track initialization state
 let isInitialized = false
@@ -128,63 +128,22 @@ app.post('/cron/daily-challenge', async (req, res: Response) => {
     }
 })
 
-// Internal Webhook: Voice Session Summary from Dashboard-Backend
-app.post('/internal/voice-summary', async (req: express.Request, res: express.Response) => {
-    const { telegramId, messages } = req.body;
+// Internal Webhook: Direct Message Dispatch from Dashboard-Backend
+app.post('/internal/send-message', async (req: express.Request, res: express.Response) => {
+    const { telegramId, text } = req.body;
     
-    if (!telegramId || !messages || messages.length === 0) {
+    if (!telegramId || !text) {
         res.status(400).json({ error: 'Invalid payload' });
         return;
     }
 
-    // Acknowledge quickly so dashboard-backend isn't waiting
-    res.status(202).json({ status: 'Processing summary' });
-
     try {
-        const { callGeminiGenerateContent } = await import('./api/gemini/callGeminiGenerateContents.js');
-        
-        const systemInstruction = `You are an expert English language evaluator.
-Analyze the provided conversation transcript between the 'user' (student) and 'model' (AI tutor).
-Evaluate the user's English proficiency based on their messages and provide a summary.
-Since this was a spoken conversation transcribed by an ASR, evaluate their pronunciation and fluency based on how the ASR interpreted their words (e.g., if there are lots of weird fragments or confused homophones, the score drops).
-You must return ONLY a raw JSON object (without markdown code blocks) matching this exact schema:
-{
-  "scores": {
-    "grammar": number (0-10),
-    "pronunciation": number (0-10),
-    "vocabulary": number (0-10),
-    "fluency": number (0-10),
-    "confidence": number (0-10)
-  },
-  "wordsToPractice": ["word1", "word2", "word3", "word4"]
-}`;
-
-        const transcript = messages.map((m: any) => `${m.sender === 'user' ? 'Student' : 'AI'}: ${m.originalText || m.text}`).join('\n');
-        const prompt = `${systemInstruction}\n\nHere is the conversation transcript:\n\n${transcript}`;
-
-        const responseText = await callGeminiGenerateContent(prompt, 'complex');
-        
-        if (responseText) {
-            // Strip markdown JSON block if present
-            const cleanJsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-            const summary = JSON.parse(cleanJsonStr);
-
-            if (summary && summary.scores && summary.wordsToPractice) {
-                const text = `📊 *Conversation Score*\n\n` +
-                  `📝 Grammar: ${summary.scores.grammar}/10\n` +
-                  `🗣 Pronunciation: ${summary.scores.pronunciation}/10\n` +
-                  `📚 Vocabulary: ${summary.scores.vocabulary}/10\n` +
-                  `🌊 Fluency: ${summary.scores.fluency}/10\n` +
-                  `💪 Confidence: ${summary.scores.confidence}/10\n\n` +
-                  `🎯 *Words to practice today:*\n\n` +
-                  summary.wordsToPractice.map((w: string) => `• \`${w}\``).join('\n');
-
-                await bot.api.sendMessage(telegramId, text, { parse_mode: 'Markdown' });
-                console.log(`[Voice Summary] Sent summary to ${telegramId}`);
-            }
-        }
+        await bot.api.sendMessage(telegramId, text, { parse_mode: 'Markdown' });
+        console.log(`[Send Message Webhook] Sent message to ${telegramId}`);
+        res.status(200).json({ success: true });
     } catch (e: any) {
-        console.error(`[Voice Summary] Failed to generate or send summary for ${telegramId}:`, e.message);
+        console.error(`[Send Message Webhook] Failed to send message to ${telegramId}:`, e.message);
+        res.status(500).json({ error: e.message });
     }
 });
 
