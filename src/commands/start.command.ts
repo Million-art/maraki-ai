@@ -24,7 +24,7 @@ export async function startCommand(ctx: Context) {
     const user = await registerOrUpdate(ctx.from, referrerId);
     const streak = await getDailyStreak(ctx.from.id);
 
-    const isBrandNewUser = user.isNewUser || (!session || !session.user);
+    const isBrandNewUser = user.isNewUser === true;
 
     // Track referral join ONLY if user is brand new (ignore existing users clicking referral links)
     if (referrerId && isBrandNewUser) {
