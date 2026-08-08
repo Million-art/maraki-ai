@@ -115,6 +115,7 @@ app.post('/cron/daily-challenge', async (req, res: Response) => {
                 await bot.api.sendMessage(userId, text, { parse_mode: 'HTML', reply_markup: keyboard });
                 sent++;
             } catch (e: any) {
+                console.error(`[Daily Broadcast] Error sending to user ${userId}:`, e.message || e);
                 // User blocked the bot or account deleted — silently skip
                 failed++;
             }
