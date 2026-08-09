@@ -3,9 +3,16 @@ import { getPersonalizedStartMsg } from "../messages/start.message.js";
 import { registerOrUpdate } from "../services/user.service.js";
 import { getSession, setSession } from "../utils/redis.js";
 import { getDailyStreak } from "../utils/streak.util.js";
+import { handlePaymentCommand } from "./payment.command.js";
 
 export async function startCommand(ctx: Context) {
   if (!ctx.from) return;
+
+  // Deep-link: /start pay — triggered from Mini App upgrade popup
+  if (String(ctx.match).trim() === 'pay') {
+    await registerOrUpdate(ctx.from); // ensure user exists
+    return handlePaymentCommand(ctx);
+  }
 
   try {
     // Extract valid numerical referrerId from start payload (ignoring self-referrals)
