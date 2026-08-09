@@ -1,6 +1,8 @@
 name: Daily Challenge Broadcast
 
 on:
+  push:
+    branches: [ main, master ]
   schedule:
     # 5:00 AM UTC = 8:00 AM EAT (Africa/Addis_Ababa, UTC+3)
     - cron: '0 5 * * *'
@@ -15,15 +17,19 @@ jobs:
     steps:
       - name: Trigger Daily Challenge Broadcast
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" \
+          # Capture both the HTTP status code and the response body
+          HTTP_STATUS=$(curl -s -w "%{http_code}" -o response_body.json \
             -X POST "${{ secrets.BOT_API_URL }}/cron/daily-challenge" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
 
-          echo "Response status: $response"
+          echo "Response status: $HTTP_STATUS"
+          echo "Response body:"
+          cat response_body.json
+          echo ""
 
-          if [ "$response" -ne 200 ]; then
-            echo "❌ Broadcast failed with status $response"
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "❌ Broadcast failed with status $HTTP_STATUS"
             exit 1
           fi
 
