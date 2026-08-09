@@ -18,7 +18,7 @@ jobs:
       - name: Trigger Daily Challenge Broadcast
         run: |
           # Capture both the HTTP status code and the response body
-          HTTP_STATUS=$(curl -s -w "%{http_code}" -o response_body.json \
+          HTTP_STATUS=$(curl -s -L -w "%{http_code}" -o response_body.json \
             -X POST "${{ secrets.BOT_API_URL }}/cron/daily-challenge" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
