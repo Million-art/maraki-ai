@@ -83,7 +83,14 @@ app.post('/cron/daily-challenge', async (req, res: Response) => {
     const authHeader = req.headers['authorization'];
 
     if (!secret || authHeader !== `Bearer ${secret}`) {
-        res.status(401).json({ error: 'Unauthorized' });
+        res.status(401).json({ 
+            error: 'Unauthorized',
+            debug: {
+                serverHasSecret: !!secret,
+                serverSecretLength: secret ? secret.length : 0,
+                receivedHeader: authHeader ? authHeader.substring(0, 10) + '...' : 'none'
+            }
+        });
         return;
     }
 
