@@ -2,7 +2,7 @@ name: Daily Challenge Broadcast
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, v3, master ]
   schedule:
     # 5:00 AM UTC = 8:00 AM EAT (Africa/Addis_Ababa, UTC+3)
     - cron: '0 5 * * *'
