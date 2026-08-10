@@ -12,9 +12,11 @@ export async function handlePaymentCommand(ctx: Context) {
 
   const { InlineKeyboard } = await import('grammy');
   const keyboard = new InlineKeyboard()
-    .text("🌟 Monthly VIP (299 ETB)", "pay_monthly")
+    .text("🌟 1 Month (299 ETB)", "pay_monthly")
     .row()
-    .text("🚀 Yearly VIP (2,499 ETB) - Save 30%", "pay_yearly");
+    .text("🔥 3 Months (799 ETB) - Save 11%", "pay_quarterly")
+    .row()
+    .text("🚀 1 Year (2,499 ETB) - Save 30%", "pay_yearly");
 
   const paymentText =
     `💳 *Maraki VIP Subscription*\n\n` +
@@ -25,9 +27,16 @@ export async function handlePaymentCommand(ctx: Context) {
 }
 
 export async function handlePaymentSelection(ctx: Context, data: string) {
-  const isYearly = data === 'pay_yearly';
-  const amount = isYearly ? '2,499' : '299';
-  const tierName = isYearly ? '🚀 Yearly VIP' : '🌟 Monthly VIP';
+  let amount = '299';
+  let tierName = '🌟 1 Month VIP';
+
+  if (data === 'pay_quarterly') {
+    amount = '799';
+    tierName = '🔥 3 Months VIP';
+  } else if (data === 'pay_yearly') {
+    amount = '2,499';
+    tierName = '🚀 1 Year VIP';
+  }
 
   const text =
     `💳 *You selected: ${tierName}*\n\n` +
@@ -64,8 +73,12 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
 
     if (result.success) {
       const amountPaid = result.result?.amount || 299;
-      const isYearly = amountPaid >= 2499;
-      const durationText = isYearly ? '12 MONTHS' : '1 MONTH';
+      let durationText = '1 MONTH';
+      if (amountPaid >= 2499) {
+        durationText = '12 MONTHS';
+      } else if (amountPaid >= 799) {
+        durationText = '3 MONTHS';
+      }
 
       await ctx.reply(
         `🎉 *PAYMENT VERIFIED SUCCESSFULLY!*\n\n` +
