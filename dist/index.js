@@ -6,7 +6,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 1000;
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
 // Track initialization state
 let isInitialized = false;
 let initializationPromise = null;
@@ -76,7 +76,14 @@ app.post('/cron/daily-challenge', async (req, res) => {
     const secret = process.env.CRON_SECRET;
     const authHeader = req.headers['authorization'];
     if (!secret || authHeader !== `Bearer ${secret}`) {
-        res.status(401).json({ error: 'Unauthorized' });
+        res.status(401).json({
+            error: 'Unauthorized',
+            debug: {
+                serverHasSecret: !!secret,
+                serverSecretLength: secret ? secret.length : 0,
+                receivedHeader: authHeader ? authHeader.substring(0, 10) + '...' : 'none'
+            }
+        });
         return;
     }
     try {
@@ -105,6 +112,7 @@ app.post('/cron/daily-challenge', async (req, res) => {
                 sent++;
             }
             catch (e) {
+                console.error(`[Daily Broadcast] Error sending to user ${userId}:`, e.message || e);
                 // User blocked the bot or account deleted — silently skip
                 failed++;
             }
@@ -115,6 +123,23 @@ app.post('/cron/daily-challenge', async (req, res) => {
     catch (error) {
         console.error('[Daily Broadcast] Error:', error);
         res.status(500).json({ error: 'Broadcast failed' });
+    }
+});
+// Internal Webhook: Direct Message Dispatch from Dashboard-Backend
+app.post('/internal/send-message', async (req, res) => {
+    const { telegramId, text } = req.body;
+    if (!telegramId || !text) {
+        res.status(400).json({ error: 'Invalid payload' });
+        return;
+    }
+    try {
+        await bot.api.sendMessage(telegramId, text, { parse_mode: 'Markdown' });
+        console.log(`[Send Message Webhook] Sent message to ${telegramId}`);
+        res.status(200).json({ success: true });
+    }
+    catch (e) {
+        console.error(`[Send Message Webhook] Failed to send message to ${telegramId}:`, e.message);
+        res.status(500).json({ error: e.message });
     }
 });
 // Webhook endpoint for Telegram

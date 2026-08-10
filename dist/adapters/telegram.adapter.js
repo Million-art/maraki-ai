@@ -220,6 +220,12 @@ bot.on('callback_query:data', async (ctx) => {
             case 'pay':
                 await handlePaymentCommand(ctx);
                 break;
+            case 'pay_monthly':
+            case 'pay_quarterly':
+            case 'pay_yearly':
+                const { handlePaymentSelection } = await import('../commands/payment.command.js');
+                await handlePaymentSelection(ctx, data);
+                break;
             case 'grammar':
                 await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });
                 await grammarCommand(ctx);

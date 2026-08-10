@@ -3,9 +3,15 @@ import { getPersonalizedStartMsg } from "../messages/start.message.js";
 import { registerOrUpdate } from "../services/user.service.js";
 import { getSession, setSession } from "../utils/redis.js";
 import { getDailyStreak } from "../utils/streak.util.js";
+import { handlePaymentCommand } from "./payment.command.js";
 export async function startCommand(ctx) {
     if (!ctx.from)
         return;
+    // Deep-link: /start pay — triggered from Mini App upgrade popup
+    if (String(ctx.match).trim() === 'pay') {
+        await registerOrUpdate(ctx.from); // ensure user exists
+        return handlePaymentCommand(ctx);
+    }
     try {
         // Extract valid numerical referrerId from start payload (ignoring self-referrals)
         let referrerId = undefined;
@@ -20,7 +26,7 @@ export async function startCommand(ctx) {
         // Always register or update user via service layer to record referrer
         const user = await registerOrUpdate(ctx.from, referrerId);
         const streak = await getDailyStreak(ctx.from.id);
-        const isBrandNewUser = user.isNewUser || (!session || !session.user);
+        const isBrandNewUser = user.isNewUser === true;
         // Track referral join ONLY if user is brand new (ignore existing users clicking referral links)
         if (referrerId && isBrandNewUser) {
             try {

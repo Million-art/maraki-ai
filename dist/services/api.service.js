@@ -82,13 +82,15 @@ export class ApiService {
                 telegramId,
                 referenceNumber,
                 tier,
-            }, { timeout: 15000 });
+            }, { timeout: 30000 });
             return data;
         }
         catch (error) {
+            console.error('Verify Bank Payment Error:', error.response?.data || error.message);
+            const backendMessage = error.response?.data?.message || error.message;
             return {
                 success: false,
-                message: 'Bank verification service unavailable or invalid reference.',
+                message: `Backend Error: ${backendMessage}`,
             };
         }
     }
