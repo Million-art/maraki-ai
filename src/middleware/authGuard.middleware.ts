@@ -49,12 +49,33 @@ export async function checkCentralAuthAndAccess(
       const remainingLessons = usage?.remainingLessons ?? (lessonLimit - lessonsUsed);
 
       if (remainingLessons <= 0) {
+        let resetText = "7 days after your first usage";
+        
+        if (usage?.nextLessonReset) {
+          const resetDate = new Date(usage.nextLessonReset);
+          const now = new Date();
+          const diffMs = resetDate.getTime() - now.getTime();
+          
+          if (diffMs > 0) {
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            if (diffDays > 0) {
+              resetText = `in **${diffDays} day(s) and ${diffHours} hour(s)**`;
+            } else if (diffHours > 0) {
+              resetText = `in **${diffHours} hour(s)**`;
+            } else {
+              resetText = `in less than an hour`;
+            }
+          }
+        }
+
         await ctx.reply(
-          `🚫 <b>Weekly Lesson Limit Reached!</b>\n\n` +
-          `You have used all <b>${lessonLimit} free lessons</b> this week.\n\n` +
-          `⏳ Your quota resets every <b>Monday</b>.\n\n` +
-          `🔓 <b>Upgrade to VIP</b> for unlimited lessons, quizzes, and AI practice  299 ETB/month!`,
-          { parse_mode: 'HTML', reply_markup: keyboard }
+          `🚫 *Weekly Lesson Limit Reached!*\n\n` +
+          `You have used all *${lessonLimit} free lessons* for your current 7-day window.\n\n` +
+          `⏳ Your next free lesson unlocks ${resetText}.\n\n` +
+          `🔓 *Upgrade to VIP* for unlimited lessons, quizzes, and AI practice — 299 ETB/month!`,
+          { parse_mode: 'Markdown', reply_markup: keyboard }
         );
         return false;
       }
