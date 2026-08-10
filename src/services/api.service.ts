@@ -111,7 +111,7 @@ export class ApiService {
           referenceNumber,
           tier,
         },
-        { timeout: 15000 },
+        { timeout: 30000 },
       );
       return data;
     } catch (error: any) {

@@ -63,12 +63,17 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
     } catch (e) {}
 
     if (result.success) {
+      const amountPaid = result.result?.amount || 299;
+      const isYearly = amountPaid >= 2499;
+      const durationText = isYearly ? '12 MONTHS' : '1 MONTH';
+
       await ctx.reply(
         `🎉 *PAYMENT VERIFIED SUCCESSFULLY!*\n\n` +
         `Bank: *${result.result?.bankName || 'CBE'}*\n` +
-        `Amount: *${result.result?.amount || 299} ETB*\n` +
+        `Amount: *${amountPaid} ETB*\n` +
         `Reference: \`${result.result?.referenceNumber || referenceText}\`\n\n` +
-        `🌟 Your *Maraki Premium* status is now ACTIVE! You have unlimited access to Maraki AI practice and exam modules.`,
+        `🎁 *CONGRATULATIONS!* You now have **${durationText}** of Maraki Premium access!\n` +
+        `🌟 You have unlimited access to Maraki AI voice chat, practice modules, and exams.`,
         { parse_mode: 'Markdown' }
       );
     } else {
