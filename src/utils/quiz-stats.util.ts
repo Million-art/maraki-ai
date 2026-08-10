@@ -48,30 +48,10 @@ export async function getLocalQuizStats(userId: number): Promise<LocalQuizStats>
     }
   } catch (e) {}
 
-  // Hydrate from Database API if local/redis cache is empty
-  let stats: LocalQuizStats = { totalQuizzesCompleted: 0, totalQuestions: 0, totalCorrect: 0 };
-  try {
-    const { apiService } = await import('../services/api.service.js');
-    const user: any = await apiService.getUserByTelegramId(userId);
-    if (user) {
-      const attempts = user.quizAttempts && Array.isArray(user.quizAttempts) ? user.quizAttempts : [];
-      stats.totalQuizzesCompleted = user.totalQuizzesCompleted || attempts.length;
-      if (attempts.length > 0) {
-        stats.totalQuestions = attempts.reduce((acc: number, q: any) => acc + (q.totalQuestions || 5), 0);
-        stats.totalCorrect = attempts.reduce((acc: number, q: any) => acc + (q.correctAnswers || 0), 0);
-      } else if (stats.totalQuizzesCompleted > 0) {
-        stats.totalQuestions = stats.totalQuizzesCompleted * 5;
-        stats.totalCorrect = Math.round(stats.totalQuestions * 0.75); // Approximate historical
-      }
-    }
-
-    if (redis.isOpen) {
-      await redis.set(`user:quiz_stats:${userId}`, JSON.stringify(stats));
-    }
-    memoryStatsStore.set(userId, stats);
-  } catch (e) {}
-
-  return stats;
+  // Return zero stats — the backend API is the authoritative source for weekly counts.
+  // We must NOT hydrate from totalQuizzesCompleted (a lifetime counter) as it would
+  // poison the cache and make the bot think the user has exhausted their weekly quota.
+  return { totalQuizzesCompleted: 0, totalQuestions: 0, totalCorrect: 0 };
 }
 
 export const quizStatsService = {
