@@ -59,26 +59,38 @@ export async function checkCentralAuthAndAccess(
         return false;
       }
     } else if (resource === 'quiz') {
-      let quizzesUsed = usage?.weeklyQuizzesUsed ?? 0;
-      try {
-        const local = await quizStatsService.getLocalQuizStats(userId);
-        if (local && local.totalQuizzesCompleted > quizzesUsed) {
-          quizzesUsed = local.totalQuizzesCompleted;
-        }
-      } catch (e) {
-        console.warn(`[CentralAuth] Local quiz stats lookup failed for user ${userId}:`, e);
-      }
-
+      const quizzesUsed = usage?.weeklyQuizzesUsed ?? 0;
       const quizLimit = usage?.weeklyQuizLimit ?? 3;
       const remainingQuizzes = Math.max(0, quizLimit - quizzesUsed);
 
       if (remainingQuizzes <= 0) {
+        let resetText = "7 days after your first usage";
+        
+        if (usage?.nextQuizReset) {
+          const resetDate = new Date(usage.nextQuizReset);
+          const now = new Date();
+          const diffMs = resetDate.getTime() - now.getTime();
+          
+          if (diffMs > 0) {
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            if (diffDays > 0) {
+              resetText = `in **${diffDays} day(s) and ${diffHours} hour(s)**`;
+            } else if (diffHours > 0) {
+              resetText = `in **${diffHours} hour(s)**`;
+            } else {
+              resetText = `in less than an hour`;
+            }
+          }
+        }
+
         await ctx.reply(
-          `🚫 <b>Weekly Quiz Limit Reached!</b>\n\n` +
-          `You have used all <b>${quizLimit} free quizzes</b> this week.\n\n` +
-          `⏳ Your quota resets every <b>Monday</b>.\n\n` +
-          `🔓 <b>Upgrade to VIP</b> for unlimited quizzes, lessons, and AI practice  299 ETB/month!`,
-          { parse_mode: 'HTML', reply_markup: keyboard }
+          `🚫 *Weekly Quiz Limit Reached!*\n\n` +
+          `You have used all *${quizLimit} free quizzes* for your current 7-day window.\n\n` +
+          `⏳ Your next free quiz unlocks ${resetText}.\n\n` +
+          `🔓 *Upgrade to VIP* for unlimited quizzes, lessons, and AI practice — 299 ETB/month!`,
+          { parse_mode: 'Markdown', reply_markup: keyboard }
         );
         return false;
       }
@@ -87,20 +99,14 @@ export async function checkCentralAuthAndAccess(
     console.error(`[CentralAuth] Error checking usage status for ${userId}:`, error);
     // Strict Fail-Closed Security: if an error occurs while evaluating quiz limits, block access
     if (resource === 'quiz') {
-      try {
-        const local = await quizStatsService.getLocalQuizStats(userId);
-        if (local && local.totalQuizzesCompleted >= 3) {
-          const keyboard = new InlineKeyboard().text("💳 Upgrade to VIP  Unlimited Access", "pay");
-          await ctx.reply(
-            `🚫 <b>Weekly Quiz Limit Reached!</b>\n\n` +
-            `You have used all <b>3 free quizzes</b> this week.\n\n` +
-            `⏳ Your quota resets every <b>Monday</b>.\n\n` +
-            `🔓 <b>Upgrade to VIP</b> for unlimited quizzes, lessons, and AI practice  299 ETB/month!`,
-            { parse_mode: 'HTML', reply_markup: keyboard }
-          );
-          return false;
-        }
-      } catch (e) { }
+      const keyboard = new InlineKeyboard().text("💳 Upgrade to VIP  Unlimited Access", "pay");
+      await ctx.reply(
+        `🚫 *Service Unavailable*\n\n` +
+        `We couldn't verify your quota right now. Please try again shortly.\n\n` +
+        `🔓 *Upgrade to VIP* for unlimited offline-ready access!`,
+        { parse_mode: 'Markdown', reply_markup: keyboard }
+      );
+      return false;
     }
   }
 
