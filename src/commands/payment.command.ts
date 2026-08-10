@@ -10,25 +10,39 @@ export async function handlePaymentCommand(ctx: Context) {
     await trackUpgradeIntent(ctx);
   } catch (e) {}
 
+  const { InlineKeyboard } = await import('grammy');
+  const keyboard = new InlineKeyboard()
+    .text("🌟 Monthly VIP (299 ETB)", "pay_monthly")
+    .row()
+    .text("🚀 Yearly VIP (2,499 ETB) - Save 30%", "pay_yearly");
+
   const paymentText =
-    `💳 *Maraki VIP Subscription & Bank Transfer*\n\n` +
+    `💳 *Maraki VIP Subscription*\n\n` +
     `Unlock unlimited Maraki AI chat, real-time tutoring, full bank aptitude & Grade 12 exam modules!\n\n` +
-    `📌 *Pricing Tiers:*\n` +
-    `• ⚡ *Weekly Pass*: 99 ETB / week\n` +
-    `• 🌟 *Monthly VIP*: 299 ETB / month (Best Value 🔥)\n` +
-    `• 🚀 *Yearly Pass*: 2,499 ETB / year (Save 30%)\n\n` +
+    `Please select your preferred subscription tier below:`;
+
+  await ctx.reply(paymentText, { parse_mode: 'Markdown', reply_markup: keyboard });
+}
+
+export async function handlePaymentSelection(ctx: Context, data: string) {
+  const isYearly = data === 'pay_yearly';
+  const amount = isYearly ? '2,499' : '299';
+  const tierName = isYearly ? '🚀 Yearly VIP' : '🌟 Monthly VIP';
+
+  const text =
+    `💳 *You selected: ${tierName}*\n\n` +
     `🏦 *Direct Bank Transfer Accounts:*\n` +
     `• *Commercial Bank of Ethiopia (CBE)*:\n` +
     `  \`1000342472501\` (Account: *Million Mulugeta*)\n` +
     `• *Dashen Bank*:\n` +
     `  \`5427280818011\` (Account: *Million Mulugeta*)\n\n` +
     `✅ *How to Activate Instantly:*\n` +
-    `1. Transfer the exact amount for your chosen tier (99 ETB, 299 ETB, or 2,499 ETB).\n` +
+    `1. Transfer exactly *${amount} ETB* to one of the accounts above.\n` +
     `2. Copy the receipt link from CBE Mobile/Dashen SuperApp (e.g., \`https://mbreciept.cbe.com.et/v2-XXXXXX\`) or reference ID.\n` +
     `3. Simply paste the link or reference directly in this chat!\n\n` +
-    `⚡ Our automated system will verify your receipt with the bank and upgrade your account in seconds!`;
+    `⚡ Our automated system will verify your receipt and upgrade your account in seconds!`;
 
-  await ctx.reply(paymentText, { parse_mode: 'Markdown' });
+  await ctx.editMessageText(text, { parse_mode: 'Markdown' });
 }
 
 export async function handleReceiptVerification(ctx: Context, referenceText: string) {
