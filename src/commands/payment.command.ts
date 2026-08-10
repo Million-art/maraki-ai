@@ -8,7 +8,7 @@ export async function handlePaymentCommand(ctx: Context) {
   try {
     const { trackUpgradeIntent } = await import('../utils/analytics.util.js');
     await trackUpgradeIntent(ctx);
-  } catch (e) {}
+  } catch (e) { }
 
   const { InlineKeyboard } = await import('grammy');
   const keyboard = new InlineKeyboard()
@@ -20,7 +20,7 @@ export async function handlePaymentCommand(ctx: Context) {
 
   const paymentText =
     `💳 *Maraki VIP Subscription*\n\n` +
-    `Unlock unlimited Maraki AI chat, real-time tutoring, full bank aptitude & Grade 12 exam modules!\n\n` +
+    `Unlock unlimited Maraki AI chat and real-time tutoring!\n\n` +
     `Please select your preferred subscription tier below:`;
 
   await ctx.reply(paymentText, { parse_mode: 'Markdown', reply_markup: keyboard });
@@ -69,7 +69,7 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
     try {
       const { trackPaymentAttempt } = await import('../utils/analytics.util.js');
       await trackPaymentAttempt(ctx, referenceText, result);
-    } catch (e) {}
+    } catch (e) { }
 
     if (result.success) {
       const amountPaid = result.result?.amount || 299;

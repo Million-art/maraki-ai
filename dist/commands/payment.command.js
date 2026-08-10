@@ -9,7 +9,7 @@ export async function handlePaymentCommand(ctx) {
     }
     catch (e) { }
     const paymentText = `💳 *Maraki VIP Subscription & Bank Transfer*\n\n` +
-        `Unlock unlimited Maraki AI chat, real-time tutoring, full bank aptitude & Grade 12 exam modules!\n\n` +
+        `Unlock unlimited Maraki AI chat and real-time tutoring!\n\n` +
         `📌 *Pricing Tiers:*\n` +
         `• ⚡ *Weekly Pass*: 99 ETB / week\n` +
         `• 🌟 *Monthly VIP*: 299 ETB / month (Best Value 🔥)\n` +
