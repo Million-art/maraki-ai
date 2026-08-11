@@ -7,21 +7,19 @@ export const referralCommand = async (ctx) => {
     }
     const stats = await referralCount(ctx.from);
     const count = stats.referralCount || 0;
-    const target = stats.target || 10;
-    const remaining = stats.remaining !== undefined ? stats.remaining : Math.max(0, target - count);
+    const target = 10;
     const referralLink = `https://t.me/${BOT_USERNAME}?start=${ctx.from.id}`;
     const progressBar = createProgressBar(count, target);
     const message = `🎁 <b>Maraki AI Invite & Earn Program</b> 🌟\n\n` +
         `Invite your friends to learn English and unlock <b>FREE Maraki VIP</b>!\n\n` +
-        `🏆 <b>Rewards:</b>\n` +
-        `• Invite <b>5 friends</b> ➔ <b>1 Week VIP</b>\n` +
-        `• Invite <b>20 friends</b> ➔ <b>1 Month VIP</b>\n\n` +
+        `🏆 <b>Reward:</b>\n` +
+        `• Invite <b>10 friends</b> ➔ <b>1 Month VIP Free!</b>\n\n` +
         `🔗 <b>Your Exclusive Referral Link:</b>\n` +
         `<code>${referralLink}</code>\n\n` +
         `📊 <b>Your Progress:</b>\n` +
         `${progressBar}\n` +
-        `• 👥 <b>Friends Referred:</b> ${count}\n` +
-        `• 🎯 <b>Next Reward Tier:</b> ${count >= 20 ? 'Max Reward Tier Reached! 🎉' : count >= 5 ? '20 Friends (1 Month VIP)' : '5 Friends (1 Week VIP)'}\n\n` +
+        `• 👥 <b>Friends Referred:</b> ${count} / ${target}\n` +
+        `• 🎯 <b>Status:</b> ${count >= 10 ? '🎉 Reward Unlocked (1 Month VIP Activated!)' : `${10 - count} more friend(s) needed`}\n\n` +
         `💡 <i>Share your link with friends or groups. When they click /start, your progress updates automatically!</i>`;
     const keyboard = new InlineKeyboard()
         .url("📢 Share on Telegram", `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me on Maraki AI to practice English & improve your skills for free! 🚀")}`)
