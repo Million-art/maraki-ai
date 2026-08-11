@@ -10,6 +10,22 @@ export async function handlePaymentCommand(ctx: Context) {
     await trackUpgradeIntent(ctx);
   } catch (e) { }
 
+  let activeNotice = '';
+  try {
+    const user = await apiService.getUserByTelegramId(ctx.from.id);
+    if (user && (user.isMarakiPremium || user.isPremium) && user.subscriptionExpiresAt) {
+      const expires = new Date(user.subscriptionExpiresAt);
+      if (expires > new Date()) {
+        const formattedDate = expires.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        activeNotice =
+          `🌟 *ACTIVE VIP SUBSCRIPTION DETECTED!*\n` +
+          `You currently have active Maraki VIP access (valid until *${formattedDate}*).\n\n` +
+          `ℹ️ *Subscription Extension Notice:*\n` +
+          `If you transfer & subscribe again, your new plan duration will be **added directly to your current expiration date** (your subscription will be extended with no lost days)! 🚀\n\n`;
+      }
+    }
+  } catch (e) { }
+
   const { InlineKeyboard } = await import('grammy');
   const keyboard = new InlineKeyboard()
     .text("🌟 1 Month (299 ETB)", "pay_monthly")
@@ -20,6 +36,7 @@ export async function handlePaymentCommand(ctx: Context) {
 
   const paymentText =
     `💳 *Maraki VIP Subscription*\n\n` +
+    activeNotice +
     `Unlock unlimited Maraki AI chat and real-time tutoring!\n\n` +
     `Please select your preferred subscription tier below:`;
 
@@ -38,6 +55,19 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
     tierName = '🚀 1 Year VIP';
   }
 
+  let extensionNotice = '';
+  try {
+    if (ctx.from) {
+      const user = await apiService.getUserByTelegramId(ctx.from.id);
+      if (user && (user.isMarakiPremium || user.isPremium) && user.subscriptionExpiresAt) {
+        const expires = new Date(user.subscriptionExpiresAt);
+        if (expires > new Date()) {
+          extensionNotice = `\n\n🔄 *Extension Notice:* As an active VIP member, your new payment will *extend* your access beyond your current expiration!`;
+        }
+      }
+    }
+  } catch (e) { }
+
   const text =
     `💳 *You selected: ${tierName}*\n\n` +
     `🏦 *Direct Bank Transfer Accounts:*\n` +
@@ -49,7 +79,7 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
     `1. Transfer exactly *${amount} ETB* to one of the accounts above.\n` +
     `2. Copy the receipt link from CBE Mobile/Dashen SuperApp (e.g., \`https://mbreciept.cbe.com.et/v2-XXXXXX\`) or reference ID.\n` +
     `3. Simply paste the link or reference directly in this chat!\n\n` +
-    `⚡ Our automated system will verify your receipt and upgrade your account in seconds!`;
+    `⚡ Our automated system will verify your receipt and upgrade/extend your account in seconds!${extensionNotice}`;
 
   await ctx.editMessageText(text, { parse_mode: 'Markdown' });
 }
@@ -80,13 +110,28 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
         durationText = '3 MONTHS';
       }
 
+      const wasExtended = result.wasExtended;
+      const headerTitle = wasExtended
+        ? '🎉 *SUBSCRIPTION EXTENDED SUCCESSFULLY!*'
+        : '🎉 *PAYMENT VERIFIED SUCCESSFULLY!*';
+      
+      const newExpiry = result.user?.subscriptionExpiresAt
+        ? new Date(result.user.subscriptionExpiresAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+        : 'Active';
+
+      const extensionMessage = wasExtended
+        ? `🔄 *Your VIP subscription has been extended!* (+${durationText})\n` +
+          `📅 *New Expiration Date:* *${newExpiry}*\n\n` +
+          `🎁 Thank you for continuing your journey with Maraki Premium!`
+        : `🎁 *CONGRATULATIONS!* You now have **${durationText}** of Maraki Premium access (valid until *${newExpiry}*)!\n` +
+          `🌟 You have unlimited access to Maraki AI voice chat, practice modules, and exams.`;
+
       await ctx.reply(
-        `🎉 *PAYMENT VERIFIED SUCCESSFULLY!*\n\n` +
-        `Bank: *${result.result?.bankName || 'CBE'}*\n` +
+        `${headerTitle}\n\n` +
+        `Bank: *${result.result?.bankName || 'Dashen Bank'}*\n` +
         `Amount: *${amountPaid} ETB*\n` +
         `Reference: \`${result.result?.referenceNumber || referenceText}\`\n\n` +
-        `🎁 *CONGRATULATIONS!* You now have **${durationText}** of Maraki Premium access!\n` +
-        `🌟 You have unlimited access to Maraki AI voice chat, practice modules, and exams.`,
+        extensionMessage,
         { parse_mode: 'Markdown' }
       );
     } else {
