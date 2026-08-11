@@ -162,7 +162,11 @@ bot.on('message:text', async (ctx) => {
   const session = await getSession(ctx.from.id);
 
   // Handle session modes
-  if (session?.mode === 'lesson') {
+  if (session?.mode === 'awaiting_receipt') {
+    await setSession(ctx.from.id, { ...session, mode: undefined });
+    await handleReceiptVerification(ctx, text);
+    return;
+  } else if (session?.mode === 'lesson') {
     const { handleLessonResponse } = await import('../commands/lesson.comand.js');
     await handleLessonResponse(ctx);
   } else if (session?.mode === 'lesson_followup') {
@@ -244,6 +248,19 @@ bot.on('callback_query:data', async (ctx) => {
       case 'pay_yearly':
         const { handlePaymentSelection } = await import('../commands/payment.command.js');
         await handlePaymentSelection(ctx, data);
+        break;
+      case 'submit_receipt_prompt':
+        await setSession(ctx.from.id, { mode: 'awaiting_receipt', timestamp: Date.now(), userId: ctx.from.id });
+        await ctx.reply(
+          `🧾 *Submit Your Payment Receipt*\n\n` +
+          `Please paste your **CBE or Dashen receipt link** (or transaction reference number) directly in this chat below:\n\n` +
+          `*Supported Link Examples:*\n` +
+          `• \`https://receipts.dashenbanksc.com/receipt/335WDTS2622300WH\`\n` +
+          `• \`https://mbreciept.cbe.com.et/v2-XXXXXX\`\n` +
+          `• Transaction Reference: \`335WDTS2622300WH\`\n\n` +
+          `⚡ Our automated system will verify your receipt with the bank network instantly!`,
+          { parse_mode: 'Markdown' }
+        );
         break;
       case 'grammar':
         await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });

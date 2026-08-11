@@ -68,6 +68,9 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
     }
   } catch (e) { }
 
+  const { InlineKeyboard } = await import('grammy');
+  const keyboard = new InlineKeyboard().text("✅ Verify Payment / Submit Receipt", "submit_receipt_prompt");
+
   const text =
     `💳 *You selected: ${tierName}*\n\n` +
     `🏦 *Direct Bank Transfer Accounts:*\n` +
@@ -78,10 +81,10 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
     `✅ *How to Activate Instantly:*\n` +
     `1. Transfer exactly *${amount} ETB* to one of the accounts above.\n` +
     `2. Copy the receipt link from CBE Mobile/Dashen SuperApp (e.g., \`https://mbreciept.cbe.com.et/v2-XXXXXX\`) or reference ID.\n` +
-    `3. Simply paste the link or reference directly in this chat!\n\n` +
+    `3. Click the **"Verify Payment / Submit Receipt"** button below or paste your receipt link directly in this chat!\n\n` +
     `⚡ Our automated system will verify your receipt and upgrade/extend your account in seconds!${extensionNotice}`;
 
-  await ctx.editMessageText(text, { parse_mode: 'Markdown' });
+  await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: keyboard });
 }
 
 export async function handleReceiptVerification(ctx: Context, referenceText: string) {
