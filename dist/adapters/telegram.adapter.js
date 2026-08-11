@@ -134,9 +134,12 @@ bot.on('message:text', async (ctx) => {
     if (!ctx.from)
         return;
     const text = ctx.message.text;
-    // Auto-detect bank receipt links or tokens (e.g. mbreciept.cbe.com.et/v2-XXXXXX or dashensuperapp.com)
+    // Auto-detect bank receipt links or tokens (e.g. mbreciept.cbe.com.et, receipts.dashenbanksc.com, or receipt.dashensuperapp.com)
     if (text.includes('mbreciept.cbe.com.et') ||
         text.includes('receipt.dashensuperapp.com') ||
+        text.includes('dashenbanksc.com') ||
+        text.includes('dashensuperapp.com') ||
+        text.toLowerCase().includes('dashen') ||
         (text.startsWith('v2-') && text.length > 8)) {
         await handleReceiptVerification(ctx, text);
         return;
