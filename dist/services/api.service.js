@@ -3,6 +3,8 @@ export class ApiService {
     backendUrl;
     constructor() {
         this.backendUrl = process.env.BACKEND_API_URL || 'http://localhost:3000';
+        const internalApiKey = process.env.INTERNAL_API_KEY || 'maraki-internal-secret-key-12345';
+        axios.defaults.headers.common['X-Maraki-Bot-Key'] = internalApiKey;
     }
     // User Management via REST API
     async getUserByTelegramId(telegramId) {

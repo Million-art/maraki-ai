@@ -26,6 +26,8 @@ export async function handlePaymentCommand(ctx) {
     catch (e) { }
     const { InlineKeyboard } = await import('grammy');
     const keyboard = new InlineKeyboard()
+        .text("⚡ 1 Week (99 ETB)", "pay_weekly")
+        .row()
         .text("🌟 1 Month (299 ETB)", "pay_monthly")
         .row()
         .text("🔥 3 Months (799 ETB) - Save 11%", "pay_quarterly")
@@ -40,13 +42,21 @@ export async function handlePaymentCommand(ctx) {
 export async function handlePaymentSelection(ctx, data) {
     let amount = '299';
     let tierName = '🌟 1 Month VIP';
-    if (data === 'pay_quarterly') {
+    let tierParam = 'monthly';
+    if (data === 'pay_weekly') {
+        amount = '99';
+        tierName = '⚡ 1 Week VIP';
+        tierParam = 'weekly';
+    }
+    else if (data === 'pay_quarterly') {
         amount = '799';
         tierName = '🔥 3 Months VIP';
+        tierParam = 'quarterly';
     }
     else if (data === 'pay_yearly') {
         amount = '2,499';
         tierName = '🚀 1 Year VIP';
+        tierParam = 'yearly';
     }
     let extensionNotice = '';
     try {
@@ -58,6 +68,13 @@ export async function handlePaymentSelection(ctx, data) {
                     extensionNotice = `\n\n🔄 *Extension Notice:* As an active VIP member, your new payment will *extend* your access beyond your current expiration!`;
                 }
             }
+            // Store selected tier in user session context
+            const { getSession, setSession } = await import('../utils/redis.js');
+            const session = await getSession(ctx.from.id);
+            await setSession(ctx.from.id, {
+                ...session,
+                selectedTier: tierParam,
+            });
         }
     }
     catch (e) { }
@@ -84,7 +101,16 @@ export async function handleReceiptVerification(ctx, referenceText) {
         parse_mode: 'Markdown',
     });
     try {
-        const result = await apiService.verifyBankPayment(telegramId, referenceText);
+        let tier = 'monthly';
+        try {
+            const { getSession } = await import('../utils/redis.js');
+            const session = await getSession(telegramId);
+            if (session?.selectedTier) {
+                tier = session.selectedTier;
+            }
+        }
+        catch (e) { }
+        const result = await apiService.verifyBankPayment(telegramId, referenceText, tier);
         // Track payment attempt and notify admin
         try {
             const { trackPaymentAttempt } = await import('../utils/analytics.util.js');
@@ -99,6 +125,12 @@ export async function handleReceiptVerification(ctx, referenceText) {
             }
             else if (amountPaid >= 799) {
                 durationText = '3 MONTHS';
+            }
+            else if (amountPaid >= 299) {
+                durationText = '1 MONTH';
+            }
+            else if (amountPaid >= 99) {
+                durationText = '1 WEEK';
             }
             const wasExtended = result.wasExtended;
             const headerTitle = wasExtended

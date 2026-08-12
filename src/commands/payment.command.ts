@@ -28,6 +28,8 @@ export async function handlePaymentCommand(ctx: Context) {
 
   const { InlineKeyboard } = await import('grammy');
   const keyboard = new InlineKeyboard()
+    .text("⚡ 1 Week (99 ETB)", "pay_weekly")
+    .row()
     .text("🌟 1 Month (299 ETB)", "pay_monthly")
     .row()
     .text("🔥 3 Months (799 ETB) - Save 11%", "pay_quarterly")
@@ -46,13 +48,20 @@ export async function handlePaymentCommand(ctx: Context) {
 export async function handlePaymentSelection(ctx: Context, data: string) {
   let amount = '299';
   let tierName = '🌟 1 Month VIP';
+  let tierParam = 'monthly';
 
-  if (data === 'pay_quarterly') {
+  if (data === 'pay_weekly') {
+    amount = '99';
+    tierName = '⚡ 1 Week VIP';
+    tierParam = 'weekly';
+  } else if (data === 'pay_quarterly') {
     amount = '799';
     tierName = '🔥 3 Months VIP';
+    tierParam = 'quarterly';
   } else if (data === 'pay_yearly') {
     amount = '2,499';
     tierName = '🚀 1 Year VIP';
+    tierParam = 'yearly';
   }
 
   let extensionNotice = '';
@@ -65,6 +74,14 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
           extensionNotice = `\n\n🔄 *Extension Notice:* As an active VIP member, your new payment will *extend* your access beyond your current expiration!`;
         }
       }
+
+      // Store selected tier in user session context
+      const { getSession, setSession } = await import('../utils/redis.js');
+      const session = await getSession(ctx.from.id);
+      await setSession(ctx.from.id, {
+        ...session,
+        selectedTier: tierParam,
+      });
     }
   } catch (e) { }
 
@@ -96,7 +113,16 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
   });
 
   try {
-    const result = await apiService.verifyBankPayment(telegramId, referenceText);
+    let tier = 'monthly';
+    try {
+      const { getSession } = await import('../utils/redis.js');
+      const session = await getSession(telegramId);
+      if (session?.selectedTier) {
+        tier = session.selectedTier;
+      }
+    } catch (e) {}
+
+    const result = await apiService.verifyBankPayment(telegramId, referenceText, tier);
 
     // Track payment attempt and notify admin
     try {
@@ -111,6 +137,10 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
         durationText = '12 MONTHS';
       } else if (amountPaid >= 799) {
         durationText = '3 MONTHS';
+      } else if (amountPaid >= 299) {
+        durationText = '1 MONTH';
+      } else if (amountPaid >= 99) {
+        durationText = '1 WEEK';
       }
 
       const wasExtended = result.wasExtended;

@@ -243,6 +243,7 @@ bot.on('callback_query:data', async (ctx) => {
       case 'pay':
         await handlePaymentCommand(ctx);
         break;
+      case 'pay_weekly':
       case 'pay_monthly':
       case 'pay_quarterly':
       case 'pay_yearly':
