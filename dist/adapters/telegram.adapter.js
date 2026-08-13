@@ -134,6 +134,41 @@ bot.on('message:text', async (ctx) => {
     if (!ctx.from)
         return;
     const text = ctx.message.text;
+    // 1. Admin 2-Way Live Relay: Handle Admin replying to user support messages
+    if (ctx.from.id === ADMIN_TELEGRAM_ID) {
+        if (text.startsWith('/reply ')) {
+            const parts = text.split(' ');
+            const targetId = parseInt(parts[1], 10);
+            const replyContent = parts.slice(2).join(' ');
+            if (targetId && replyContent) {
+                try {
+                    await bot.api.sendMessage(targetId, `💬 *Maraki Support Team:*\n\n${replyContent}`, { parse_mode: 'Markdown' });
+                    await ctx.reply(`✅ Reply delivered to user \`${targetId}\`!`, { parse_mode: 'Markdown' });
+                    return;
+                }
+                catch (err) {
+                    await ctx.reply(`❌ Failed to send: ${err.message}`);
+                    return;
+                }
+            }
+        }
+        if (ctx.message.reply_to_message?.text || ctx.message.reply_to_message?.caption) {
+            const parentText = ctx.message.reply_to_message.text || ctx.message.reply_to_message.caption || '';
+            const match = parentText.match(/(?:User ID|ID):\s*`?(\d+)`?/i) || parentText.match(/id=(\d+)/i);
+            if (match && match[1]) {
+                const targetId = parseInt(match[1], 10);
+                try {
+                    await bot.api.sendMessage(targetId, `💬 *Maraki Support Team:*\n\n${text}`, { parse_mode: 'Markdown' });
+                    await ctx.reply(`✅ Reply delivered to user \`${targetId}\`!`, { parse_mode: 'Markdown' });
+                    return;
+                }
+                catch (err) {
+                    await ctx.reply(`❌ Delivery failed: ${err.message}`);
+                    return;
+                }
+            }
+        }
+    }
     // Auto-detect bank receipt links or tokens (e.g. mbreciept.cbe.com.et, receipts.dashenbanksc.com, or receipt.dashensuperapp.com)
     if (text.includes('mbreciept.cbe.com.et') ||
         text.includes('receipt.dashensuperapp.com') ||
@@ -146,7 +181,20 @@ bot.on('message:text', async (ctx) => {
     }
     const session = await getSession(ctx.from.id);
     // Handle session modes
-    if (session?.mode === 'awaiting_receipt') {
+    if (session?.mode === 'support_chat') {
+        await setSession(ctx.from.id, { ...session, mode: undefined });
+        const user = ctx.from;
+        const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
+        const username = user.username ? `@${user.username}` : 'No username';
+        await bot.api.sendMessage(ADMIN_TELEGRAM_ID, `📩 *New In-Bot Support Message*\n\n` +
+            `👤 *From:* ${name} (${username})\n` +
+            `🆔 *User ID:* \`${user.id}\`\n\n` +
+            `💬 *Message:*\n${text}\n\n` +
+            `👇 *To reply, simply use Telegram's Reply feature on this message!*`, { parse_mode: 'Markdown' });
+        await ctx.reply(`✅ *Support message sent!* Our team will reply to you directly inside this bot chat.`, { parse_mode: 'Markdown' });
+        return;
+    }
+    else if (session?.mode === 'awaiting_receipt') {
         await setSession(ctx.from.id, { ...session, mode: undefined });
         await handleReceiptVerification(ctx, text);
         return;
@@ -244,6 +292,12 @@ bot.on('callback_query:data', async (ctx) => {
                     `• Transaction Reference: \`XXXXX\`\n\n` +
                     `⚡ Our automated system will verify your receipt with the bank network instantly!`, { parse_mode: 'Markdown' });
                 break;
+            case 'contact_support':
+                await setSession(ctx.from.id, { mode: 'support_chat', timestamp: Date.now(), userId: ctx.from.id });
+                await ctx.reply(`💬 *Maraki Customer Support*\n\n` +
+                    `Please type your question or support request below.\n` +
+                    `Our support team will reply directly to you inside this bot chat! 🚀`, { parse_mode: 'Markdown' });
+                break;
             case 'grammar':
                 await setSession(ctx.from.id, { menu: data, timestamp: Date.now(), userId: ctx.from.id });
                 await grammarCommand(ctx);
@@ -285,6 +339,11 @@ bot.on('callback_query:data', async (ctx) => {
             case 'close':
                 return ctx.deleteMessage();
             default:
+                if (data.startsWith('admin_followup_') || data.startsWith('admin_discount_')) {
+                    const { handleAdminFollowupAction } = await import('../utils/analytics.util.js');
+                    await handleAdminFollowupAction(ctx, data);
+                    return;
+                }
                 if (data.startsWith('quiz_answer_')) {
                     const answerIndex = parseInt(data.replace('quiz_answer_', ''), 10);
                     if (!isNaN(answerIndex)) {

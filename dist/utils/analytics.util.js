@@ -1,5 +1,7 @@
 import { redis } from './redis.js';
 export const ADMIN_TELEGRAM_ID = 386095768;
+// Map to track pending automated 15-minute follow-up timers
+const activeFollowupTimers = new Map();
 // In-memory counter store fallback
 const statsStore = {
     newUsers: 0,
@@ -36,7 +38,7 @@ export async function trackNewUser(ctx) {
         console.error('Failed to notify admin of new user:', err);
     }
 }
-// Track and Notify Upgrade/Payment Click
+// Track and Notify Upgrade/Payment Click with 1-Click Admin Follow-up & Scheduled Auto Nudge
 export async function trackUpgradeIntent(ctx) {
     if (!ctx.from)
         return;
@@ -51,29 +53,88 @@ export async function trackUpgradeIntent(ctx) {
     }
     catch (e) { }
     const user = ctx.from;
+    const userId = user.id;
     const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
+    const firstName = user.first_name || 'there';
     const username = user.username ? `@${user.username}` : 'No username';
+    const { InlineKeyboard } = await import('grammy');
+    const keyboard = new InlineKeyboard()
+        .text("💬 Send Follow-up via Bot", `admin_followup_${userId}`)
+        .text("🎁 Send Special Discount", `admin_discount_${userId}`);
     const alertMsg = `💳 <b>User Clicked Upgrade / VIP!</b>\n\n` +
         `👤 <b>Name:</b> ${name}\n` +
         `💬 <b>Username:</b> ${username}\n` +
-        `🆔 <b>User ID:</b> <code>${user.id}</code>\n` +
-        `💡 <i>User is viewing bank details & pricing tiers. Follow up if they don't complete payment!</i>\n\n` +
-        `👉 <a href="tg://user?id=${user.id}">Click here to message user directly</a>`;
+        `🆔 <b>User ID:</b> <code>${userId}</code>\n\n` +
+        `💡 <i>Click below to send an automated follow-up message to this user directly via Maraki Bot!</i>`;
     try {
-        await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML' });
+        await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML', reply_markup: keyboard });
     }
     catch (err) {
         console.error('Failed to notify admin of upgrade click:', err);
     }
+    // Store follow-up intent in Redis with 15-minute TTL for zero server memory overhead & persistence
+    try {
+        if (redis.isOpen) {
+            await redis.set(`followup:intent:${userId}`, JSON.stringify({ userId, firstName, timestamp: Date.now() }), { EX: 900 });
+        }
+    }
+    catch (e) { }
+    // Clear existing timer if any
+    if (activeFollowupTimers.has(userId)) {
+        clearTimeout(activeFollowupTimers.get(userId));
+    }
+    // Schedule automated 15-minute follow-up nudge (if user doesn't complete payment)
+    const timer = setTimeout(async () => {
+        activeFollowupTimers.delete(userId);
+        try {
+            // Verify if Redis key was cleared (indicating payment completed elsewhere)
+            if (redis.isOpen) {
+                const pendingKey = await redis.get(`followup:intent:${userId}`);
+                if (!pendingKey)
+                    return; // Payment completed or canceled!
+                await redis.del(`followup:intent:${userId}`);
+            }
+            const { apiService } = await import('../services/api.service.js');
+            const latestUser = await apiService.getUserByTelegramId(userId).catch(() => null);
+            if (latestUser && (latestUser.isMarakiPremium || latestUser.isPremium)) {
+                return; // User already upgraded, skip nudge!
+            }
+            const followupKeyboard = new InlineKeyboard()
+                .text("💳 View Plans & Bank Details", "pay")
+                .row()
+                .text("💬 Chat with Support", "contact_support");
+            await ctx.api.sendMessage(userId, `👋 *Hi ${firstName}!*\n\n` +
+                `We noticed you were checking out Maraki VIP subscription options earlier.\n\n` +
+                `❓ *Need any assistance?*\n` +
+                `Our bank verification works automatically with **CBE (1000342472501)** & **Dashen (5427280818011)** in < 5 seconds!\n\n` +
+                `Click below if you have any questions or would like help activating your account:`, { parse_mode: 'Markdown', reply_markup: followupKeyboard });
+        }
+        catch (e) {
+            console.error(`Failed to send 15-min auto follow-up to user ${userId}:`, e);
+        }
+    }, 15 * 60 * 1000); // 15 minutes
+    activeFollowupTimers.set(userId, timer);
 }
 // Track and Notify Payment Verification Attempt (Success / Failure)
 export async function trackPaymentAttempt(ctx, referenceText, result) {
     if (!ctx.from)
         return;
     const user = ctx.from;
+    const userId = user.id;
     const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
     const username = user.username ? `@${user.username}` : 'No username';
     if (result.success) {
+        // Instantly delete Redis key & in-memory timer on successful payment
+        try {
+            if (redis.isOpen) {
+                await redis.del(`followup:intent:${userId}`);
+            }
+        }
+        catch (e) { }
+        if (activeFollowupTimers.has(userId)) {
+            clearTimeout(activeFollowupTimers.get(userId));
+            activeFollowupTimers.delete(userId);
+        }
         statsStore.paymentSuccesses++;
         try {
             if (redis.isOpen) {
@@ -100,18 +161,67 @@ export async function trackPaymentAttempt(ctx, referenceText, result) {
             }
         }
         catch (e) { }
-        const alertMsg = `🚨 <b>Payment Verification Failed (Follow-up Required!)</b>\n\n` +
+        const { InlineKeyboard } = await import('grammy');
+        const keyboard = new InlineKeyboard()
+            .text("💬 Contact User via Bot", `admin_followup_${userId}`);
+        const alertMsg = `🚨 <b>Payment Verification Failed</b>\n\n` +
             `👤 <b>Name:</b> ${name}\n` +
             `💬 <b>Username:</b> ${username}\n` +
             `🆔 <b>User ID:</b> <code>${user.id}</code>\n` +
             `🧾 <b>Input:</b> <code>${referenceText.slice(0, 200)}</code>\n` +
-            `❌ <b>Reason:</b> ${result.message || 'Transaction could not be verified'}\n\n` +
-            `📲 <b>Follow-up Action:</b> Reach out to user to assist with their transfer!\n` +
-            `👉 <a href="tg://user?id=${user.id}">Direct Message User</a>`;
+            `❌ <b>Reason:</b> ${result.message || 'Transaction could not be verified'}`;
         try {
-            await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML' });
+            await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML', reply_markup: keyboard });
         }
         catch (err) { }
+    }
+}
+// Helper function to handle Admin 1-click follow-up buttons from alerts
+export async function handleAdminFollowupAction(ctx, actionData) {
+    if (!ctx.from || ctx.from.id !== ADMIN_TELEGRAM_ID)
+        return;
+    const { InlineKeyboard } = await import('grammy');
+    if (actionData.startsWith('admin_followup_')) {
+        const targetUserId = parseInt(actionData.replace('admin_followup_', ''), 10);
+        if (!targetUserId)
+            return;
+        try {
+            const followupMsg = `👋 *Hi there!*\n\n` +
+                `We noticed you were checking out Maraki VIP options.\n` +
+                `If you have any questions about CBE / Dashen bank transfer or need assistance with activation, feel free to reply directly to this message! 🚀`;
+            const keyboard = new InlineKeyboard()
+                .text("💳 View Pricing & Accounts", "pay")
+                .row()
+                .text("💬 Reply to Support", "contact_support");
+            await ctx.api.sendMessage(targetUserId, followupMsg, { parse_mode: 'Markdown', reply_markup: keyboard });
+            await ctx.answerCallbackQuery('✅ Follow-up sent to user via Bot!');
+            await ctx.reply(`✅ *Follow-up message delivered to user \`${targetUserId}\` via Bot!*`, { parse_mode: 'Markdown' });
+        }
+        catch (err) {
+            await ctx.answerCallbackQuery('❌ Delivery failed');
+            await ctx.reply(`❌ Failed to send follow-up: ${err.message}`);
+        }
+    }
+    else if (actionData.startsWith('admin_discount_')) {
+        const targetUserId = parseInt(actionData.replace('admin_discount_', ''), 10);
+        if (!targetUserId)
+            return;
+        try {
+            const discountMsg = `🎁 *SPECIAL MARAKI VIP DISCOUNT OFFER!*\n\n` +
+                `Get 1 Month of Maraki VIP for **only 199 ETB** (Save 100 ETB)!\n\n` +
+                `🏦 *Transfer 199 ETB to:*\n` +
+                `• **CBE**: \`1000342472501\` (Million Mulugeta)\n` +
+                `• **Dashen**: \`5427280818011\` (Million Mulugeta)\n\n` +
+                `Paste your receipt link here to activate your discount instantly! 🚀`;
+            const keyboard = new InlineKeyboard().text("✅ Verify Payment", "submit_receipt_prompt");
+            await ctx.api.sendMessage(targetUserId, discountMsg, { parse_mode: 'Markdown', reply_markup: keyboard });
+            await ctx.answerCallbackQuery('🎁 Discount offer sent to user!');
+            await ctx.reply(`🎁 *Discount offer delivered to user \`${targetUserId}\` via Bot!*`, { parse_mode: 'Markdown' });
+        }
+        catch (err) {
+            await ctx.answerCallbackQuery('❌ Delivery failed');
+            await ctx.reply(`❌ Failed to send discount: ${err.message}`);
+        }
     }
 }
 // Get Analytics Stats for /admin_status
@@ -149,12 +259,10 @@ const localReferralMap = new Map();
 export async function trackReferralJoin(referrerId, newUserId) {
     if (!referrerId || referrerId === newUserId)
         return;
-    // Local memory tracking
     if (!localReferralMap.has(referrerId)) {
         localReferralMap.set(referrerId, new Set());
     }
     localReferralMap.get(referrerId).add(newUserId);
-    // Redis persistent tracking
     try {
         if (redis.isOpen) {
             await redis.sAdd(`referrals:${referrerId}`, String(newUserId));

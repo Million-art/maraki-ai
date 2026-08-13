@@ -1,12 +1,15 @@
 import { Context } from 'grammy';
 import { apiService } from '../services/api.service.js';
+import {
+  trackUpgradeIntent,
+  trackPaymentAttempt,
+} from '../utils/analytics.util.js';
 
 export async function handlePaymentCommand(ctx: Context) {
   if (!ctx.from) return;
 
   // Track user upgrade click & notify admin for follow-up
   try {
-    const { trackUpgradeIntent } = await import('../utils/analytics.util.js');
     await trackUpgradeIntent(ctx);
   } catch (e) { }
 
@@ -120,13 +123,12 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
       if (session?.selectedTier) {
         tier = session.selectedTier;
       }
-    } catch (e) {}
+    } catch (e) { }
 
     const result = await apiService.verifyBankPayment(telegramId, referenceText, tier);
 
     // Track payment attempt and notify admin
     try {
-      const { trackPaymentAttempt } = await import('../utils/analytics.util.js');
       await trackPaymentAttempt(ctx, referenceText, result);
     } catch (e) { }
 
@@ -147,17 +149,17 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
       const headerTitle = wasExtended
         ? '🎉 *SUBSCRIPTION EXTENDED SUCCESSFULLY!*'
         : '🎉 *PAYMENT VERIFIED SUCCESSFULLY!*';
-      
+
       const newExpiry = result.user?.subscriptionExpiresAt
         ? new Date(result.user.subscriptionExpiresAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
         : 'Active';
 
       const extensionMessage = wasExtended
         ? `🔄 *Your VIP subscription has been extended!* (+${durationText})\n` +
-          `📅 *New Expiration Date:* *${newExpiry}*\n\n` +
-          `🎁 Thank you for continuing your journey with Maraki Premium!`
+        `📅 *New Expiration Date:* *${newExpiry}*\n\n` +
+        `🎁 Thank you for continuing your journey with Maraki Premium!`
         : `🎁 *CONGRATULATIONS!* You now have **${durationText}** of Maraki Premium access (valid until *${newExpiry}*)!\n` +
-          `🌟 You have unlimited access to Maraki AI voice chat, practice modules, and exams.`;
+        `🌟 You have unlimited access to Maraki AI voice chat, practice modules, and exams.`;
 
       await ctx.reply(
         `${headerTitle}\n\n` +
@@ -169,15 +171,13 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
       );
     } else {
       const { InlineKeyboard } = await import('grammy');
-      const keyboard = new InlineKeyboard().url("💬 Contact Admin (@miilla021)", "https://t.me/miilla021");
+      const keyboard = new InlineKeyboard().text("💬 Contact In-Bot Support", "contact_support");
 
       await ctx.reply(
         `❌ *Payment Verification Failed*\n\n` +
         `Reason: ${result.message || 'Transaction could not be verified'}.\n\n` +
-        `📌 *Under-Payment or Transfer Issue?*\n` +
-        `If you transferred a partial amount (e.g. 50 ETB) or need manual assistance, please contact our Admin directly:\n` +
-        `👉 *@miilla021*\n\n` +
-        `Our team will verify your transfer and assist you immediately!`,
+        `📌 *Need Assistance?*\n` +
+        `If you transferred a partial amount or have a payment question, click **Contact In-Bot Support** below to chat with our team directly inside this bot!`,
         { parse_mode: 'Markdown', reply_markup: keyboard }
       );
     }

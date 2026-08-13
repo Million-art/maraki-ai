@@ -1,10 +1,10 @@
 import { apiService } from '../services/api.service.js';
+import { trackUpgradeIntent, trackPaymentAttempt, } from '../utils/analytics.util.js';
 export async function handlePaymentCommand(ctx) {
     if (!ctx.from)
         return;
     // Track user upgrade click & notify admin for follow-up
     try {
-        const { trackUpgradeIntent } = await import('../utils/analytics.util.js');
         await trackUpgradeIntent(ctx);
     }
     catch (e) { }
@@ -113,7 +113,6 @@ export async function handleReceiptVerification(ctx, referenceText) {
         const result = await apiService.verifyBankPayment(telegramId, referenceText, tier);
         // Track payment attempt and notify admin
         try {
-            const { trackPaymentAttempt } = await import('../utils/analytics.util.js');
             await trackPaymentAttempt(ctx, referenceText, result);
         }
         catch (e) { }
@@ -153,13 +152,11 @@ export async function handleReceiptVerification(ctx, referenceText) {
         }
         else {
             const { InlineKeyboard } = await import('grammy');
-            const keyboard = new InlineKeyboard().url("💬 Contact Admin (@miilla021)", "https://t.me/miilla021");
+            const keyboard = new InlineKeyboard().text("💬 Contact In-Bot Support", "contact_support");
             await ctx.reply(`❌ *Payment Verification Failed*\n\n` +
                 `Reason: ${result.message || 'Transaction could not be verified'}.\n\n` +
-                `📌 *Under-Payment or Transfer Issue?*\n` +
-                `If you transferred a partial amount (e.g. 50 ETB) or need manual assistance, please contact our Admin directly:\n` +
-                `👉 *@miilla021*\n\n` +
-                `Our team will verify your transfer and assist you immediately!`, { parse_mode: 'Markdown', reply_markup: keyboard });
+                `📌 *Need Assistance?*\n` +
+                `If you transferred a partial amount or have a payment question, click **Contact In-Bot Support** below to chat with our team directly inside this bot!`, { parse_mode: 'Markdown', reply_markup: keyboard });
         }
     }
     catch (error) {
