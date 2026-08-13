@@ -183,8 +183,17 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
             // Throttling gap (40ms) to respect Telegram API rate limits (max ~25-30 msg/sec)
             await new Promise(r => setTimeout(r, 40));
         } catch (e: any) {
-            console.error(`[Broadcast Webhook] Failed for user ${telegramId}:`, e.message);
-            failed++;
+            console.error(`[Broadcast Webhook] Parse mode failed for ${telegramId}: ${e.message}. Retrying plain text fallback...`);
+            try {
+                // Remove HTML tags for fallback delivery
+                const cleanText = text.replace(/<[^>]*>?/gm, '');
+                await bot.api.sendMessage(telegramId, cleanText, { reply_markup });
+                sent++;
+                await new Promise(r => setTimeout(r, 40));
+            } catch (fallbackErr: any) {
+                console.error(`[Broadcast Webhook] Delivery failed for ${telegramId}:`, fallbackErr.message);
+                failed++;
+            }
         }
     }
 
