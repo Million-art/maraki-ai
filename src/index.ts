@@ -171,9 +171,19 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
         .replace(/<br\s*\/?>/gi, '\n')
         .replace(/<\/br>/gi, '\n');
 
-    const reply_markup = (buttonText && buttonUrl)
-        ? { inline_keyboard: [[{ text: buttonText, url: buttonUrl }]] }
-        : undefined;
+    let reply_markup: any = undefined;
+    if (buttonText && buttonUrl) {
+        // If buttonUrl is a Web App link (e.g. vercel.app or web url), use Telegram web_app property for direct app popup
+        const isWebApp = buttonUrl.includes('.vercel.app') || 
+                         buttonUrl.includes('maraki-mini-app') || 
+                         (!buttonUrl.includes('t.me/') && buttonUrl.startsWith('http'));
+
+        if (isWebApp) {
+            reply_markup = { inline_keyboard: [[{ text: buttonText, web_app: { url: buttonUrl } }]] };
+        } else {
+            reply_markup = { inline_keyboard: [[{ text: buttonText, url: buttonUrl }]] };
+        }
+    }
 
     let sent = 0;
     let failed = 0;
