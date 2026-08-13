@@ -155,6 +155,43 @@ app.post('/internal/send-message', async (req: express.Request, res: express.Res
     }
 });
 
+// Internal Webhook: Batch Broadcast Dispatch from Dashboard-Backend
+app.post('/internal/broadcast-message', async (req: express.Request, res: express.Response) => {
+    const { targetTelegramIds, text, parseMode = 'HTML', buttonText, buttonUrl } = req.body;
+
+    if (!Array.isArray(targetTelegramIds) || targetTelegramIds.length === 0 || !text) {
+        res.status(400).json({ error: 'Invalid broadcast payload. targetTelegramIds (array) and text required.' });
+        return;
+    }
+
+    console.log(`[Broadcast Webhook] Starting batch broadcast to ${targetTelegramIds.length} users...`);
+
+    const reply_markup = (buttonText && buttonUrl)
+        ? { inline_keyboard: [[{ text: buttonText, url: buttonUrl }]] }
+        : undefined;
+
+    let sent = 0;
+    let failed = 0;
+
+    for (const telegramId of targetTelegramIds) {
+        try {
+            await bot.api.sendMessage(telegramId, text, {
+                parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
+                reply_markup,
+            });
+            sent++;
+            // Throttling gap (40ms) to respect Telegram API rate limits (max ~25-30 msg/sec)
+            await new Promise(r => setTimeout(r, 40));
+        } catch (e: any) {
+            console.error(`[Broadcast Webhook] Failed for user ${telegramId}:`, e.message);
+            failed++;
+        }
+    }
+
+    console.log(`[Broadcast Webhook] Completed. Sent: ${sent}, Failed: ${failed}`);
+    res.status(200).json({ success: true, sent, failed, total: targetTelegramIds.length });
+});
+
 // Webhook endpoint for Telegram
 app.post('/webhook', async (req, res) => {
     try {
