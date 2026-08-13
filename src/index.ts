@@ -155,16 +155,29 @@ app.post('/internal/send-message', async (req: express.Request, res: express.Res
     }
 });
 
-// Internal Webhook: Batch Broadcast Dispatch from Dashboard-Backend
+// In-memory queue tracker for scale (10k+ users)
+interface BroadcastJob {
+    id: string;
+    status: 'PROCESSING' | 'COMPLETED';
+    sent: number;
+    failed: number;
+    total: number;
+    details: Array<{ telegramId: number; status: 'SUCCESS' | 'FAILED'; error?: string }>;
+    createdAt: number;
+}
+const broadcastJobs = new Map<string, BroadcastJob>();
+
+// Internal Webhook: Batch Broadcast Dispatch (Non-Blocking for 10k+ users)
 app.post('/internal/broadcast-message', async (req: express.Request, res: express.Response) => {
-    const { targetTelegramIds, text, parseMode = 'HTML', buttonText, buttonUrl } = req.body;
+    const { targetTelegramIds, text, parseMode = 'HTML', buttonText, buttonUrl, broadcastId: customId } = req.body;
 
     if (!Array.isArray(targetTelegramIds) || targetTelegramIds.length === 0 || !text) {
         res.status(400).json({ error: 'Invalid broadcast payload. targetTelegramIds (array) and text required.' });
         return;
     }
 
-    console.log(`[Broadcast Webhook] Starting batch broadcast to ${targetTelegramIds.length} users...`);
+    const broadcastId = customId || `bcast_${Date.now()}`;
+    console.log(`[Broadcast Webhook] Queuing background broadcast (${broadcastId}) for ${targetTelegramIds.length} users...`);
 
     // Auto-sanitize HTML for Telegram (convert <br>, <br/>, </br> to real newlines)
     const sanitizedText = text
@@ -173,7 +186,6 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
 
     let reply_markup: any = undefined;
     if (buttonText && buttonUrl) {
-        // If buttonUrl is a Web App link (e.g. vercel.app or web url), use Telegram web_app property for direct app popup
         const isWebApp = buttonUrl.includes('.vercel.app') || 
                          buttonUrl.includes('maraki-mini-app') || 
                          (!buttonUrl.includes('t.me/') && buttonUrl.startsWith('http'));
@@ -185,35 +197,66 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
         }
     }
 
-    let sent = 0;
-    let failed = 0;
+    const job: BroadcastJob = {
+        id: broadcastId,
+        status: 'PROCESSING',
+        sent: 0,
+        failed: 0,
+        total: targetTelegramIds.length,
+        details: [],
+        createdAt: Date.now(),
+    };
+    broadcastJobs.set(broadcastId, job);
 
-    for (const telegramId of targetTelegramIds) {
-        try {
-            await bot.api.sendMessage(telegramId, sanitizedText, {
-                parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
-                reply_markup,
-            });
-            sent++;
-            // Throttling gap (40ms) to respect Telegram API rate limits (max ~25-30 msg/sec)
-            await new Promise(r => setTimeout(r, 40));
-        } catch (e: any) {
-            console.error(`[Broadcast Webhook] Parse mode failed for ${telegramId}: ${e.message}. Retrying plain text fallback...`);
+    // Immediately respond to caller (Prevents Vercel/HTTP 504 Timeouts for 10k+ scale)
+    res.status(200).json({
+        success: true,
+        broadcastId,
+        total: job.total,
+        status: 'PROCESSING',
+        message: `Broadcast queued for ${job.total} users.`,
+    });
+
+    // Run batch delivery in non-blocking background loop
+    (async () => {
+        for (const telegramId of targetTelegramIds) {
             try {
-                // Remove HTML tags for fallback delivery
-                const cleanText = text.replace(/<[^>]*>?/gm, '');
-                await bot.api.sendMessage(telegramId, cleanText, { reply_markup });
-                sent++;
+                await bot.api.sendMessage(telegramId, sanitizedText, {
+                    parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
+                    reply_markup,
+                });
+                job.sent++;
+                job.details.push({ telegramId: Number(telegramId), status: 'SUCCESS' });
+                // Throttling gap (40ms) to respect Telegram API rate limits (~25 msg/sec)
                 await new Promise(r => setTimeout(r, 40));
-            } catch (fallbackErr: any) {
-                console.error(`[Broadcast Webhook] Delivery failed for ${telegramId}:`, fallbackErr.message);
-                failed++;
+            } catch (e: any) {
+                console.error(`[Broadcast Webhook] Parse mode failed for ${telegramId}: ${e.message}. Retrying fallback...`);
+                try {
+                    const cleanText = text.replace(/<[^>]*>?/gm, '');
+                    await bot.api.sendMessage(telegramId, cleanText, { reply_markup });
+                    job.sent++;
+                    job.details.push({ telegramId: Number(telegramId), status: 'SUCCESS' });
+                    await new Promise(r => setTimeout(r, 40));
+                } catch (fallbackErr: any) {
+                    console.error(`[Broadcast Webhook] Delivery failed for ${telegramId}:`, fallbackErr.message);
+                    job.failed++;
+                    job.details.push({ telegramId: Number(telegramId), status: 'FAILED', error: fallbackErr.message || e.message });
+                }
             }
         }
-    }
+        job.status = 'COMPLETED';
+        console.log(`[Broadcast Webhook] Background job ${broadcastId} completed. Sent: ${job.sent}, Failed: ${job.failed}`);
+    })();
+});
 
-    console.log(`[Broadcast Webhook] Completed. Sent: ${sent}, Failed: ${failed}`);
-    res.status(200).json({ success: true, sent, failed, total: targetTelegramIds.length });
+// GET Endpoint to poll status of background broadcast
+app.get('/internal/broadcast-status/:id', (req: express.Request, res: express.Response) => {
+    const job = broadcastJobs.get(req.params.id);
+    if (!job) {
+        res.status(404).json({ success: false, error: 'Broadcast job not found' });
+        return;
+    }
+    res.status(200).json({ success: true, ...job });
 });
 
 // Webhook endpoint for Telegram
