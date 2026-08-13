@@ -10,7 +10,6 @@ export async function chatMode(ctx) {
         `/start - Main Menu\n` +
         `/grammar - 🧹Correct your sentence\n` +
         `/lesson - ✨Learn from your previous mistakes\n` +
-        `/chat_conversation - ⚡Practice chat conversation\n` +
         `/translation - 🌐Amharic to English translation\n` +
         `/referral_link - 🔗 Get your referral link\n` +
         `/level - 📊 Check your level\n` +
@@ -49,17 +48,17 @@ export async function handleChatConversation(ctx) {
                     const recentChats = conversation.chatHistory.slice(-5);
                     context = recentChats
                         .map((chat) => {
-                        const userMsg = chat.userMessage || 'No message';
-                        const aiMsg = chat.aiResponse || 'No response';
-                        const truncateSmart = (text, maxLength) => {
-                            if (text.length <= maxLength)
-                                return text;
-                            const truncated = text.substring(0, maxLength);
-                            const lastSpace = truncated.lastIndexOf(' ');
-                            return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...';
-                        };
-                        return `User: ${truncateSmart(userMsg, 100)} | AI: ${truncateSmart(aiMsg, 100)}`;
-                    })
+                            const userMsg = chat.userMessage || 'No message';
+                            const aiMsg = chat.aiResponse || 'No response';
+                            const truncateSmart = (text, maxLength) => {
+                                if (text.length <= maxLength)
+                                    return text;
+                                const truncated = text.substring(0, maxLength);
+                                const lastSpace = truncated.lastIndexOf(' ');
+                                return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...';
+                            };
+                            return `User: ${truncateSmart(userMsg, 100)} | AI: ${truncateSmart(aiMsg, 100)}`;
+                        })
                         .join(' | ');
                 }
             }

@@ -15,7 +15,6 @@ export async function chatMode(ctx: Context) {
     `/start - Main Menu\n` +
     `/grammar - 🧹Correct your sentence\n` +
     `/lesson - ✨Learn from your previous mistakes\n` +
-    `/chat_conversation - ⚡Practice chat conversation\n` +
     `/translation - 🌐Amharic to English translation\n` +
     `/referral_link - 🔗 Get your referral link\n` +
     `/level - 📊 Check your level\n` +
