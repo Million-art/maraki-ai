@@ -166,6 +166,11 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
 
     console.log(`[Broadcast Webhook] Starting batch broadcast to ${targetTelegramIds.length} users...`);
 
+    // Auto-sanitize HTML for Telegram (convert <br>, <br/>, </br> to real newlines)
+    const sanitizedText = text
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/br>/gi, '\n');
+
     const reply_markup = (buttonText && buttonUrl)
         ? { inline_keyboard: [[{ text: buttonText, url: buttonUrl }]] }
         : undefined;
@@ -175,7 +180,7 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
 
     for (const telegramId of targetTelegramIds) {
         try {
-            await bot.api.sendMessage(telegramId, text, {
+            await bot.api.sendMessage(telegramId, sanitizedText, {
                 parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
                 reply_markup,
             });
