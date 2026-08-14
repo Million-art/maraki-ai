@@ -408,6 +408,19 @@ export { notifyAdminOnError, ADMIN_TELEGRAM_ID };
 
 // Global error handler for all bot operations
 bot.catch(async (err) => {
+  const errAny = err as any;
+  const errorMsg = String(errAny?.error?.message || errAny?.error || err || '');
+  const isBenign = 
+    errorMsg.includes('bot was blocked by the user') ||
+    errorMsg.includes('query is too old') ||
+    errorMsg.includes('message to edit not found') ||
+    errorMsg.includes('message is not modified');
+
+  if (isBenign) {
+    console.warn(`[Benign Telegram Error Ignored]: ${errorMsg}`);
+    return;
+  }
+
   console.error(`Error while handling update ${err.ctx.update?.update_id}:`, err.error);
   await notifyAdminOnError(err.ctx, err.error, `Global Handler (Update ${err.ctx.update?.update_id})`);
 });

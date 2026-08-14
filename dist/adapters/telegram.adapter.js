@@ -19,9 +19,9 @@ import { redis } from '../utils/redis.js';
 import { notifyAdminOnError, ADMIN_TELEGRAM_ID } from '../utils/admin-notify.util.js';
 import { setNotifyPreference } from '../utils/daily-notify.util.js';
 dotenv.config();
-const bot_token = process.env.TOKEN || process.env.TKN || process.env.BOT_TOKEN;
+const bot_token = process.env.DEV_BOT_TOKEN || process.env.TOKEN || process.env.TKN || process.env.BOT_TOKEN;
 if (!bot_token) {
-    throw new Error('TOKEN is not defined in .env (Set TOKEN, TKN, or BOT_TOKEN)');
+    throw new Error('TOKEN is not defined in .env (Set DEV_BOT_TOKEN, TOKEN, TKN, or BOT_TOKEN)');
 }
 export const bot = new Bot(bot_token);
 // Global per-user deduplication lock map for single-instance
@@ -374,6 +374,16 @@ bot.on('callback_query:data', async (ctx) => {
 export { notifyAdminOnError, ADMIN_TELEGRAM_ID };
 // Global error handler for all bot operations
 bot.catch(async (err) => {
+    const errAny = err;
+    const errorMsg = String(errAny?.error?.message || errAny?.error || err || '');
+    const isBenign = errorMsg.includes('bot was blocked by the user') ||
+        errorMsg.includes('query is too old') ||
+        errorMsg.includes('message to edit not found') ||
+        errorMsg.includes('message is not modified');
+    if (isBenign) {
+        console.warn(`[Benign Telegram Error Ignored]: ${errorMsg}`);
+        return;
+    }
     console.error(`Error while handling update ${err.ctx.update?.update_id}:`, err.error);
     await notifyAdminOnError(err.ctx, err.error, `Global Handler (Update ${err.ctx.update?.update_id})`);
 });

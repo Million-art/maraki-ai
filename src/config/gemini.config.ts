@@ -1,10 +1,10 @@
 export const GEMINI_CONFIG = {
 
   models: {
-    basic: 'gemini-3.5-flash-lite',
-    complex: 'gemini-3.5-flash',
-    fallback: 'gemini-1.5-flash',
-    live: 'gemini-2.0-flash-lite',
+    basic: 'gemini-2.5-flash',
+    complex: 'gemini-2.5-flash',
+    fallback: 'gemini-2.5-flash-lite',
+    live: 'gemini-2.5-flash',
   } as Record<'basic' | 'complex' | 'fallback' | 'live', string>,
 
   getApiKeys: (): string[] => {

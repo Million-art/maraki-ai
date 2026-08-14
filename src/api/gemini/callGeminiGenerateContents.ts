@@ -11,9 +11,16 @@ export async function callGeminiGenerateContent(
     throw new Error("GEMINI_API_KEY is not set in environment");
   }
 
-  const primaryModel = GEMINI_CONFIG.models[taskType];
-  const fallbackModel = GEMINI_CONFIG.models.fallback;
-  const modelsToTry = Array.from(new Set([primaryModel, fallbackModel]));
+  const primaryModel = GEMINI_CONFIG.models[taskType] || 'gemini-2.5-flash';
+  const fallbackModel = GEMINI_CONFIG.models.fallback || 'gemini-2.5-flash-lite';
+  const modelsToTry = Array.from(new Set([
+    primaryModel,
+    fallbackModel,
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+  ]));
 
   for (const apiKey of apiKeys) {
     for (const modelName of modelsToTry) {
@@ -41,7 +48,6 @@ export async function callGeminiGenerateContent(
 
         if (data?.error) {
           const errMsg = data.error.message || JSON.stringify(data.error);
-          // Only log warnings if it's not an expected rate-limit cascade
           if (!errMsg.includes('Quota exceeded')) {
             console.warn(`Model ${modelName} (Key ${apiKey.substring(0, 6)}...): ${errMsg}`);
           }
@@ -58,5 +64,5 @@ export async function callGeminiGenerateContent(
     }
   }
 
-  return "Sorry, I'm experiencing high traffic right now. Please try again in a moment! ⏳";
+  throw new Error("Gemini AI API service unavailable or rate limited.");
 }

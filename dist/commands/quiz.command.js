@@ -34,13 +34,25 @@ const sendNextQuestion = async (ctx) => {
         await showQuizResults(ctx);
         return;
     }
-    if (questions.length === 0) {
+    if (!questions || !Array.isArray(questions) || questions.length === 0) {
         // Generate questions if not already generated
         const generatedQuestions = await generateQuizQuestions(ctx.from.id);
-        session.quizState.questions = generatedQuestions;
+        session.quizState.questions = generatedQuestions && generatedQuestions.length > 0 ? generatedQuestions : getFallbackQuizQuestions();
         await setSession(ctx.from.id, session);
     }
-    const question = session.quizState.questions[currentQuestion];
+    const question = session.quizState.questions?.[currentQuestion];
+    // Safeguard: If question or options is invalid, replace with fallback pool
+    if (!question || !Array.isArray(question.options) || question.options.length === 0) {
+        session.quizState.questions = getFallbackQuizQuestions();
+        await setSession(ctx.from.id, session);
+        const validQuestion = session.quizState.questions[currentQuestion] || session.quizState.questions[0];
+        const keyboard = new InlineKeyboard();
+        validQuestion.options.forEach((option, index) => {
+            keyboard.text(option, `quiz_answer_${index}`).row();
+        });
+        await ctx.reply(`Question ${currentQuestion + 1}/5:\n\n${validQuestion.question}`, { reply_markup: keyboard });
+        return;
+    }
     const keyboard = new InlineKeyboard();
     question.options.forEach((option, index) => {
         keyboard.text(option, `quiz_answer_${index}`).row();
@@ -93,7 +105,7 @@ Return a JSON object with:
   "explanation": "Brief explanation"
 }`;
     try {
-        const response = await callGeminiGenerateContent(prompt, 'basic');
+        const response = await callGeminiGenerateContent(prompt, 'basic', true);
         const parsed = JSON.parse(response.replace(/```json\s*|\s*```/g, ''));
         return {
             question: parsed.question,
@@ -139,12 +151,15 @@ Return a JSON array of ${count} objects, each with:
   "explanation": "Brief explanation"
 }`;
     try {
-        const response = await callGeminiGenerateContent(prompt, 'basic');
+        const response = await callGeminiGenerateContent(prompt, 'basic', true);
         const jsonMatch = response.match(/\[[\s\S]*\]/);
         const jsonString = jsonMatch ? jsonMatch[0] : response.replace(/```json\s*|\s*```/g, '');
         const questions = JSON.parse(jsonString);
         if (Array.isArray(questions) && questions.length > 0) {
-            return questions.map((q) => ({ ...q, type: 'general' }));
+            const validQuestions = questions.filter((q) => q && q.question && Array.isArray(q.options) && q.options.length >= 2);
+            if (validQuestions.length > 0) {
+                return validQuestions.map((q) => ({ ...q, type: 'general' }));
+            }
         }
     }
     catch (error) {

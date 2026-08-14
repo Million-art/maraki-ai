@@ -1,27 +1,41 @@
 import { GEMINI_CONFIG } from '../../config/gemini.config.js';
-export async function callGeminiGenerateContent(promptText, taskType = 'complex') {
+export async function callGeminiGenerateContent(promptText, taskType = 'complex', jsonMode = false) {
     const apiKeys = GEMINI_CONFIG.getApiKeys();
     if (apiKeys.length === 0) {
         throw new Error("GEMINI_API_KEY is not set in environment");
     }
-    const primaryModel = GEMINI_CONFIG.models[taskType];
-    const fallbackModel = GEMINI_CONFIG.models.fallback;
-    const modelsToTry = Array.from(new Set([primaryModel, fallbackModel]));
+    const primaryModel = GEMINI_CONFIG.models[taskType] || 'gemini-2.5-flash';
+    const fallbackModel = GEMINI_CONFIG.models.fallback || 'gemini-2.5-flash-lite';
+    const modelsToTry = Array.from(new Set([
+        primaryModel,
+        fallbackModel,
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite',
+        'gemini-3.5-flash',
+        'gemini-3.5-flash-lite',
+    ]));
     for (const apiKey of apiKeys) {
         for (const modelName of modelsToTry) {
             try {
+                const bodyPayload = {
+                    contents: [{ parts: [{ text: promptText }] }],
+                };
+                if (jsonMode) {
+                    bodyPayload.generationConfig = {
+                        responseMimeType: 'application/json',
+                    };
+                }
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'x-goog-api-key': apiKey,
                     },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
+                    body: JSON.stringify(bodyPayload),
                 });
                 const data = await res.json();
                 if (data?.error) {
                     const errMsg = data.error.message || JSON.stringify(data.error);
-                    // Only log warnings if it's not an expected rate-limit cascade
                     if (!errMsg.includes('Quota exceeded')) {
                         console.warn(`Model ${modelName} (Key ${apiKey.substring(0, 6)}...): ${errMsg}`);
                     }
@@ -37,5 +51,5 @@ export async function callGeminiGenerateContent(promptText, taskType = 'complex'
             }
         }
     }
-    return "Sorry, I'm experiencing high traffic right now. Please try again in a moment! ⏳";
+    throw new Error("Gemini AI API service unavailable or rate limited.");
 }

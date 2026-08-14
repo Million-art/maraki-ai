@@ -76,8 +76,12 @@ export async function startCommand(ctx: Context) {
     const welcomeMsg = getPersonalizedStartMsg(ctx.from.first_name || "there");
 
     await ctx.reply(welcomeMsg, { parse_mode: 'HTML', reply_markup: keyboard });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in /start command:", error);
-    await ctx.reply("⚠️ Something went wrong while starting the bot.");
+    if (error?.error_code !== 403 && !String(error).includes('blocked by the user')) {
+      try {
+        await ctx.reply("⚠️ Something went wrong while starting the bot.");
+      } catch (ignored) {}
+    }
   }
 }
