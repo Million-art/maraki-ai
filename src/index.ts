@@ -31,8 +31,11 @@ const initialize = async () => {
             await bot.init()
             console.log('Bot initialized')
 
-            // If WEBHOOK_URL is provided, use Webhook; otherwise use Long Polling (ideal for EC2)
-            const webhookUrl = process.env.WEBHOOK_URL
+            // Enable Long Polling if USE_POLLING=true OR DEV_BOT_TOKEN is set for local dev
+            const isDevBot = !!process.env.DEV_BOT_TOKEN;
+            const usePolling = process.env.USE_POLLING === 'true' || isDevBot;
+            const webhookUrl = usePolling ? null : process.env.WEBHOOK_URL;
+
             if (webhookUrl) {
                 try {
                     const webhookInfo = await bot.api.getWebhookInfo()
@@ -50,7 +53,7 @@ const initialize = async () => {
                     }
                 }
             } else {
-                // Remove old Vercel webhook if any and switch to EC2 Long Polling
+                // Clear any existing Webhook and start Long Polling
                 try {
                     await bot.api.deleteWebhook()
                     console.log('Cleared legacy Telegram webhook')
@@ -58,7 +61,7 @@ const initialize = async () => {
                     // Ignore if no webhook was set
                 }
                 bot.start()
-                console.log('Bot started with Long Polling (EC2 continuous listener)')
+                console.log('🤖 Bot started in Long Polling mode (Development / Continuous Listener)')
             }
 
             isInitialized = true

@@ -22,9 +22,9 @@ import { setNotifyPreference } from '../utils/daily-notify.util.js';
 
 dotenv.config();
 
-const bot_token = process.env.TOKEN || process.env.TKN || process.env.BOT_TOKEN;
+const bot_token = process.env.DEV_BOT_TOKEN || process.env.TOKEN || process.env.TKN || process.env.BOT_TOKEN;
 if (!bot_token) {
-  throw new Error('TOKEN is not defined in .env (Set TOKEN, TKN, or BOT_TOKEN)');
+  throw new Error('TOKEN is not defined in .env (Set DEV_BOT_TOKEN, TOKEN, TKN, or BOT_TOKEN)');
 }
 export const bot = new Bot(bot_token);
 
