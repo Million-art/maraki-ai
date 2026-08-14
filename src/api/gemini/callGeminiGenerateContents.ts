@@ -2,7 +2,8 @@ import { GEMINI_CONFIG } from '../../config/gemini.config.js';
 
 export async function callGeminiGenerateContent(
   promptText: string,
-  taskType: 'basic' | 'complex' | 'fallback' | 'live' = 'complex'
+  taskType: 'basic' | 'complex' | 'fallback' | 'live' = 'complex',
+  jsonMode: boolean = false
 ) {
   const apiKeys = GEMINI_CONFIG.getApiKeys();
 
@@ -17,13 +18,23 @@ export async function callGeminiGenerateContent(
   for (const apiKey of apiKeys) {
     for (const modelName of modelsToTry) {
       try {
+        const bodyPayload: any = {
+          contents: [{ parts: [{ text: promptText }] }],
+        };
+
+        if (jsonMode) {
+          bodyPayload.generationConfig = {
+            responseMimeType: 'application/json',
+          };
+        }
+
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'x-goog-api-key': apiKey,
           },
-          body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
+          body: JSON.stringify(bodyPayload),
         });
 
         const data = await res.json();
