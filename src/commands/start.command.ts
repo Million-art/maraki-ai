@@ -8,8 +8,9 @@ import { handlePaymentCommand } from "./payment.command.js";
 export async function startCommand(ctx: Context) {
   if (!ctx.from) return;
 
-  // Deep-link: /start pay — triggered from Mini App upgrade popup
-  if (String(ctx.match).trim() === 'pay') {
+  // Deep-link: /start pay or /start=pay — triggered from Mini App upgrade popup
+  const matchStr = String(ctx.match || '').trim().toLowerCase();
+  if (matchStr === 'pay' || matchStr.includes('pay')) {
     await registerOrUpdate(ctx.from); // ensure user exists
     return handlePaymentCommand(ctx);
   }
