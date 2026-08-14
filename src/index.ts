@@ -172,7 +172,7 @@ const broadcastJobs = new Map<string, BroadcastJob>();
 
 // Internal Webhook: Batch Broadcast Dispatch (Non-Blocking for 10k+ users)
 app.post('/internal/broadcast-message', async (req: express.Request, res: express.Response) => {
-    const { targetTelegramIds, text, parseMode = 'HTML', buttonText, buttonUrl, broadcastId: customId } = req.body;
+    const { targetTelegramIds, text, parseMode = 'HTML', buttonText, buttonUrl, broadcastId: customId, stickerFileId, animationFileId } = req.body;
 
     if (!Array.isArray(targetTelegramIds) || targetTelegramIds.length === 0 || !text) {
         res.status(400).json({ error: 'Invalid broadcast payload. targetTelegramIds (array) and text required.' });
@@ -224,6 +224,17 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
     (async () => {
         for (const telegramId of targetTelegramIds) {
             try {
+                // Optionally send animated Sticker or GIF animation first if file_id is provided
+                if (stickerFileId) {
+                    await bot.api.sendSticker(telegramId, stickerFileId).catch((stkErr: any) => {
+                        console.warn(`[Broadcast Webhook] Sticker send failed for ${telegramId}: ${stkErr.message}`);
+                    });
+                } else if (animationFileId) {
+                    await bot.api.sendAnimation(telegramId, animationFileId).catch((animErr: any) => {
+                        console.warn(`[Broadcast Webhook] Animation GIF send failed for ${telegramId}: ${animErr.message}`);
+                    });
+                }
+
                 await bot.api.sendMessage(telegramId, sanitizedText, {
                     parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
                     reply_markup,
