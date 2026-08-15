@@ -171,20 +171,20 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
       );
     } else {
       const { InlineKeyboard } = await import('grammy');
-      const keyboard = new InlineKeyboard().text("💬 Contact In-Bot Support", "contact_support");
+      const keyboard = new InlineKeyboard().text("💬 የድጋፍ ቡድኑን ያነጋግሩ (Support)", "contact_support");
 
       await ctx.reply(
-        `❌ *Payment Verification Failed*\n\n` +
-        `Reason: ${result.message || 'Transaction could not be verified'}.\n\n` +
-        `📌 *Need Assistance?*\n` +
-        `If you transferred a partial amount or have a payment question, click **Contact In-Bot Support** below to chat with our team directly inside this bot!`,
+        `❌ *ክፍያዎን ማረጋገጥ አልተቻለም*\n\n` +
+        `ምክንያት: ${result.message || 'ክፍያውን ማረጋገጥ አልተቻለም'}.\n\n` +
+        `📌 *እርዳታ ይፈልጋሉ?*\n` +
+        `ከሚፈለገው ያነሰ የገንዘብ መጠን ከላኩ ወይም ስለክፍያዎ ጥያቄ ካለዎት፣ የድጋፍ ቡድናችንን እዚሁ ቦት ላይ ለማነጋገር ከታች ያለውን **የድጋፍ ቡድኑን ያነጋግሩ (Support)** የሚለውን ይጫኑ!`,
         { parse_mode: 'Markdown', reply_markup: keyboard }
       );
     }
   } catch (error: any) {
     console.error('Receipt verification error:', error);
     await ctx.reply(
-      `⚠️ *Verification Error*: Unable to connect to the bank network right now. Please try again in a few moments.`
+      `⚠️ *የኔትዎርክ ችግር*: በአሁኑ ሰዓት ከባንክ ኔትዎርክ ጋር መገናኘት አልተቻለም። እባክዎን ከጥቂት ደቂቃዎች በኋላ እንደገና ይሞክሩ።`
     );
   }
 }
