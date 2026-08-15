@@ -74,7 +74,7 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
       if (user && (user.isMarakiPremium || user.isPremium) && user.subscriptionExpiresAt) {
         const expires = new Date(user.subscriptionExpiresAt);
         if (expires > new Date()) {
-          extensionNotice = `\n\n🔄 *የማራዘሚያ ማሳሰቢያ፡* አሁን ላይ active የVIP አባል እንደመሆንዎ፣ አዲሱ ክፍያዎ የአባልነት ጊዜዎን አሁን ካለው ማብቂያ ቀን በላይ *ያራዝመዋል*!`;
+          extensionNotice = `\n\n🔄 *ማሳሰቢያ፡* አዲሱ ክፍያዎ የአባልነት ጊዜዎን አሁን ካለው ማብቂያ ቀን ላይ ይጨምረዋል!`;
         }
       }
 
@@ -93,16 +93,16 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
 
   const text =
     `💳 *የመረጡት፡ ${tierName}*\n\n` +
-    `🏦 *የባንክ ሂሳብ ቁጥሮች (Direct Bank Transfer):*\n` +
-    `• *የኢትዮጵያ ንግድ ባንክ (CBE)*:\n` +
-    `  \`1000342472501\` (ኮፒ ለማድረግ ይንኩት) (ስም: *Million Mulugeta*)\n` +
-    `• *ዳሽን ባንክ (Dashen Bank)*:\n` +
-    `  \`5427280818011\` (ኮፒ ለማድረግ ይንኩት) (ስም: *Million Mulugeta*)\n\n` +
-    `✅ *እንዴት ወዲያውኑ active ማድረግ ይቻላል?*\n` +
-    `1. ከላይ ወዳሉት የባንክ ሂሳቦች በትክክል *${amount} ETB* ያስገቡ።\n` +
-    `2. ከCBE Mobile/Dashen SuperApp የክፍያውን ሊንክ ኮፒ ያድርጉ (ለምሳሌ፣ \`https://mbreciept.cbe.com.et/v2-XXXXXX\`) ወይም የ reference ቁጥሩን ይውሰዱ።\n` +
-    `3. ከታች ያለውን **"Verify Payment / Submit Receipt"** ቁልፍ ይጫኑ ወይም የክፍያውን ሊንክ እዚሁ ቻት ላይ ፔስት (Paste) ያድርጉ!\n\n` +
-    `⚡ የእኛ ሲስተም ክፍያዎን ወዲያውኑ በማረጋገጥ አባልነትዎን በሰከንዶች ውስጥ ያሳድጋል/ያራዝማል!${extensionNotice}`;
+    `🏦 *የባንክ ሂሳብ ቁጥሮች፡*\n` +
+    `• *CBE*: \`1000342472501\`\n` +
+    `• *Dashen*: \`5427280818011\`\n` +
+    `👤 ስም: *Million Mulugeta*\n` +
+    `*(ኮፒ ለማድረግ አካውንት ቁጥሩን ይንኩ)*\n\n` +
+    `✅ *እንዴት active ማድረግ ይቻላል?*\n` +
+    `1. ከላይ ወዳሉት ሂሳቦች በትክክል *${amount} ETB* ያስገቡ።\n` +
+    `2. ከCBE/Dashen የክፍያውን ሊንክ ኮፒ ያድርጉ ወይም reference ቁጥሩን ይውሰዱ።\n` +
+    `3. ሊንኩን እዚሁ ቻት ላይ ፔስት (Paste) ያድርጉ ወይም ከታች **"Verify Payment"** ይጫኑ!\n\n` +
+    `⚡ ክፍያዎ በሰከንዶች ውስጥ ተረጋግጦ active ይሆናል!${extensionNotice}`;
 
   await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: keyboard });
 }
