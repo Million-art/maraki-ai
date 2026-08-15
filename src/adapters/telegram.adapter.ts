@@ -291,6 +291,16 @@ bot.on('callback_query:data', async (ctx) => {
     }
   } else {
     switch (data) {
+      case 'check_channel_join':
+        const { checkChannelMembership } = await import('../utils/channel-check.util.js');
+        const isMember = await checkChannelMembership(ctx);
+        if (isMember) {
+          try { await ctx.deleteMessage(); } catch(e) {}
+          await ctx.reply("✅ *Thank you for joining!* You now have access to Maraki AI.", { parse_mode: 'Markdown' });
+          const { startCommand } = await import('../commands/start.command.js');
+          await startCommand(ctx);
+        }
+        break;
       case 'subscribe':
       case 'pay':
         await handlePaymentCommand(ctx);

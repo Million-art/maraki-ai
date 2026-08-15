@@ -15,6 +15,13 @@ export async function startCommand(ctx: Context) {
     return handlePaymentCommand(ctx);
   }
 
+  // Channel Membership Validation
+  const { checkChannelMembership } = await import('../utils/channel-check.util.js');
+  const isMember = await checkChannelMembership(ctx);
+  if (!isMember) {
+    return; // Access denied until they join
+  }
+
   try {
     // Extract valid numerical referrerId from start payload (ignoring self-referrals)
     let referrerId: number | undefined = undefined;
