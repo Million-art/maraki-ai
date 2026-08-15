@@ -140,6 +140,18 @@ bot.command('stop_daily', async (ctx) => {
   );
 });
 
+// Utility to extract File IDs for media
+bot.on('message:animation', async (ctx) => {
+  if (ctx.from?.id === ADMIN_TELEGRAM_ID) {
+    const fileId = ctx.message.animation.file_id;
+    console.log('\n====================================');
+    console.log('🎬 ANIMATION FILE ID RECEIVED:');
+    console.log(fileId);
+    console.log('====================================\n');
+    await ctx.reply(`Here is the file_id for this GIF:\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
+  }
+});
+
 // Catch all text messages
 bot.on('message:text', async (ctx) => {
   if (!ctx.from) return;

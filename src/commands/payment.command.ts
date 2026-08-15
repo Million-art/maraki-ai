@@ -104,7 +104,23 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
     `3. ሊንኩን እዚሁ ቻት ላይ ፔስት (Paste) ያድርጉ ወይም ከታች **"Verify Payment"** ይጫኑ!\n\n` +
     `⚡ ክፍያዎ በሰከንዶች ውስጥ ተረጋግጦ active ይሆናል!${extensionNotice}`;
 
-  await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: keyboard });
+  try {
+    await ctx.deleteMessage();
+  } catch (e) {
+    console.error('Could not delete old message', e);
+  }
+
+  try {
+    await ctx.replyWithAnimation('CgACAgQAAxkBAAIB2mqAkuKmD1uR2rIh-JRbLjYG6qx-AALyHwACbyzwUym4AYm72uFkPQQ', {
+      caption: text,
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
+  } catch (mediaError) {
+    console.error('Failed to send animation, falling back to text:', mediaError);
+    // Fallback to text if the file_id is invalid
+    await ctx.reply(text, { parse_mode: 'Markdown', reply_markup: keyboard });
+  }
 }
 
 export async function handleReceiptVerification(ctx: Context, referenceText: string) {
