@@ -21,10 +21,10 @@ export async function handlePaymentCommand(ctx: Context) {
       if (expires > new Date()) {
         const formattedDate = expires.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
         activeNotice =
-          `🌟 *ACTIVE VIP SUBSCRIPTION DETECTED!*\n` +
-          `You currently have active Maraki VIP access (valid until *${formattedDate}*).\n\n` +
-          `ℹ️ *Subscription Extension Notice:*\n` +
-          `If you transfer & subscribe again, your new plan duration will be **added directly to your current expiration date** (your subscription will be extended with no lost days)! 🚀\n\n`;
+          `🌟 *ያለፈበት ጊዜ ያልደረሰ VIP subscription አለዎት!*\n` +
+          `አሁን ላይ active የሆነ የMaraki AI VIP subscription አለዎት (እስከ *${formattedDate}* የሚያገለግል)።\n\n` +
+          `ℹ️ *የsubscription ማራዘሚያ ማሳሰቢያ፡*\n` +
+          `ክፍያ ፈጽመው በድጋሚ ከተመዘገቡ፣ አዲሱ የsubscription ጊዜዎ **በቀጥታ አሁን ካለዎት ማብቂያ ቀን ላይ ይጨመራል** (ምንም ቀን ሳያጡ subscriptionዎ ይራዘማል)! 🚀\n\n`;
       }
     }
   } catch (e) { }
@@ -40,10 +40,10 @@ export async function handlePaymentCommand(ctx: Context) {
     .text("🚀 1 Year (2,499 ETB) - Save 30%", "pay_yearly");
 
   const paymentText =
-    `💳 *Maraki VIP Subscription*\n\n` +
+    `💳 *የMaraki AI VIP ክፍያ*\n\n` +
     activeNotice +
-    `Unlock unlimited Maraki AI chat and real-time tutoring!\n\n` +
-    `Please select your preferred subscription tier below:`;
+    `ያልተገደበ የMaraki AI ውይይት እና የድምጽ ልምምድ ያግኙ!\n\n` +
+    `እባክዎን ከታች ከተዘረዘሩት የsubscription አማራጮች ውስጥ የሚፈልጉትን ይምረጡ፡`;
 
   await ctx.reply(paymentText, { parse_mode: 'Markdown', reply_markup: keyboard });
 }
@@ -74,7 +74,7 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
       if (user && (user.isMarakiPremium || user.isPremium) && user.subscriptionExpiresAt) {
         const expires = new Date(user.subscriptionExpiresAt);
         if (expires > new Date()) {
-          extensionNotice = `\n\n🔄 *Extension Notice:* As an active VIP member, your new payment will *extend* your access beyond your current expiration!`;
+          extensionNotice = `\n\n🔄 *የማራዘሚያ ማሳሰቢያ፡* አሁን ላይ active የVIP አባል እንደመሆንዎ፣ አዲሱ ክፍያዎ የአባልነት ጊዜዎን አሁን ካለው ማብቂያ ቀን በላይ *ያራዝመዋል*!`;
         }
       }
 
@@ -92,17 +92,17 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
   const keyboard = new InlineKeyboard().text("✅ Verify Payment / Submit Receipt", "submit_receipt_prompt");
 
   const text =
-    `💳 *You selected: ${tierName}*\n\n` +
-    `🏦 *Direct Bank Transfer Accounts:*\n` +
-    `• *Commercial Bank of Ethiopia (CBE)*:\n` +
-    `  \`1000342472501\` (Account: *Million Mulugeta*)\n` +
-    `• *Dashen Bank*:\n` +
-    `  \`5427280818011\` (Account: *Million Mulugeta*)\n\n` +
-    `✅ *How to Activate Instantly:*\n` +
-    `1. Transfer exactly *${amount} ETB* to one of the accounts above.\n` +
-    `2. Copy the receipt link from CBE Mobile/Dashen SuperApp (e.g., \`https://mbreciept.cbe.com.et/v2-XXXXXX\`) or reference ID.\n` +
-    `3. Click the **"Verify Payment / Submit Receipt"** button below or paste your receipt link directly in this chat!\n\n` +
-    `⚡ Our automated system will verify your receipt and upgrade/extend your account in seconds!${extensionNotice}`;
+    `💳 *የመረጡት፡ ${tierName}*\n\n` +
+    `🏦 *የባንክ ሂሳብ ቁጥሮች (Direct Bank Transfer):*\n` +
+    `• *የኢትዮጵያ ንግድ ባንክ (CBE)*:\n` +
+    `  \`1000342472501\` (ኮፒ ለማድረግ ይንኩት) (ስም: *Million Mulugeta*)\n` +
+    `• *ዳሽን ባንክ (Dashen Bank)*:\n` +
+    `  \`5427280818011\` (ኮፒ ለማድረግ ይንኩት) (ስም: *Million Mulugeta*)\n\n` +
+    `✅ *እንዴት ወዲያውኑ active ማድረግ ይቻላል?*\n` +
+    `1. ከላይ ወዳሉት የባንክ ሂሳቦች በትክክል *${amount} ETB* ያስገቡ።\n` +
+    `2. ከCBE Mobile/Dashen SuperApp የክፍያውን ሊንክ ኮፒ ያድርጉ (ለምሳሌ፣ \`https://mbreciept.cbe.com.et/v2-XXXXXX\`) ወይም የ reference ቁጥሩን ይውሰዱ።\n` +
+    `3. ከታች ያለውን **"Verify Payment / Submit Receipt"** ቁልፍ ይጫኑ ወይም የክፍያውን ሊንክ እዚሁ ቻት ላይ ፔስት (Paste) ያድርጉ!\n\n` +
+    `⚡ የእኛ ሲስተም ክፍያዎን ወዲያውኑ በማረጋገጥ አባልነትዎን በሰከንዶች ውስጥ ያሳድጋል/ያራዝማል!${extensionNotice}`;
 
   await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: keyboard });
 }
@@ -147,19 +147,19 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
 
       const wasExtended = result.wasExtended;
       const headerTitle = wasExtended
-        ? '🎉 *SUBSCRIPTION EXTENDED SUCCESSFULLY!*'
-        : '🎉 *PAYMENT VERIFIED SUCCESSFULLY!*';
+        ? '🎉 *የአባልነት ጊዜዎ በተሳካ ሁኔታ ተራዝሟል!*'
+        : '🎉 *ክፍያዎ በተሳካ ሁኔታ ተረጋግጧል!*';
 
       const newExpiry = result.user?.subscriptionExpiresAt
         ? new Date(result.user.subscriptionExpiresAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
         : 'Active';
 
       const extensionMessage = wasExtended
-        ? `🔄 *Your VIP subscription has been extended!* (+${durationText})\n` +
-        `📅 *New Expiration Date:* *${newExpiry}*\n\n` +
-        `🎁 Thank you for continuing your journey with Maraki Premium!`
-        : `🎁 *CONGRATULATIONS!* You now have **${durationText}** of Maraki Premium access (valid until *${newExpiry}*)!\n` +
-        `🌟 You have unlimited access to Maraki AI voice chat, practice modules, and exams.`;
+        ? `🔄 *የVIP አባልነትዎ ተራዝሟል!* (+${durationText})\n` +
+        `📅 *አዲሱ ማብቂያ ቀን፡* *${newExpiry}*\n\n` +
+        `🎁 ከMaraki Premium ጋር ጉዞዎን ስለቀጠሉ እናመሰግናለን!`
+        : `🎁 *እንኳን ደስ አሎት!* አሁን የ **${durationText}** Maraki Premium አባልነት አግኝተዋል (እስከ *${newExpiry}* የሚያገለግል)!\n` +
+        `🌟 አሁን ያለገደብ የMaraki AI የድምጽ ውይይት፣ የልምምድ ሞጁሎች እና ፈተናዎችን መጠቀም ይችላሉ።`;
 
       await ctx.reply(
         `${headerTitle}\n\n` +
