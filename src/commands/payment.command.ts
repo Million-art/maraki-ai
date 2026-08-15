@@ -99,7 +99,7 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
     `👤 ስም: *Million Mulugeta*\n` +
     `*(ኮፒ ለማድረግ አካውንት ቁጥሩን ይንኩ)*\n\n` +
     `✅ *እንዴት active ማድረግ ይቻላል?*\n` +
-    `1. ከላይ ወዳሉት ሂሳቦች በትክክል *${amount} ETB* ያስገቡ።\n` +
+    `1. ከላይ ካሉት ሂሳቦች ወደ **አንዱ** ብቻ በትክክል *${amount} ETB* ያስገቡ።\n` +
     `2. ከCBE/Dashen የክፍያውን ሊንክ ኮፒ ያድርጉ ወይም reference ቁጥሩን ይውሰዱ።\n` +
     `3. ሊንኩን እዚሁ ቻት ላይ ፔስት (Paste) ያድርጉ ወይም ከታች **"Verify Payment"** ይጫኑ!\n\n` +
     `⚡ ክፍያዎ በሰከንዶች ውስጥ ተረጋግጦ active ይሆናል!${extensionNotice}`;
