@@ -296,7 +296,7 @@ bot.on('callback_query:data', async (ctx) => {
         const isMember = await checkChannelMembership(ctx);
         if (isMember) {
           try { await ctx.deleteMessage(); } catch(e) {}
-          await ctx.reply("✅ *Thank you for joining!* You now have access to Maraki AI.", { parse_mode: 'Markdown' });
+          await ctx.reply("✅ *ስለተቀላቀሉን እናመሰግናለን!* አሁን Maraki AIን ሙሉ በሙሉ መጠቀም ይችላሉ።", { parse_mode: 'Markdown' });
           const { startCommand } = await import('../commands/start.command.js');
           await startCommand(ctx);
         }

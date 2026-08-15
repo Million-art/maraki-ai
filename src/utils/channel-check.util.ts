@@ -31,14 +31,14 @@ export async function checkChannelMembership(ctx: Context): Promise<boolean> {
     : `https://t.me/marakiai`; // Fallback
 
   const keyboard = new InlineKeyboard()
-    .url(`📢 Join Channel`, channelUrl)
+    .url(`📢 ቻናሉን ተቀላቀሉ`, channelUrl)
     .row()
-    .text("✅ I have joined", "check_channel_join");
+    .text("✅ ተቀላቅያለሁ", "check_channel_join");
 
   await ctx.reply(
-    `🚀 *Join Our Official Channel!*\n\n` +
-    `To use Maraki AI's free lessons, AI voice practice, and quizzes, you must be a member of our official Telegram channel.\n\n` +
-    `👉 Please join the channel below and click **"I have joined"**!`,
+    `🚀 *የቴሌግራም ቻናላችንን ይቀላቀሉ!*\n\n` +
+    `የMaraki AI ነጻ ትምህርቶችን፣ የድምጽ ልምምዶችን እና ፈተናዎችን ለመጠቀም የቴሌግራም ቻናላችንን መቀላቀል ግዴታ ነው።\n\n` +
+    `👉 እባክዎን ከታች ያለውን ቻናል ይቀላቀሉ እና **"✅ ተቀላቅያለሁ"** የሚለውን ቁልፍ ይጫኑ!`,
     { parse_mode: 'Markdown', reply_markup: keyboard }
   );
 
