@@ -177,7 +177,21 @@ export class ApiService {
       const { data } = await axios.get(`${this.backendUrl}/api/student/usage/${telegramId}`, { timeout: 5000 });
       return data;
     } catch (error) {
-      // Fail closed: deny quiz/lesson access when backend is unreachable
+      if (process.env.NODE_ENV === 'development') {
+        return {
+          isPremium: true,
+          weeklyQuizzesUsed: 0,
+          weeklyQuizLimit: -1,
+          remaining: 999,
+          weeklyLessonsUsed: 0,
+          weeklyLessonLimit: -1,
+          remainingLessons: 999,
+          hasAccess: true,
+          reason: 'Development mode local testing',
+        };
+      }
+
+      // Fail closed in production: deny quiz/lesson access when backend is unreachable
       return {
         isPremium: false,
         weeklyQuizzesUsed: 99,   // Exceeds limit intentionally

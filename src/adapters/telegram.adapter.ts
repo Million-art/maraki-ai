@@ -231,7 +231,7 @@ bot.on('message:text', async (ctx) => {
     await setSession(ctx.from.id, { ...session, mode: undefined });
     await handleReceiptVerification(ctx, text);
     return;
-  } else if (session?.mode === 'lesson') {
+  } else if (session?.mode === 'lesson' || session?.mode === 'lesson_awaiting_topic') {
     const { handleLessonResponse } = await import('../commands/lesson.comand.js');
     await handleLessonResponse(ctx);
   } else if (session?.mode === 'lesson_followup') {
@@ -355,6 +355,19 @@ bot.on('callback_query:data', async (ctx) => {
         await setSession(ctx.from.id, { mode: 'lesson', timestamp: Date.now(), userId: ctx.from.id });
         await lessonCommand(ctx);
         break;
+      case 'lesson_start_rec': {
+        const session = await getSession(ctx.from.id);
+        const topic = session?.recommendedTopic || 'General English Grammar';
+        const { generateAndSendLesson } = await import('../commands/lesson.comand.js');
+        await generateAndSendLesson(ctx, topic);
+        break;
+      }
+      case 'lesson_custom_input': {
+        const existingSession = await getSession(ctx.from.id) || {};
+        await setSession(ctx.from.id, { ...existingSession, mode: 'lesson_awaiting_topic', timestamp: Date.now(), userId: ctx.from.id });
+        await ctx.reply('✏️ *Type Your Preferred Lesson Topic*\n\nPlease type any topic you would like to learn about today (e.g., *"Past Continuous Tense"*, *"Business Emails"*, *"Phrasal Verbs"*):', { parse_mode: 'Markdown' });
+        break;
+      }
       case 'lesson_followup_ask': {
         const existingSession = await getSession(ctx.from.id) || {};
         await setSession(ctx.from.id, { ...existingSession, mode: 'lesson_followup', timestamp: Date.now(), userId: ctx.from.id });
