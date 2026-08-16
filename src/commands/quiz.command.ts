@@ -56,7 +56,11 @@ const sendNextQuestion = async (ctx: Context) => {
     validQuestion.options.forEach((option: string, index: number) => {
       keyboard.text(option, `quiz_answer_${index}`).row();
     });
-    await ctx.reply(`Question ${currentQuestion + 1}/5:\n\n${validQuestion.question}`, { reply_markup: keyboard });
+    try {
+      await ctx.reply(`Question ${currentQuestion + 1}/5:\n\n${validQuestion.question}`, { reply_markup: keyboard });
+    } catch (error) {
+      console.error('Failed to send fallback question (network error):', error);
+    }
     return;
   }
 
@@ -66,7 +70,11 @@ const sendNextQuestion = async (ctx: Context) => {
     keyboard.text(option, `quiz_answer_${index}`).row();
   });
 
-  await ctx.reply(`Question ${currentQuestion + 1}/5:\n\n${question.question}`, { reply_markup: keyboard });
+  try {
+    await ctx.reply(`Question ${currentQuestion + 1}/5:\n\n${question.question}`, { reply_markup: keyboard });
+  } catch (error) {
+    console.error('Failed to send question (network error):', error);
+  }
 };
 
 const generateQuizQuestions = async (userId: number) => {
@@ -75,6 +83,13 @@ const generateQuizQuestions = async (userId: number) => {
     const user = await apiService.getUserByTelegramId(userId);
     const userLevel = user?.level || 'intermediate';
 
+    // 1. Anti-Repeat DB Check: Try to fetch a fully structured zero-cost quiz from the database first
+    const structuredQuiz = await apiService.getStructuredQuiz(userId, userLevel);
+    if (structuredQuiz && structuredQuiz.length > 0) {
+      return structuredQuiz; // Successfully fetched from DB! Zero Gemini cost.
+    }
+
+    // 2. Fallback to Gemini AI Generation
     // Get recent grammar mistakes (last 10)
     const conversation = await apiService.getConversation(userId);
     const recentMistakes = conversation?.grammarMistakes?.slice(-10) || [];

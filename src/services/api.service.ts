@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getSession, setSession } from '../utils/redis.js';
 
 export interface IUser {
   telegramId: number;
@@ -203,6 +204,91 @@ export class ApiService {
     } catch (error) {
       console.error('Error in saveQuizResult:', error);
       return { success: false };
+    }
+  }
+
+  // Ultra-fast structured quiz fetching with Anti-Repeat logic and Bulk Pre-fetching
+  async getStructuredQuiz(telegramId: number, level: string = 'beginner'): Promise<any[] | null> {
+    try {
+      const startTime = Date.now();
+
+      // 1. Check Redis for pre-fetched quizzes
+      const session = await getSession(telegramId) || {};
+      if (session.prefetchedQuizzes && session.prefetchedQuizzes.length > 0) {
+        const quizToServe = session.prefetchedQuizzes.shift(); // Take one quiz
+        await setSession(telegramId, session); // Save remaining back to Redis
+        const latency = Date.now() - startTime;
+        console.log(`✅ Loaded quiz from Redis Cache for user ${telegramId} (Latency: ${latency}ms, Remaining: ${session.prefetchedQuizzes.length})`);
+        return quizToServe;
+      }
+
+      // 2. Fetch active quizzes for this level (Fail-fast 1.5s timeout)
+      const user = await this.getUserByTelegramId(telegramId);
+      const completedQuizIds = new Set(user?.quizAttempts?.map((a: any) => a.quizId) || []);
+
+      const { data: availableQuizzes } = await axios.get(
+        `${this.backendUrl}/api/student/quizzes?level=${level}`,
+        { timeout: 1500 }
+      );
+
+      if (!availableQuizzes || !Array.isArray(availableQuizzes) || availableQuizzes.length === 0) {
+        return null;
+      }
+
+      // 3. Anti-Repeat: Filter out completed quizzes
+      const unseenQuizzes = availableQuizzes.filter(q => !completedQuizIds.has(q.id));
+      
+      if (unseenQuizzes.length === 0) {
+        return null; // User finished all DB quizzes! Fallback to infinite Gemini.
+      }
+
+      // 4. Bulk Fetch up to 5 random unseen quizzes
+      const quizzesToFetch = unseenQuizzes.sort(() => 0.5 - Math.random()).slice(0, 5);
+      const fetchedQuizzes: any[][] = [];
+
+      await Promise.all(quizzesToFetch.map(async (quizMeta) => {
+        try {
+          const { data: fullQuiz } = await axios.get(
+            `${this.backendUrl}/api/student/quizzes/${quizMeta.id}`,
+            { timeout: 1500 }
+          );
+
+          if (fullQuiz && fullQuiz.questions && fullQuiz.questions.length > 0) {
+            const mappedQuestions = fullQuiz.questions.map((q: any) => {
+              const options = q.options.map((o: any) => o.optionText);
+              const correctIndex = q.options.findIndex((o: any) => o.isCorrect);
+              return {
+                question: q.questionText,
+                options: options,
+                correctAnswer: correctIndex >= 0 ? correctIndex : 0,
+                explanation: q.explanation || 'No explanation provided.',
+                quizId: fullQuiz.id 
+              };
+            });
+            fetchedQuizzes.push(mappedQuestions);
+          }
+        } catch (e) {
+          // Ignore individual quiz fetch failures
+        }
+      }));
+
+      if (fetchedQuizzes.length === 0) {
+        return null;
+      }
+
+      // 5. Serve the first one, cache the rest!
+      const quizToServe = fetchedQuizzes.shift();
+      if (fetchedQuizzes.length > 0) {
+        await setSession(telegramId, { ...session, prefetchedQuizzes: fetchedQuizzes });
+      }
+
+      const latency = Date.now() - startTime;
+      console.log(`✅ Bulk fetched ${fetchedQuizzes.length + 1} quizzes from DB for user ${telegramId} (Latency: ${latency}ms)`);
+      return quizToServe || null;
+
+    } catch (error) {
+      // If ANY network error or timeout happens, gracefully return null to fallback to Gemini
+      return null;
     }
   }
 }

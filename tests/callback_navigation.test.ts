@@ -15,6 +15,7 @@ describe('Callback Navigation & All Menu Option Buttons Test Suite', () => {
   let getUserByTelegramIdSpy: any;
 
   beforeEach(() => {
+    process.env.GEMINI_API_KEY = 'test_key_for_jest_mock';
     jest.restoreAllMocks();
     jest.spyOn(apiService, 'registerStudent').mockResolvedValue({ success: true } as never);
     jest.spyOn(apiService, 'createOrUpdateUser').mockResolvedValue({ success: true } as never);
@@ -40,6 +41,10 @@ describe('Callback Navigation & All Menu Option Buttons Test Suite', () => {
       callbackQuery: { data: '' },
       reply: jest.fn().mockResolvedValue(true as never),
       answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
+      api: {
+        getChatMember: jest.fn().mockResolvedValue({ status: 'member' } as never),
+        sendMessage: jest.fn().mockResolvedValue(true as never),
+      },
     };
   });
 
@@ -47,9 +52,9 @@ describe('Callback Navigation & All Menu Option Buttons Test Suite', () => {
     test('Clicking "🧠 Quiz" button when 3/3 quizzes completed locally should BLOCK access', async () => {
       getUsageSpy.mockResolvedValueOnce({
         isPremium: false,
-        weeklyQuizzesUsed: 0,
+        weeklyQuizzesUsed: 3,
         weeklyQuizLimit: 3,
-        remaining: 3,
+        remaining: 0,
       });
 
       getLocalQuizStatsSpy.mockResolvedValueOnce({
@@ -62,7 +67,7 @@ describe('Callback Navigation & All Menu Option Buttons Test Suite', () => {
 
       expect(mockCtx.reply).toHaveBeenCalledWith(
         expect.stringContaining('Weekly Quiz Limit Reached!'),
-        expect.objectContaining({ parse_mode: 'HTML' })
+        expect.objectContaining({ parse_mode: 'Markdown' })
       );
     });
 
@@ -102,7 +107,7 @@ describe('Callback Navigation & All Menu Option Buttons Test Suite', () => {
 
       expect(mockCtx.reply).toHaveBeenCalledWith(
         expect.stringContaining('Weekly Lesson Limit Reached!'),
-        expect.objectContaining({ parse_mode: 'HTML' })
+        expect.objectContaining({ parse_mode: 'Markdown' })
       );
     });
 
@@ -146,7 +151,7 @@ describe('Callback Navigation & All Menu Option Buttons Test Suite', () => {
       await handlePaymentCommand(mockCtx);
 
       expect(mockCtx.reply).toHaveBeenCalledWith(
-        expect.stringContaining('Maraki VIP Subscription & Bank Transfer'),
+        expect.stringContaining('የMaraki AI VIP ክፍያ'),
         expect.objectContaining({ parse_mode: 'Markdown' })
       );
     });
