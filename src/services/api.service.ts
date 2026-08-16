@@ -210,6 +210,7 @@ export class ApiService {
     try {
       const { data } = await axios.post(`${this.backendUrl}/api/student/quizzes/general/attempt`, {
         telegramId,
+        quizId: quizData.quizId,
         score: quizData.score || 0,
         correctAnswers: quizData.correctAnswers || 0,
         totalQuestions: quizData.totalQuestions || 5,
@@ -226,22 +227,30 @@ export class ApiService {
     try {
       const startTime = Date.now();
 
-      // 1. Check Redis for pre-fetched quizzes
-      const session = await getSession(telegramId) || {};
-      if (session.prefetchedQuizzes && session.prefetchedQuizzes.length > 0) {
-        const quizToServe = session.prefetchedQuizzes.shift(); // Take one quiz
-        await setSession(telegramId, session); // Save remaining back to Redis
-        const latency = Date.now() - startTime;
-        console.log(`✅ Loaded quiz from Redis Cache for user ${telegramId} (Latency: ${latency}ms, Remaining: ${session.prefetchedQuizzes.length})`);
-        return quizToServe;
-      }
-
-      // 2. Fetch active quizzes for this level
+      // 1. Fetch user completed quiz IDs first
       const user = await Promise.race([
         this.getUserByTelegramId(telegramId),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
       ]).catch(() => null) as any;
-      const completedQuizIds = new Set(user?.quizAttempts?.map((a: any) => a.quizId) || []);
+      const completedQuizIds = new Set(user?.quizAttempts?.map((a: any) => a.quizId).filter(Boolean) || []);
+
+      // 2. Check Redis for pre-fetched quizzes (ensuring none are already completed)
+      const session = await getSession(telegramId) || {};
+      if (session.prefetchedQuizzes && Array.isArray(session.prefetchedQuizzes) && session.prefetchedQuizzes.length > 0) {
+        // Filter out any prefetched quizzes that user has completed in the meantime
+        session.prefetchedQuizzes = session.prefetchedQuizzes.filter((qArray: any[]) => {
+          const qId = qArray?.[0]?.quizId;
+          return !qId || !completedQuizIds.has(qId);
+        });
+
+        if (session.prefetchedQuizzes.length > 0) {
+          const quizToServe = session.prefetchedQuizzes.shift(); // Take one unseen quiz
+          await setSession(telegramId, session); // Save remaining back to Redis
+          const latency = Date.now() - startTime;
+          console.log(`✅ Loaded unseen quiz from Redis Cache for user ${telegramId} (Latency: ${latency}ms, Remaining: ${session.prefetchedQuizzes.length})`);
+          return quizToServe;
+        }
+      }
 
       // 2. Fetch active quizzes for this level (with fallback to all active quizzes if level match is empty)
       let availableQuizzes: any[] = [];
@@ -289,12 +298,25 @@ export class ApiService {
 
           if (fullQuiz && fullQuiz.questions && fullQuiz.questions.length > 0) {
             const mappedQuestions = fullQuiz.questions.map((q: any) => {
-              const options = q.options.map((o: any) => o.optionText);
-              const correctIndex = q.options.findIndex((o: any) => o.isCorrect);
+              // Extract options with correctness flag
+              const optionsWithFlag = q.options.map((o: any) => ({
+                text: o.optionText,
+                isCorrect: !!o.isCorrect
+              }));
+              
+              // Fisher-Yates random shuffle
+              for (let i = optionsWithFlag.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [optionsWithFlag[i], optionsWithFlag[j]] = [optionsWithFlag[j], optionsWithFlag[i]];
+              }
+
+              const shuffledTexts = optionsWithFlag.map((o: any) => o.text);
+              const newCorrectIndex = optionsWithFlag.findIndex((o: any) => o.isCorrect);
+
               return {
                 question: q.questionText,
-                options: options,
-                correctAnswer: correctIndex >= 0 ? correctIndex : 0,
+                options: shuffledTexts,
+                correctAnswer: newCorrectIndex >= 0 ? newCorrectIndex : 0,
                 explanation: q.explanation || 'No explanation provided.',
                 quizId: fullQuiz.id 
               };

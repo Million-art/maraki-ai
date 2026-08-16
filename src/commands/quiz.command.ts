@@ -259,7 +259,24 @@ Return a JSON array of ${count} objects, each with:
           } catch (e) {}
         }
 
-        return validQuestions.map((q: any) => ({ ...q, type: 'general' }));
+        return validQuestions.map((q: any) => {
+          const optionsWithFlag = q.options.map((optText: string, idx: number) => ({
+            text: optText.replace(/^[A-D]\)\s*/, ''),
+            isCorrect: idx === q.correctAnswer
+          }));
+          for (let i = optionsWithFlag.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [optionsWithFlag[i], optionsWithFlag[j]] = [optionsWithFlag[j], optionsWithFlag[i]];
+          }
+          const shuffledTexts = optionsWithFlag.map((o: any) => o.text);
+          const newCorrectIndex = optionsWithFlag.findIndex((o: any) => o.isCorrect);
+          return {
+            ...q,
+            options: shuffledTexts,
+            correctAnswer: newCorrectIndex >= 0 ? newCorrectIndex : 0,
+            type: 'general'
+          };
+        });
       }
     }
   } catch (error) {
@@ -341,7 +358,9 @@ const showQuizResults = async (ctx: Context) => {
   } catch (e) { }
 
   try {
+    const completedQuizId = questions?.[0]?.quizId;
     await apiService.saveQuizResult(ctx.from.id, {
+      quizId: completedQuizId,
       score,
       totalQuestions: 5,
       correctAnswers,
