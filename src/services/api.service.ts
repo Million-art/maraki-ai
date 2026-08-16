@@ -243,10 +243,25 @@ export class ApiService {
       ]).catch(() => null) as any;
       const completedQuizIds = new Set(user?.quizAttempts?.map((a: any) => a.quizId) || []);
 
-      const { data: availableQuizzes } = await axios.get(
-        `${this.backendUrl}/api/student/quizzes?level=${level}`,
-        { timeout: 1500 }
-      );
+      // 2. Fetch active quizzes for this level (with fallback to all active quizzes if level match is empty)
+      let availableQuizzes: any[] = [];
+      try {
+        const { data } = await axios.get(
+          `${this.backendUrl}/api/student/quizzes?level=${level}`,
+          { timeout: 3000 }
+        );
+        availableQuizzes = data;
+      } catch (e) {}
+
+      if (!availableQuizzes || !Array.isArray(availableQuizzes) || availableQuizzes.length === 0) {
+        try {
+          const { data } = await axios.get(
+            `${this.backendUrl}/api/student/quizzes`,
+            { timeout: 3000 }
+          );
+          availableQuizzes = data;
+        } catch (e) {}
+      }
 
       if (!availableQuizzes || !Array.isArray(availableQuizzes) || availableQuizzes.length === 0) {
         return null;
@@ -255,19 +270,17 @@ export class ApiService {
       // 3. Anti-Repeat: Filter out completed quizzes
       const unseenQuizzes = availableQuizzes.filter(q => !completedQuizIds.has(q.id));
       
-      if (unseenQuizzes.length === 0) {
-        return null; // User finished all DB quizzes! Fallback to infinite Gemini.
-      }
+      const targetPool = unseenQuizzes.length > 0 ? unseenQuizzes : availableQuizzes;
 
       // 4. Bulk Fetch up to 5 random unseen quizzes
-      const quizzesToFetch = unseenQuizzes.sort(() => 0.5 - Math.random()).slice(0, 5);
+      const quizzesToFetch = targetPool.sort(() => 0.5 - Math.random()).slice(0, 5);
       const fetchedQuizzes: any[][] = [];
 
       await Promise.all(quizzesToFetch.map(async (quizMeta) => {
         try {
           const { data: fullQuiz } = await axios.get(
             `${this.backendUrl}/api/student/quizzes/${quizMeta.id}`,
-            { timeout: 1500 }
+            { timeout: 3000 }
           );
 
           if (fullQuiz && fullQuiz.questions && fullQuiz.questions.length > 0) {

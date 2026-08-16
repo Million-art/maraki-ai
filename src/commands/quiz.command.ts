@@ -145,14 +145,14 @@ const generateQuizQuestions = async (userId: number) => {
     // Fill remaining slots up to 5 with questions tailored to user level and weak areas
     if (questions.length < 5) {
       const remainingCount = 5 - questions.length;
-      const extraQuestions = await generateGeneralQuestions(userLevel, remainingCount, recentMistakes);
+      const extraQuestions = await generateGeneralQuestions(userLevel, remainingCount, recentMistakes, userId);
       questions = [...questions, ...extraQuestions];
     }
 
     return questions;
   } catch (error) {
     console.error('Error generating quiz questions:', error);
-    return await generateGeneralQuestions('intermediate', 5);
+    return await generateGeneralQuestions('intermediate', 5, [], userId);
   }
 };
 
@@ -188,8 +188,8 @@ Return a JSON object with:
   }
 };
 
-const generateGeneralQuestions = async (userLevel: string, count: number = 5, userMistakes: any[] = []) => {
-  const topics = [
+const generateGeneralQuestions = async (userLevel: string, count: number = 5, userMistakes: any[] = [], userId?: number) => {
+  const topicsPool = [
     "Phrasal Verbs & Everyday Idioms",
     "Past Continuous vs Past Simple Tenses",
     "Prepositions of Time, Direction & Place",
@@ -199,19 +199,38 @@ const generateGeneralQuestions = async (userLevel: string, count: number = 5, us
     "Articles (a, an, the) & Quantifiers",
     "Commonly Confused Words (their/there/they're, lie/lay)",
     "Present Perfect vs Past Simple Tenses",
-    "Modal Verbs (can, should, must, might, could)"
+    "Modal Verbs (can, should, must, might, could)",
+    "Relative Clauses (who, which, that, whose)",
+    "Reported Speech & Indirect Questions",
+    "Passive Voice & Causative Verbs",
+    "Advanced Collocations & Academic Vocabulary"
   ];
-  const randomTopic = topics[Math.floor(Math.random() * topics.length)];
-  const randomSeed = Math.floor(Math.random() * 1000000);
+  
+  // Pick 3 random topics to force question variety
+  const selectedTopics = [...topicsPool].sort(() => 0.5 - Math.random()).slice(0, 3).join(", ");
+  const randomSeed = `${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
+
+  let recentQuestionHistoryStr = "";
+  if (userId) {
+    try {
+      const session = await getSession(userId);
+      const history = session?.askedQuestionsHistory || [];
+      if (history.length > 0) {
+        recentQuestionHistoryStr = `\nCRITICAL ANTI-REPEAT INSTRUCTION: DO NOT repeat or generate questions similar to these recently asked questions:\n- ${history.slice(-15).join('\n- ')}\n`;
+      }
+    } catch (e) {
+      console.warn('Failed to load question history from session:', (e as Error).message);
+    }
+  }
 
   const mistakeContext = userMistakes.length > 0
     ? `User's past mistake history: ${JSON.stringify(userMistakes.map(m => m.mistake || m.correction))}. Focus questions on similar weak areas.`
     : `Focus on typical grammar and vocabulary mistakes made by ${userLevel} level English learners.`;
 
-  const prompt = `Generate ${count} UNIQUE, FRESH multiple-choice questions for an English learner at ${userLevel} level.
+  const prompt = `Generate ${count} COMPLETELY UNIQUE, FRESH multiple-choice questions for an English learner at ${userLevel} level.
 ${mistakeContext}
-Primary Focus Topic: ${randomTopic} (Random Seed: ${randomSeed}).
-Ensure questions are completely unique and test different grammar rules or vocabulary.
+Focus Topics: ${selectedTopics} (Seed: ${randomSeed}).${recentQuestionHistoryStr}
+Ensure each of the ${count} questions tests a DIFFERENT grammar rule or vocabulary word. DO NOT use standard template questions like "Seldom...", "It is crucial...", or "Had we arrived...".
 
 Return a JSON array of ${count} objects, each with:
 {
@@ -229,6 +248,17 @@ Return a JSON array of ${count} objects, each with:
     if (Array.isArray(questions) && questions.length > 0) {
       const validQuestions = questions.filter((q: any) => q && q.question && Array.isArray(q.options) && q.options.length >= 2);
       if (validQuestions.length > 0) {
+        // Save new question titles to session history to prevent future repetition
+        if (userId) {
+          try {
+            const session = await getSession(userId) || {};
+            const history = session.askedQuestionsHistory || [];
+            const newTitles = validQuestions.map((q: any) => q.question.substring(0, 50));
+            const updatedHistory = [...history, ...newTitles].slice(-30);
+            await setSession(userId, { ...session, askedQuestionsHistory: updatedHistory });
+          } catch (e) {}
+        }
+
         return validQuestions.map((q: any) => ({ ...q, type: 'general' }));
       }
     }
