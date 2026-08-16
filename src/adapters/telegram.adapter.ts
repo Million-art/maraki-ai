@@ -59,7 +59,7 @@ bot.use(async (ctx, next) => {
     try {
       if (redis.isOpen) {
         const redisLockKey = `lock:user_action:${userId}:${actionName}`;
-        const acquired = await redis.set(redisLockKey, 'locked', { NX: true, EX: 15 });
+        const acquired = await redis.set(redisLockKey, 'locked', { NX: true, EX: 60 });
         if (!acquired) {
           return; // Suppress duplicate execution from concurrent processes or retries
         }
@@ -370,7 +370,6 @@ bot.on('callback_query:data', async (ctx) => {
         await startTranslation(ctx);
         break;
       case 'quiz':
-        await setSession(ctx.from.id, { mode: 'quiz', timestamp: Date.now(), userId: ctx.from.id });
         await quizCommand(ctx);
         break;
       case 'level':

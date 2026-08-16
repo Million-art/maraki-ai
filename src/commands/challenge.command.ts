@@ -108,14 +108,37 @@ export async function challengeCommand(ctx: Context) {
     return;
   }
 
-  // ── 2. Generate a fresh challenge for today ──────────────────────────────────
+  // ── 2. Fetch from DB (Fast) or Generate via Gemini (Fallback) ─────────────
   let userLevel = 'intermediate';
   try {
     const user = await apiService.getUserByTelegramId(userId);
     userLevel = user?.level || 'intermediate';
   } catch (e) {}
 
-  const prompt = `Generate a Daily English Challenge for an English learner at ${userLevel} level.
+  try {
+    // Attempt to fetch from DB first
+    let data: any = null;
+    const dbChallenge = await apiService.getDailyChallenge(userLevel);
+    
+    if (dbChallenge) {
+      data = {
+        wordOfTheDay: {
+          word: dbChallenge.word,
+          partOfSpeech: dbChallenge.wordPartOfSpeech,
+          definition: dbChallenge.wordDefinition,
+          example: dbChallenge.wordExample
+        },
+        idiomOfTheDay: {
+          idiom: dbChallenge.idiom,
+          meaning: dbChallenge.idiomMeaning,
+          example: dbChallenge.idiomExample
+        }
+      };
+      console.log(`[Challenge] Fetched DB challenge for level ${userLevel} (Day ${dbChallenge.dayNumber})`);
+    } else {
+      // Fallback to Gemini if DB is empty or fails
+      console.log(`[Challenge] DB fetch failed/empty. Falling back to Gemini for ${userLevel}...`);
+      const prompt = `Generate a Daily English Challenge for an English learner at ${userLevel} level.
 Return JSON format with:
 {
   "wordOfTheDay": {
@@ -130,10 +153,9 @@ Return JSON format with:
     "example": "Sample sentence using the idiom"
   }
 }`;
-
-  try {
-    const aiRaw = await callGeminiGenerateContent(prompt, 'complex');
-    const data = JSON.parse(aiRaw.replace(/```json\s*|\s*```/g, ''));
+      const aiRaw = await callGeminiGenerateContent(prompt, 'complex');
+      data = JSON.parse(aiRaw.replace(/```json\s*|\s*```/g, ''));
+    }
 
     const challengeContent =
       `💡 <b>WORD OF THE DAY</b>\n` +

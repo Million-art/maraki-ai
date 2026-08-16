@@ -14,9 +14,46 @@ export const quizCommand = async (ctx: Context) => {
     const allowed = await checkCentralAuthAndAccess(ctx, 'quiz');
     if (!allowed) return;
 
-    await setSession(ctx.from.id, { mode: 'quiz', timestamp: Date.now(), quizState: { currentQuestion: 0, answers: [], questions: [] } });
-    await ctx.reply("🧠 Starting your English quiz! I'll ask you 5 questions based on your recent mistakes or your level.\n\nLet's begin!");
-    await sendNextQuestion(ctx);
+    // ── Atomic Quiz Start Lock ────────────────────────────────────────────────
+    // Use Redis NX to guarantee only ONE quiz startup can run at a time per user.
+    // This prevents the race condition where two calls read the session before
+    // either has finished writing, causing duplicate quiz start messages.
+    const { redis } = await import('../utils/redis.js');
+    const quizStartLockKey = `quiz_starting:${ctx.from.id}`;
+    if (redis.isOpen) {
+      const acquired = await redis.set(quizStartLockKey, '1', { NX: true, EX: 30 });
+      if (!acquired) {
+        // Another call is already starting the quiz — silently ignore this one
+        return;
+      }
+    }
+
+    try {
+      // Guard: If a quiz is already in progress (questions loaded), don't restart it
+      const existingSession = await getSession(ctx.from.id);
+      if (existingSession?.mode === 'quiz' && existingSession?.quizState?.questions?.length > 0 && existingSession?.quizState?.currentQuestion < 5) {
+        await ctx.reply("You already have a quiz in progress! Please answer the current question.");
+        await sendNextQuestion(ctx);
+        return;
+      }
+
+      // Start fresh - preserve prefetchedQuizzes from previous bulk fetch!
+      const prevSession = existingSession || {};
+      await setSession(ctx.from.id, {
+        ...prevSession,
+        mode: 'quiz',
+        timestamp: Date.now(),
+        quizState: { currentQuestion: 0, answers: [], questions: [] }
+      });
+      await ctx.reply("🧠 Starting your English quiz! I'll ask you 5 questions based on your recent mistakes or your level.\n\nLet's begin!");
+      await sendNextQuestion(ctx);
+    } finally {
+      // Always release the quiz start lock once we've sent the first question
+      if (redis.isOpen) {
+        await redis.del(quizStartLockKey);
+      }
+    }
+
   } catch (error) {
     console.error('Quiz command error:', error);
     const { notifyAdminOnError } = await import('../utils/admin-notify.util.js');
@@ -235,10 +272,15 @@ export const handleQuizAnswer = async (ctx: Context, answerIndex: number) => {
 
   // Show feedback
   const feedback = isCorrect ? "✅ Correct!" : "❌ Incorrect.";
-  await ctx.reply(`${feedback}\n\n${currentQ.explanation}`);
+  try {
+    await ctx.reply(`${feedback}\n\n${currentQ.explanation}`);
+  } catch (e) {
+    console.error('Failed to send answer feedback:', e);
+  }
 
-  // Send next question after a short delay
-  setTimeout(() => sendNextQuestion(ctx), 2000);
+  // Use await with a proper delay instead of setTimeout to prevent race conditions
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  await sendNextQuestion(ctx);
 };
 
 const showQuizResults = async (ctx: Context) => {

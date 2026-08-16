@@ -222,8 +222,11 @@ export class ApiService {
         return quizToServe;
       }
 
-      // 2. Fetch active quizzes for this level (Fail-fast 1.5s timeout)
-      const user = await this.getUserByTelegramId(telegramId);
+      // 2. Fetch active quizzes for this level
+      const user = await Promise.race([
+        this.getUserByTelegramId(telegramId),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+      ]).catch(() => null) as any;
       const completedQuizIds = new Set(user?.quizAttempts?.map((a: any) => a.quizId) || []);
 
       const { data: availableQuizzes } = await axios.get(
@@ -288,6 +291,23 @@ export class ApiService {
 
     } catch (error) {
       // If ANY network error or timeout happens, gracefully return null to fallback to Gemini
+      return null;
+    }
+  }
+
+  /**
+   * Fetch the Daily Challenge directly from the DB.
+   * If it fails or returns null, the bot falls back to Gemini.
+   */
+  async getDailyChallenge(level: string): Promise<any | null> {
+    try {
+      const response = await axios.get(`${this.backendUrl}/api/challenges/today`, {
+        params: { level },
+        timeout: 2000 // 2 seconds max
+      });
+      return response.data?.data || null;
+    } catch (error) {
+      console.error('Failed to fetch daily challenge from DB:', error);
       return null;
     }
   }
