@@ -159,7 +159,25 @@ export const QUIZ_FALLBACK_POOL = [
 
 export function getFallbackQuizQuestions() {
   const shuffled = [...QUIZ_FALLBACK_POOL].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, 5);
+  const selected = shuffled.slice(0, 5);
+  
+  return selected.map((q) => {
+    const optionsWithFlag = q.options.map((optText: string, idx: number) => ({
+      text: optText.replace(/^[A-D]\)\s*/, ''),
+      isCorrect: idx === q.correctAnswer
+    }));
+    for (let i = optionsWithFlag.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [optionsWithFlag[i], optionsWithFlag[j]] = [optionsWithFlag[j], optionsWithFlag[i]];
+    }
+    const shuffledTexts = optionsWithFlag.map((o: any) => o.text);
+    const newCorrectIndex = optionsWithFlag.findIndex((o: any) => o.isCorrect);
+    return {
+      ...q,
+      options: shuffledTexts,
+      correctAnswer: newCorrectIndex >= 0 ? newCorrectIndex : 0,
+    };
+  });
 }
 
 export function getFallbackMistakeQuestion(mistakeText: string, correctionText: string) {

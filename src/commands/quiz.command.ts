@@ -397,6 +397,17 @@ const showQuizResults = async (ctx: Context) => {
 
   await ctx.reply(resultMessage, { reply_markup: keyboard });
 
-  // Clear quiz session
-  await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
+  // Clear quiz session while preserving session history, asked question texts, and prefetched quizzes
+  const currentSession = (await getSession(ctx.from.id)) || {};
+  const previousAskedTexts = currentSession.askedQuestionTexts || [];
+  const newQuestionTexts = (questions || []).map((q: any) => q.question).filter(Boolean);
+  const updatedAskedTexts = Array.from(new Set([...previousAskedTexts, ...newQuestionTexts])).slice(-100);
+
+  delete currentSession.quizState;
+  await setSession(ctx.from.id, {
+    ...currentSession,
+    askedQuestionTexts: updatedAskedTexts,
+    mode: null,
+    timestamp: Date.now(),
+  });
 };

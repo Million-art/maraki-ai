@@ -208,6 +208,7 @@ export class ApiService {
 
   async saveQuizResult(telegramId: number, quizData: any): Promise<any> {
     try {
+      console.log(`💾 [SAVING QUIZ RESULT] Telegram User ${telegramId} | Quiz ID: ${quizData.quizId || 'AI-Generated'} | Score: ${quizData.score}%`);
       const { data } = await axios.post(`${this.backendUrl}/api/student/quizzes/general/attempt`, {
         telegramId,
         quizId: quizData.quizId,
@@ -215,9 +216,10 @@ export class ApiService {
         correctAnswers: quizData.correctAnswers || 0,
         totalQuestions: quizData.totalQuestions || 5,
       }, { timeout: 5000 });
+      console.log(`✅ [QUIZ RESULT SAVED] Recorded Attempt ID: ${data?.id} for Quiz ID: ${data?.quizId}`);
       return data;
     } catch (error) {
-      console.error('Error in saveQuizResult:', error);
+      console.error('❌ Error in saveQuizResult:', (error as Error).message);
       return { success: false };
     }
   }
@@ -230,7 +232,7 @@ export class ApiService {
       // 1. Fetch user completed quiz IDs first
       const user = await Promise.race([
         this.getUserByTelegramId(telegramId),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
       ]).catch(() => null) as any;
       const completedQuizIds = new Set(user?.quizAttempts?.map((a: any) => a.quizId).filter(Boolean) || []);
 
@@ -257,7 +259,7 @@ export class ApiService {
       try {
         const { data } = await axios.get(
           `${this.backendUrl}/api/student/quizzes?level=${level}`,
-          { timeout: 3000 }
+          { timeout: 10000 }
         );
         availableQuizzes = data;
       } catch (e) {}
@@ -266,7 +268,7 @@ export class ApiService {
         try {
           const { data } = await axios.get(
             `${this.backendUrl}/api/student/quizzes`,
-            { timeout: 3000 }
+            { timeout: 10000 }
           );
           availableQuizzes = data;
         } catch (e) {}
@@ -279,24 +281,41 @@ export class ApiService {
       // 3. Anti-Repeat: Filter out completed quizzes
       const unseenQuizzes = availableQuizzes.filter(q => !completedQuizIds.has(q.id));
       
+      console.log(`🔍 [QUIZ ANTI-REPEAT LOG] User ${telegramId} | Level: ${level}`);
+      console.log(`   - Total DB Quizzes: ${availableQuizzes.length}`);
+      console.log(`   - User Completed DB Quiz IDs (${completedQuizIds.size}):`, Array.from(completedQuizIds));
+      console.log(`   - Unseen DB Quizzes Available: ${unseenQuizzes.length}`);
+
       if (unseenQuizzes.length === 0) {
+        console.log(`⚠️ User ${telegramId} completed ALL DB quizzes for ${level}! Switching to dynamic AI generation.`);
         return null; // User finished all DB quizzes! Fallback to infinite Gemini AI generation.
       }
 
-      const targetPool = unseenQuizzes;
+      // Load asked question texts history from session to prevent duplicate question texts across different quiz IDs
+      const askedTextsSet = new Set<string>((session.askedQuestionTexts || []).map((t: string) => t.trim().toLowerCase()));
 
-      // 4. Bulk Fetch up to 5 random unseen quizzes
-      const quizzesToFetch = targetPool.sort(() => 0.5 - Math.random()).slice(0, 5);
+      // 4. Bulk Fetch up to 8 random unseen quizzes to find quizzes with completely unique questions
+      const quizzesToFetch = unseenQuizzes.sort(() => 0.5 - Math.random()).slice(0, 8);
       const fetchedQuizzes: any[][] = [];
 
       await Promise.all(quizzesToFetch.map(async (quizMeta) => {
         try {
           const { data: fullQuiz } = await axios.get(
             `${this.backendUrl}/api/student/quizzes/${quizMeta.id}`,
-            { timeout: 3000 }
+            { timeout: 10000 }
           );
 
           if (fullQuiz && fullQuiz.questions && fullQuiz.questions.length > 0) {
+            // Check if any question text in this quiz has already been answered by the user
+            const hasDuplicateText = fullQuiz.questions.some((q: any) =>
+              askedTextsSet.has(q.questionText.trim().toLowerCase())
+            );
+
+            if (hasDuplicateText) {
+              console.log(`⚠️ Skipping Quiz ID: ${fullQuiz.id} because it contains duplicate question texts seen previously.`);
+              return;
+            }
+
             const mappedQuestions = fullQuiz.questions.map((q: any) => {
               // Extract options with correctness flag
               const optionsWithFlag = q.options.map((o: any) => ({
