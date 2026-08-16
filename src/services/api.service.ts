@@ -270,7 +270,11 @@ export class ApiService {
       // 3. Anti-Repeat: Filter out completed quizzes
       const unseenQuizzes = availableQuizzes.filter(q => !completedQuizIds.has(q.id));
       
-      const targetPool = unseenQuizzes.length > 0 ? unseenQuizzes : availableQuizzes;
+      if (unseenQuizzes.length === 0) {
+        return null; // User finished all DB quizzes! Fallback to infinite Gemini AI generation.
+      }
+
+      const targetPool = unseenQuizzes;
 
       // 4. Bulk Fetch up to 5 random unseen quizzes
       const quizzesToFetch = targetPool.sort(() => 0.5 - Math.random()).slice(0, 5);
