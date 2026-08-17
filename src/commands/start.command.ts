@@ -89,7 +89,7 @@ export async function startCommand(ctx: Context) {
     if (error?.error_code !== 403 && !String(error).includes('blocked by the user')) {
       try {
         await ctx.reply("⚠️ Something went wrong while starting the bot.");
-      } catch (ignored) {}
+      } catch (ignored) { }
     }
   }
 }

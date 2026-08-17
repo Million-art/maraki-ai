@@ -189,14 +189,21 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
 
     let reply_markup: any = undefined;
     if (buttonText && buttonUrl) {
-        const isWebApp = buttonUrl.includes('.vercel.app') || 
-                         buttonUrl.includes('maraki-mini-app') || 
-                         (!buttonUrl.includes('t.me/') && buttonUrl.startsWith('http'));
+        const cleanUrl = buttonUrl.trim();
+        const isCommandCallback = !cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://');
 
-        if (isWebApp) {
-            reply_markup = { inline_keyboard: [[{ text: buttonText, web_app: { url: buttonUrl } }]] };
+        if (isCommandCallback) {
+            const callbackData = cleanUrl.replace(/^\//, '').replace(/^cmd:/i, '').replace(/^callback:/i, '').trim();
+            reply_markup = { inline_keyboard: [[{ text: buttonText, callback_data: callbackData || 'quiz' }]] };
         } else {
-            reply_markup = { inline_keyboard: [[{ text: buttonText, url: buttonUrl }]] };
+            const isWebApp = cleanUrl.includes('.vercel.app') || 
+                             cleanUrl.includes('maraki-mini-app');
+
+            if (isWebApp) {
+                reply_markup = { inline_keyboard: [[{ text: buttonText, web_app: { url: cleanUrl } }]] };
+            } else {
+                reply_markup = { inline_keyboard: [[{ text: buttonText, url: cleanUrl }]] };
+            }
         }
     }
 
