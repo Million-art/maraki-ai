@@ -156,7 +156,7 @@ describe('Callback Navigation & All Menu Option Buttons Test Suite', () => {
       );
     });
 
-    test('Clicking "🎁 Invite Friends" button should return personalized referral link', async () => {
+    test('Clicking "🎁 Premium Challenge" button should return personalized referral link', async () => {
       jest.spyOn(apiService, 'getReferralStats').mockResolvedValueOnce({
         totalReferred: 2,
         target: 10,

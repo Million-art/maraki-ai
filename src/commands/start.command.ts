@@ -79,7 +79,7 @@ export async function startCommand(ctx: Context) {
       .text("🌐 Amharic-English", "translation")
       .text("⚙️ My Progress", "level")
       .row()
-      .text("🎁 Invite Friends", "referral_link");
+      .text("🎁 Premium Challenge", "referral_link");
 
     const welcomeMsg = getPersonalizedStartMsg(ctx.from.first_name || "there");
 
