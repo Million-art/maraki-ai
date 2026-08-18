@@ -4,6 +4,7 @@ import { connectRedis } from './utils/redis.js'
 import { bot } from './adapters/telegram.adapter.js'
 dotenv.config()
 
+
 const app = express()
 const port = process.env.PORT || 1000
 
@@ -86,7 +87,7 @@ app.post('/cron/daily-challenge', async (req, res: Response) => {
     const authHeader = req.headers['authorization'];
 
     if (!secret || authHeader !== `Bearer ${secret}`) {
-        res.status(401).json({ 
+        res.status(401).json({
             error: 'Unauthorized',
             debug: {
                 serverHasSecret: !!secret,
@@ -117,7 +118,7 @@ app.post('/cron/daily-challenge', async (req, res: Response) => {
                 await new Promise(r => setTimeout(r, 50));
 
                 // Build a minimal fake context to call existing challenge logic
-                await bot.api.sendChatAction(userId, 'typing').catch(() => {});
+                await bot.api.sendChatAction(userId, 'typing').catch(() => { });
 
                 // Import builder to generate fresh challenge for this user
                 const { buildDailyChallengeMessage } = await import('./commands/challenge.command.js');
@@ -142,7 +143,7 @@ app.post('/cron/daily-challenge', async (req, res: Response) => {
 // Internal Webhook: Direct Message Dispatch from Dashboard-Backend
 app.post('/internal/send-message', async (req: express.Request, res: express.Response) => {
     const { telegramId, text } = req.body;
-    
+
     if (!telegramId || !text) {
         res.status(400).json({ error: 'Invalid payload' });
         return;
@@ -196,8 +197,8 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
             const callbackData = cleanUrl.replace(/^\//, '').replace(/^cmd:/i, '').replace(/^callback:/i, '').trim();
             reply_markup = { inline_keyboard: [[{ text: buttonText, callback_data: callbackData || 'quiz' }]] };
         } else {
-            const isWebApp = cleanUrl.includes('.vercel.app') || 
-                             cleanUrl.includes('maraki-mini-app');
+            const isWebApp = cleanUrl.includes('.vercel.app') ||
+                cleanUrl.includes('maraki-mini-app');
 
             if (isWebApp) {
                 reply_markup = { inline_keyboard: [[{ text: buttonText, web_app: { url: cleanUrl } }]] };
