@@ -44,8 +44,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          timeout: 120s
-          command_timeout: 10m
+          timeout: 30m
+          command_timeout: 30m
           envs: TKN,NODE_ENV,WEBHOOK_URL,BACKEND_API_URL,DATABASE_URL,REDIS_URL,GEMINI_API_KEY,REPO_LOWER,ACTOR,GH_TOKEN
           script: |
             # Authenticate with GHCR on EC2
