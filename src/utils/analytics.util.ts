@@ -193,13 +193,25 @@ export async function trackPaymentAttempt(
       .text("⚡ Approve 1 Month VIP", `admin_approve_${userId}_monthly`)
       .text("⚡ Approve 1 Week VIP", `admin_approve_${userId}_weekly`);
 
+    let rawReason = result.message || result.result?.reason || 'Transaction could not be verified';
+    if (rawReason.includes('Backend Error:')) {
+      rawReason = rawReason.replace('Backend Error:', '').trim();
+    }
+    let formattedReason = rawReason;
+
+    if (rawReason === 'error.http.500' || rawReason.includes('error.http.500')) {
+      formattedReason = `CBE Server Error (HTTP 500): The transaction token "v2-..." was not found on CBE network, or CBE API server is temporarily down.\n<i>Raw code: <code>error.http.500</code></i>`;
+    } else if (rawReason.includes('404')) {
+      formattedReason = `Transaction Not Found (HTTP 404): No record found for this reference.\n<i>Raw detail: <code>${rawReason}</code></i>`;
+    }
+
     const alertMsg =
       `🚨 <b>Payment Verification Failed Alert</b>\n\n` +
       `👤 <b>Student:</b> ${name}\n` +
       `💬 <b>Username:</b> ${username}\n` +
       `🆔 <b>User ID:</b> <code>${user.id}</code>\n` +
       `🧾 <b>Submitted Input:</b> <code>${referenceText.slice(0, 200)}</code>\n` +
-      `❌ <b>Error Reason:</b> <code>${result.message || 'Transaction could not be verified'}</code>\n` +
+      `❌ <b>Error Details:</b>\n${formattedReason}\n\n` +
       `⏰ <b>Timestamp:</b> ${new Date().toLocaleString()}\n\n` +
       `💡 <i>You can click "Approve" below to instantly grant VIP access to this user directly via Telegram!</i>`;
 
@@ -221,7 +233,11 @@ export async function notifyAdminPaymentError(
   const userId = user.id;
   const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
   const username = user.username ? `@${user.username}` : 'No username';
-  const errorDetails = error?.response?.data?.message || error?.message || String(error);
+  let errorDetails = error?.response?.data?.message || error?.message || String(error);
+
+  if (errorDetails === 'error.http.500' || errorDetails.includes('error.http.500')) {
+    errorDetails = `CBE Network 500 Error: Transaction token not found on CBE network or CBE server offline. (Raw: error.http.500)`;
+  }
 
   const { InlineKeyboard } = await import('grammy');
   const keyboard = new InlineKeyboard()

@@ -1,5 +1,5 @@
 import { apiService } from '../services/api.service.js';
-import { trackUpgradeIntent, trackPaymentAttempt, } from '../utils/analytics.util.js';
+import { trackUpgradeIntent, trackPaymentAttempt, notifyAdminPaymentError, } from '../utils/analytics.util.js';
 export async function handlePaymentCommand(ctx) {
     if (!ctx.from)
         return;
@@ -179,7 +179,6 @@ export async function handleReceiptVerification(ctx, referenceText) {
     catch (error) {
         console.error('Receipt verification error:', error);
         try {
-            const { notifyAdminPaymentError } = await import('../utils/analytics.util.js');
             await notifyAdminPaymentError(ctx, referenceText, error);
         }
         catch (e) { }
