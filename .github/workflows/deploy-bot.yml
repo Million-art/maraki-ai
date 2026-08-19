@@ -65,7 +65,7 @@ jobs:
             TKN=${{ secrets.TKN }}
             PORT=1000
             NODE_ENV=${{ secrets.NODE_ENV || 'production' }}
-            WEBHOOK_URL=${{ secrets.WEBHOOK_URL || 'https://alertmanager.ptgr.io/webhook' }}
+            WEBHOOK_URL=${{ secrets.WEBHOOK_URL || 'https://alert.carramarket.com/webhook' }}
             BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             REDIS_URL=${{ secrets.REDIS_URL }}
@@ -101,7 +101,7 @@ jobs:
               --restart unless-stopped \
               $NET_FLAG \
               -p 1000:1000 \
-              -e VIRTUAL_HOST=alertmanager.ptgr.io \
+              -e VIRTUAL_HOST=alert.carramarket.com,alertmanager.ptgr.io \
               -e VIRTUAL_PORT=1000 \
               --env-file "$TARGET_DIR/.env" \
               ghcr.io/$REPO_LOWER/maraki-bot:latest
@@ -110,7 +110,7 @@ jobs:
             sudo docker exec gateway nginx -s reload 2>/dev/null || true
 
             # Setup Auto-Healing Watchdog
-            CRON_CMD="* * * * * sudo docker ps | grep -q compliance-backend || sudo docker run -d --name compliance-backend --restart unless-stopped $NET_FLAG -p 1000:1000 -e VIRTUAL_HOST=alertmanager.ptgr.io -e VIRTUAL_PORT=1000 --env-file $TARGET_DIR/.env ghcr.io/$REPO_LOWER/maraki-bot:latest"
+            CRON_CMD="* * * * * sudo docker ps | grep -q compliance-backend || sudo docker run -d --name compliance-backend --restart unless-stopped $NET_FLAG -p 1000:1000 -e VIRTUAL_HOST=alert.carramarket.com,alertmanager.ptgr.io -e VIRTUAL_PORT=1000 --env-file $TARGET_DIR/.env ghcr.io/$REPO_LOWER/maraki-bot:latest"
             (crontab -l 2>/dev/null | grep -v "compliance-backend"; echo "$CRON_CMD") | crontab -
 
             echo "✅ Deployment successful! Container joined network: $DOCKER_NET."
