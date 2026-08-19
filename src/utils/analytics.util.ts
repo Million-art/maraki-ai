@@ -26,7 +26,7 @@ export async function trackNewUser(ctx: Context) {
     if (redis.isOpen) {
       await redis.incr('analytics:new_users');
     }
-  } catch (e) {}
+  } catch (e) { }
 
   const user = ctx.from;
   const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
@@ -58,7 +58,7 @@ export async function trackUpgradeIntent(ctx: Context) {
     if (redis.isOpen) {
       await redis.incr('analytics:upgrade_clicks');
     }
-  } catch (e) {}
+  } catch (e) { }
 
   const user = ctx.from;
   const userId = user.id;
@@ -88,7 +88,7 @@ export async function trackUpgradeIntent(ctx: Context) {
     if (redis.isOpen) {
       await redis.set(`followup:intent:${userId}`, JSON.stringify({ userId, firstName, timestamp: Date.now() }), { EX: 900 });
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // Clear existing timer if any
   if (activeFollowupTimers.has(userId)) {
@@ -153,7 +153,7 @@ export async function trackPaymentAttempt(
       if (redis.isOpen) {
         await redis.del(`followup:intent:${userId}`);
       }
-    } catch (e) {}
+    } catch (e) { }
 
     if (activeFollowupTimers.has(userId)) {
       clearTimeout(activeFollowupTimers.get(userId)!);
@@ -165,7 +165,7 @@ export async function trackPaymentAttempt(
       if (redis.isOpen) {
         await redis.incr('analytics:payment_successes');
       }
-    } catch (e) {}
+    } catch (e) { }
 
     const alertMsg =
       `🎉 <b>Payment Verified & VIP Activated!</b>\n\n` +
@@ -177,14 +177,14 @@ export async function trackPaymentAttempt(
 
     try {
       await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML' });
-    } catch (err) {}
+    } catch (err) { }
   } else {
     statsStore.paymentFailures++;
     try {
       if (redis.isOpen) {
         await redis.incr('analytics:payment_failures');
       }
-    } catch (e) {}
+    } catch (e) { }
 
     const { InlineKeyboard } = await import('grammy');
     const keyboard = new InlineKeyboard()
@@ -205,7 +205,7 @@ export async function trackPaymentAttempt(
 
     try {
       await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML', reply_markup: keyboard });
-    } catch (err) {}
+    } catch (err) { }
   }
 }
 
@@ -268,7 +268,7 @@ export async function handleAdminFollowupAction(ctx: Context, actionData: string
       if (res?.success) {
         const tierTitle = tier === 'weekly' ? '1 WEEK VIP' : '1 MONTH VIP';
         const userMsg =
-          `🎉 *የVIP አባልነትዎ በድጋፍ ቡድኑ በኩል አውቶማቲክ ተፈቅዷል!*\n\n` +
+          `🎉 *የVIP አባልነትዎ ተፈቅዷል!*\n\n` +
           `🎁 *እንኳን ደስ አሎት!* አሁን የ **${tierTitle}** Maraki Premium አባልነት አግኝተዋል።\n` +
           `🌟 አሁን ያለገደብ የMaraki AI የድምጽ ውይይት፣ የልምምድ ሞጁሎች እና ፈተናዎችን መጠቀም ይችላሉ።`;
 
@@ -348,7 +348,7 @@ export async function getAnalyticsStats() {
       if (pf) paymentFailures = parseInt(pf, 10);
       if (ps) paymentSuccesses = parseInt(ps, 10);
     }
-  } catch (e) {}
+  } catch (e) { }
 
   return {
     newUsers,
@@ -373,7 +373,7 @@ export async function trackReferralJoin(referrerId: number, newUserId: number) {
     if (redis.isOpen) {
       await redis.sAdd(`referrals:${referrerId}`, String(newUserId));
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 
 export async function getLocalReferralCount(referrerId: number): Promise<number> {
@@ -387,7 +387,7 @@ export async function getLocalReferralCount(referrerId: number): Promise<number>
       const redisCount = await redis.sCard(`referrals:${referrerId}`);
       if (redisCount > count) count = redisCount;
     }
-  } catch (e) {}
+  } catch (e) { }
 
   return count;
 }

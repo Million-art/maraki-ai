@@ -229,7 +229,7 @@ export async function handleAdminFollowupAction(ctx, actionData) {
             const res = await apiService.verifyBankPayment(targetUserId, overrideRef, tier);
             if (res?.success) {
                 const tierTitle = tier === 'weekly' ? '1 WEEK VIP' : '1 MONTH VIP';
-                const userMsg = `🎉 *የVIP አባልነትዎ በድጋፍ ቡድኑ በኩል አውቶማቲክ ተፈቅዷል!*\n\n` +
+                const userMsg = `🎉 *የVIP አባልነትዎ ተፈቅዷል!*\n\n` +
                     `🎁 *እንኳን ደስ አሎት!* አሁን የ **${tierTitle}** Maraki Premium አባልነት አግኝተዋል።\n` +
                     `🌟 አሁን ያለገደብ የMaraki AI የድምጽ ውይይት፣ የልምምድ ሞጁሎች እና ፈተናዎችን መጠቀም ይችላሉ።`;
                 await ctx.api.sendMessage(targetUserId, userMsg, { parse_mode: 'Markdown' });
