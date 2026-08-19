@@ -12,9 +12,44 @@ export const quizCommand = async (ctx) => {
         const allowed = await checkCentralAuthAndAccess(ctx, 'quiz');
         if (!allowed)
             return;
-        await setSession(ctx.from.id, { mode: 'quiz', timestamp: Date.now(), quizState: { currentQuestion: 0, answers: [], questions: [] } });
-        await ctx.reply("🧠 Starting your English quiz! I'll ask you 5 questions based on your recent mistakes or your level.\n\nLet's begin!");
-        await sendNextQuestion(ctx);
+        // ── Atomic Quiz Start Lock ────────────────────────────────────────────────
+        // Use Redis NX to guarantee only ONE quiz startup can run at a time per user.
+        // This prevents the race condition where two calls read the session before
+        // either has finished writing, causing duplicate quiz start messages.
+        const { redis } = await import('../utils/redis.js');
+        const quizStartLockKey = `quiz_starting:${ctx.from.id}`;
+        if (redis.isOpen) {
+            const acquired = await redis.set(quizStartLockKey, '1', { NX: true, EX: 30 });
+            if (!acquired) {
+                // Another call is already starting the quiz — silently ignore this one
+                return;
+            }
+        }
+        try {
+            // Guard: If a quiz is already in progress (questions loaded), don't restart it
+            const existingSession = await getSession(ctx.from.id);
+            if (existingSession?.mode === 'quiz' && existingSession?.quizState?.questions?.length > 0 && existingSession?.quizState?.currentQuestion < 5) {
+                await ctx.reply("You already have a quiz in progress! Please answer the current question.");
+                await sendNextQuestion(ctx);
+                return;
+            }
+            // Start fresh - preserve prefetchedQuizzes from previous bulk fetch!
+            const prevSession = existingSession || {};
+            await setSession(ctx.from.id, {
+                ...prevSession,
+                mode: 'quiz',
+                timestamp: Date.now(),
+                quizState: { currentQuestion: 0, answers: [], questions: [] }
+            });
+            await ctx.reply("🧠 Starting your English quiz! I'll ask you 5 questions based on your recent mistakes or your level.\n\nLet's begin!");
+            await sendNextQuestion(ctx);
+        }
+        finally {
+            // Always release the quiz start lock once we've sent the first question
+            if (redis.isOpen) {
+                await redis.del(quizStartLockKey);
+            }
+        }
     }
     catch (error) {
         console.error('Quiz command error:', error);
@@ -50,20 +85,36 @@ const sendNextQuestion = async (ctx) => {
         validQuestion.options.forEach((option, index) => {
             keyboard.text(option, `quiz_answer_${index}`).row();
         });
-        await ctx.reply(`Question ${currentQuestion + 1}/5:\n\n${validQuestion.question}`, { reply_markup: keyboard });
+        try {
+            await ctx.reply(`Question ${currentQuestion + 1}/5:\n\n${validQuestion.question}`, { reply_markup: keyboard });
+        }
+        catch (error) {
+            console.error('Failed to send fallback question (network error):', error);
+        }
         return;
     }
     const keyboard = new InlineKeyboard();
     question.options.forEach((option, index) => {
         keyboard.text(option, `quiz_answer_${index}`).row();
     });
-    await ctx.reply(`Question ${currentQuestion + 1}/5:\n\n${question.question}`, { reply_markup: keyboard });
+    try {
+        await ctx.reply(`Question ${currentQuestion + 1}/5:\n\n${question.question}`, { reply_markup: keyboard });
+    }
+    catch (error) {
+        console.error('Failed to send question (network error):', error);
+    }
 };
 const generateQuizQuestions = async (userId) => {
     try {
         // Get user level
         const user = await apiService.getUserByTelegramId(userId);
         const userLevel = user?.level || 'intermediate';
+        // 1. Anti-Repeat DB Check: Try to fetch a fully structured zero-cost quiz from the database first
+        const structuredQuiz = await apiService.getStructuredQuiz(userId, userLevel);
+        if (structuredQuiz && structuredQuiz.length > 0) {
+            return structuredQuiz; // Successfully fetched from DB! Zero Gemini cost.
+        }
+        // 2. Fallback to Gemini AI Generation
         // Get recent grammar mistakes (last 10)
         const conversation = await apiService.getConversation(userId);
         const recentMistakes = conversation?.grammarMistakes?.slice(-10) || [];
@@ -79,14 +130,14 @@ const generateQuizQuestions = async (userId) => {
         // Fill remaining slots up to 5 with questions tailored to user level and weak areas
         if (questions.length < 5) {
             const remainingCount = 5 - questions.length;
-            const extraQuestions = await generateGeneralQuestions(userLevel, remainingCount, recentMistakes);
+            const extraQuestions = await generateGeneralQuestions(userLevel, remainingCount, recentMistakes, userId);
             questions = [...questions, ...extraQuestions];
         }
         return questions;
     }
     catch (error) {
         console.error('Error generating quiz questions:', error);
-        return await generateGeneralQuestions('intermediate', 5);
+        return await generateGeneralQuestions('intermediate', 5, [], userId);
     }
 };
 const generateQuestionFromMistake = async (mistake, userLevel) => {
@@ -120,8 +171,8 @@ Return a JSON object with:
         return getFallbackMistakeQuestion(mistake.mistake, mistake.correction);
     }
 };
-const generateGeneralQuestions = async (userLevel, count = 5, userMistakes = []) => {
-    const topics = [
+const generateGeneralQuestions = async (userLevel, count = 5, userMistakes = [], userId) => {
+    const topicsPool = [
         "Phrasal Verbs & Everyday Idioms",
         "Past Continuous vs Past Simple Tenses",
         "Prepositions of Time, Direction & Place",
@@ -131,17 +182,35 @@ const generateGeneralQuestions = async (userLevel, count = 5, userMistakes = [])
         "Articles (a, an, the) & Quantifiers",
         "Commonly Confused Words (their/there/they're, lie/lay)",
         "Present Perfect vs Past Simple Tenses",
-        "Modal Verbs (can, should, must, might, could)"
+        "Modal Verbs (can, should, must, might, could)",
+        "Relative Clauses (who, which, that, whose)",
+        "Reported Speech & Indirect Questions",
+        "Passive Voice & Causative Verbs",
+        "Advanced Collocations & Academic Vocabulary"
     ];
-    const randomTopic = topics[Math.floor(Math.random() * topics.length)];
-    const randomSeed = Math.floor(Math.random() * 1000000);
+    // Pick 3 random topics to force question variety
+    const selectedTopics = [...topicsPool].sort(() => 0.5 - Math.random()).slice(0, 3).join(", ");
+    const randomSeed = `${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
+    let recentQuestionHistoryStr = "";
+    if (userId) {
+        try {
+            const session = await getSession(userId);
+            const history = session?.askedQuestionsHistory || [];
+            if (history.length > 0) {
+                recentQuestionHistoryStr = `\nCRITICAL ANTI-REPEAT INSTRUCTION: DO NOT repeat or generate questions similar to these recently asked questions:\n- ${history.slice(-15).join('\n- ')}\n`;
+            }
+        }
+        catch (e) {
+            console.warn('Failed to load question history from session:', e.message);
+        }
+    }
     const mistakeContext = userMistakes.length > 0
         ? `User's past mistake history: ${JSON.stringify(userMistakes.map(m => m.mistake || m.correction))}. Focus questions on similar weak areas.`
         : `Focus on typical grammar and vocabulary mistakes made by ${userLevel} level English learners.`;
-    const prompt = `Generate ${count} UNIQUE, FRESH multiple-choice questions for an English learner at ${userLevel} level.
+    const prompt = `Generate ${count} COMPLETELY UNIQUE, FRESH multiple-choice questions for an English learner at ${userLevel} level.
 ${mistakeContext}
-Primary Focus Topic: ${randomTopic} (Random Seed: ${randomSeed}).
-Ensure questions are completely unique and test different grammar rules or vocabulary.
+Focus Topics: ${selectedTopics} (Seed: ${randomSeed}).${recentQuestionHistoryStr}
+Ensure each of the ${count} questions tests a DIFFERENT grammar rule or vocabulary word. DO NOT use standard template questions like "Seldom...", "It is crucial...", or "Had we arrived...".
 
 Return a JSON array of ${count} objects, each with:
 {
@@ -158,7 +227,35 @@ Return a JSON array of ${count} objects, each with:
         if (Array.isArray(questions) && questions.length > 0) {
             const validQuestions = questions.filter((q) => q && q.question && Array.isArray(q.options) && q.options.length >= 2);
             if (validQuestions.length > 0) {
-                return validQuestions.map((q) => ({ ...q, type: 'general' }));
+                // Save new question titles to session history to prevent future repetition
+                if (userId) {
+                    try {
+                        const session = await getSession(userId) || {};
+                        const history = session.askedQuestionsHistory || [];
+                        const newTitles = validQuestions.map((q) => q.question.substring(0, 50));
+                        const updatedHistory = [...history, ...newTitles].slice(-30);
+                        await setSession(userId, { ...session, askedQuestionsHistory: updatedHistory });
+                    }
+                    catch (e) { }
+                }
+                return validQuestions.map((q) => {
+                    const optionsWithFlag = q.options.map((optText, idx) => ({
+                        text: optText.replace(/^[A-D]\)\s*/, ''),
+                        isCorrect: idx === q.correctAnswer
+                    }));
+                    for (let i = optionsWithFlag.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [optionsWithFlag[i], optionsWithFlag[j]] = [optionsWithFlag[j], optionsWithFlag[i]];
+                    }
+                    const shuffledTexts = optionsWithFlag.map((o) => o.text);
+                    const newCorrectIndex = optionsWithFlag.findIndex((o) => o.isCorrect);
+                    return {
+                        ...q,
+                        options: shuffledTexts,
+                        correctAnswer: newCorrectIndex >= 0 ? newCorrectIndex : 0,
+                        type: 'general'
+                    };
+                });
             }
         }
     }
@@ -198,9 +295,15 @@ export const handleQuizAnswer = async (ctx, answerIndex) => {
     await setSession(ctx.from.id, session);
     // Show feedback
     const feedback = isCorrect ? "✅ Correct!" : "❌ Incorrect.";
-    await ctx.reply(`${feedback}\n\n${currentQ.explanation}`);
-    // Send next question after a short delay
-    setTimeout(() => sendNextQuestion(ctx), 2000);
+    try {
+        await ctx.reply(`${feedback}\n\n${currentQ.explanation}`);
+    }
+    catch (e) {
+        console.error('Failed to send answer feedback:', e);
+    }
+    // Use await with a proper delay instead of setTimeout to prevent race conditions
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    await sendNextQuestion(ctx);
 };
 const showQuizResults = async (ctx) => {
     if (!ctx.from)
@@ -229,7 +332,9 @@ const showQuizResults = async (ctx) => {
     }
     catch (e) { }
     try {
+        const completedQuizId = questions?.[0]?.quizId;
         await apiService.saveQuizResult(ctx.from.id, {
+            quizId: completedQuizId,
             score,
             totalQuestions: 5,
             correctAnswers,
@@ -262,6 +367,16 @@ const showQuizResults = async (ctx) => {
         .row()
         .text("💳 Upgrade to VIP", "pay");
     await ctx.reply(resultMessage, { reply_markup: keyboard });
-    // Clear quiz session
-    await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
+    // Clear quiz session while preserving session history, asked question texts, and prefetched quizzes
+    const currentSession = (await getSession(ctx.from.id)) || {};
+    const previousAskedTexts = currentSession.askedQuestionTexts || [];
+    const newQuestionTexts = (questions || []).map((q) => q.question).filter(Boolean);
+    const updatedAskedTexts = Array.from(new Set([...previousAskedTexts, ...newQuestionTexts])).slice(-100);
+    delete currentSession.quizState;
+    await setSession(ctx.from.id, {
+        ...currentSession,
+        askedQuestionTexts: updatedAskedTexts,
+        mode: null,
+        timestamp: Date.now(),
+    });
 };

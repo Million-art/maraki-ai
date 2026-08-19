@@ -50,7 +50,7 @@ bot.use(async (ctx, next) => {
         try {
             if (redis.isOpen) {
                 const redisLockKey = `lock:user_action:${userId}:${actionName}`;
-                const acquired = await redis.set(redisLockKey, 'locked', { NX: true, EX: 15 });
+                const acquired = await redis.set(redisLockKey, 'locked', { NX: true, EX: 60 });
                 if (!acquired) {
                     return; // Suppress duplicate execution from concurrent processes or retries
                 }
@@ -129,6 +129,17 @@ bot.command('stop_daily', async (ctx) => {
     await setNotifyPreference(ctx.from.id, 'no');
     await ctx.reply(`🔕 <b>Daily challenge notifications stopped.</b>\n\nYou can always re-enable them by clicking <b>🔥 Daily Challenge</b> and opting in again.`, { parse_mode: 'HTML' });
 });
+// Utility to extract File IDs for media
+bot.on('message:animation', async (ctx) => {
+    if (ctx.from?.id === ADMIN_TELEGRAM_ID) {
+        const fileId = ctx.message.animation.file_id;
+        console.log('\n====================================');
+        console.log('🎬 ANIMATION FILE ID RECEIVED:');
+        console.log(fileId);
+        console.log('====================================\n');
+        await ctx.reply(`Here is the file_id for this GIF:\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
+    }
+});
 // Catch all text messages
 bot.on('message:text', async (ctx) => {
     if (!ctx.from)
@@ -199,7 +210,7 @@ bot.on('message:text', async (ctx) => {
         await handleReceiptVerification(ctx, text);
         return;
     }
-    else if (session?.mode === 'lesson') {
+    else if (session?.mode === 'lesson' || session?.mode === 'lesson_awaiting_topic') {
         const { handleLessonResponse } = await import('../commands/lesson.comand.js');
         await handleLessonResponse(ctx);
     }
@@ -271,6 +282,19 @@ bot.on('callback_query:data', async (ctx) => {
     }
     else {
         switch (data) {
+            case 'check_channel_join':
+                const { checkChannelMembership } = await import('../utils/channel-check.util.js');
+                const isMember = await checkChannelMembership(ctx);
+                if (isMember) {
+                    try {
+                        await ctx.deleteMessage();
+                    }
+                    catch (e) { }
+                    await ctx.reply("✅ *ስለተቀላቀሉን እናመሰግናለን!* አሁን Maraki AIን ሙሉ በሙሉ መጠቀም ይችላሉ።", { parse_mode: 'Markdown' });
+                    const { startCommand } = await import('../commands/start.command.js');
+                    await startCommand(ctx);
+                }
+                break;
             case 'subscribe':
             case 'pay':
                 await handlePaymentCommand(ctx);
@@ -307,6 +331,19 @@ bot.on('callback_query:data', async (ctx) => {
                 await setSession(ctx.from.id, { mode: 'lesson', timestamp: Date.now(), userId: ctx.from.id });
                 await lessonCommand(ctx);
                 break;
+            case 'lesson_start_rec': {
+                const session = await getSession(ctx.from.id);
+                const topic = session?.recommendedTopic || 'General English Grammar';
+                const { generateAndSendLesson } = await import('../commands/lesson.comand.js');
+                await generateAndSendLesson(ctx, topic);
+                break;
+            }
+            case 'lesson_custom_input': {
+                const existingSession = await getSession(ctx.from.id) || {};
+                await setSession(ctx.from.id, { ...existingSession, mode: 'lesson_awaiting_topic', timestamp: Date.now(), userId: ctx.from.id });
+                await ctx.reply('✏️ *Type Your Preferred Lesson Topic*\n\nPlease type any topic you would like to learn about today (e.g., *"Past Continuous Tense"*, *"Business Emails"*, *"Phrasal Verbs"*):', { parse_mode: 'Markdown' });
+                break;
+            }
             case 'lesson_followup_ask': {
                 const existingSession = await getSession(ctx.from.id) || {};
                 await setSession(ctx.from.id, { ...existingSession, mode: 'lesson_followup', timestamp: Date.now(), userId: ctx.from.id });
@@ -322,7 +359,6 @@ bot.on('callback_query:data', async (ctx) => {
                 await startTranslation(ctx);
                 break;
             case 'quiz':
-                await setSession(ctx.from.id, { mode: 'quiz', timestamp: Date.now(), userId: ctx.from.id });
                 await quizCommand(ctx);
                 break;
             case 'level':
@@ -339,7 +375,7 @@ bot.on('callback_query:data', async (ctx) => {
             case 'close':
                 return ctx.deleteMessage();
             default:
-                if (data.startsWith('admin_followup_') || data.startsWith('admin_discount_')) {
+                if (data.startsWith('admin_followup_') || data.startsWith('admin_discount_') || data.startsWith('admin_approve_')) {
                     const { handleAdminFollowupAction } = await import('../utils/analytics.util.js');
                     await handleAdminFollowupAction(ctx, data);
                     return;

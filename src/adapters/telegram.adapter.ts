@@ -399,7 +399,7 @@ bot.on('callback_query:data', async (ctx) => {
       case 'close':
         return ctx.deleteMessage();
       default:
-        if (data.startsWith('admin_followup_') || data.startsWith('admin_discount_')) {
+        if (data.startsWith('admin_followup_') || data.startsWith('admin_discount_') || data.startsWith('admin_approve_')) {
           const { handleAdminFollowupAction } = await import('../utils/analytics.util.js');
           await handleAdminFollowupAction(ctx, data);
           return;

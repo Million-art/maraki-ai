@@ -188,15 +188,20 @@ export async function trackPaymentAttempt(
 
     const { InlineKeyboard } = await import('grammy');
     const keyboard = new InlineKeyboard()
-      .text("💬 Contact User via Bot", `admin_followup_${userId}`);
+      .text("💬 Contact User via Bot", `admin_followup_${userId}`)
+      .row()
+      .text("⚡ Approve 1 Month VIP", `admin_approve_${userId}_monthly`)
+      .text("⚡ Approve 1 Week VIP", `admin_approve_${userId}_weekly`);
 
     const alertMsg =
-      `🚨 <b>Payment Verification Failed</b>\n\n` +
-      `👤 <b>Name:</b> ${name}\n` +
+      `🚨 <b>Payment Verification Failed Alert</b>\n\n` +
+      `👤 <b>Student:</b> ${name}\n` +
       `💬 <b>Username:</b> ${username}\n` +
       `🆔 <b>User ID:</b> <code>${user.id}</code>\n` +
-      `🧾 <b>Input:</b> <code>${referenceText.slice(0, 200)}</code>\n` +
-      `❌ <b>Reason:</b> ${result.message || 'Transaction could not be verified'}`;
+      `🧾 <b>Submitted Input:</b> <code>${referenceText.slice(0, 200)}</code>\n` +
+      `❌ <b>Error Reason:</b> <code>${result.message || 'Transaction could not be verified'}</code>\n` +
+      `⏰ <b>Timestamp:</b> ${new Date().toLocaleString()}\n\n` +
+      `💡 <i>You can click "Approve" below to instantly grant VIP access to this user directly via Telegram!</i>`;
 
     try {
       await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML', reply_markup: keyboard });
@@ -204,13 +209,81 @@ export async function trackPaymentAttempt(
   }
 }
 
-// Helper function to handle Admin 1-click follow-up buttons from alerts
+// Dedicated helper to alert Admin on uncaught payment system/network exceptions
+export async function notifyAdminPaymentError(
+  ctx: Context,
+  referenceText: string,
+  error: any
+) {
+  if (!ctx.from) return;
+
+  const user = ctx.from;
+  const userId = user.id;
+  const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
+  const username = user.username ? `@${user.username}` : 'No username';
+  const errorDetails = error?.response?.data?.message || error?.message || String(error);
+
+  const { InlineKeyboard } = await import('grammy');
+  const keyboard = new InlineKeyboard()
+    .text("💬 Contact User via Bot", `admin_followup_${userId}`)
+    .row()
+    .text("⚡ Approve 1 Month VIP", `admin_approve_${userId}_monthly`)
+    .text("⚡ Approve 1 Week VIP", `admin_approve_${userId}_weekly`);
+
+  const alertMsg =
+    `🔥 <b>Payment System Exception Alert!</b>\n\n` +
+    `👤 <b>Student:</b> ${name}\n` +
+    `💬 <b>Username:</b> ${username}\n` +
+    `🆔 <b>User ID:</b> <code>${userId}</code>\n` +
+    `🧾 <b>Submitted Input:</b> <code>${referenceText.slice(0, 200)}</code>\n` +
+    `⚠️ <b>Exception:</b> <code>${errorDetails}</code>\n` +
+    `⏰ <b>Timestamp:</b> ${new Date().toLocaleString()}\n\n` +
+    `💡 <i>Click "Approve" below to manually grant VIP access to this student without checking Docker logs!</i>`;
+
+  try {
+    await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML', reply_markup: keyboard });
+  } catch (err) {
+    console.error('Failed to send admin payment exception alert:', err);
+  }
+}
+
+// Helper function to handle Admin 1-click follow-up & approval buttons from alerts
 export async function handleAdminFollowupAction(ctx: Context, actionData: string) {
   if (!ctx.from || ctx.from.id !== ADMIN_TELEGRAM_ID) return;
 
   const { InlineKeyboard } = await import('grammy');
 
-  if (actionData.startsWith('admin_followup_')) {
+  if (actionData.startsWith('admin_approve_')) {
+    // Format: admin_approve_<userId>_<tier>
+    const parts = actionData.replace('admin_approve_', '').split('_');
+    const targetUserId = parseInt(parts[0], 10);
+    const tier = parts[1] || 'monthly';
+    if (!targetUserId) return;
+
+    try {
+      const { apiService } = await import('../services/api.service.js');
+      const overrideRef = `ADMIN_OVERRIDE_${Date.now()}_${targetUserId}`;
+      const res = await apiService.verifyBankPayment(targetUserId, overrideRef, tier);
+
+      if (res?.success) {
+        const tierTitle = tier === 'weekly' ? '1 WEEK VIP' : '1 MONTH VIP';
+        const userMsg =
+          `🎉 *የVIP አባልነትዎ በድጋፍ ቡድኑ በኩል አውቶማቲክ ተፈቅዷል!*\n\n` +
+          `🎁 *እንኳን ደስ አሎት!* አሁን የ **${tierTitle}** Maraki Premium አባልነት አግኝተዋል።\n` +
+          `🌟 አሁን ያለገደብ የMaraki AI የድምጽ ውይይት፣ የልምምድ ሞጁሎች እና ፈተናዎችን መጠቀም ይችላሉ።`;
+
+        await ctx.api.sendMessage(targetUserId, userMsg, { parse_mode: 'Markdown' });
+        await ctx.answerCallbackQuery(`✅ ${tierTitle} Granted to user ${targetUserId}!`);
+        await ctx.reply(`✅ *Granted ${tierTitle} access to student \`${targetUserId}\` successfully!*`, { parse_mode: 'Markdown' });
+      } else {
+        await ctx.answerCallbackQuery('❌ Manual approval failed');
+        await ctx.reply(`❌ Failed to grant VIP: ${res?.message || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      await ctx.answerCallbackQuery('❌ Approval failed');
+      await ctx.reply(`❌ Error executing manual approval: ${err.message}`);
+    }
+  } else if (actionData.startsWith('admin_followup_')) {
     const targetUserId = parseInt(actionData.replace('admin_followup_', ''), 10);
     if (!targetUserId) return;
 

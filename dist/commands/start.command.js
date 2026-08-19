@@ -7,10 +7,17 @@ import { handlePaymentCommand } from "./payment.command.js";
 export async function startCommand(ctx) {
     if (!ctx.from)
         return;
-    // Deep-link: /start pay — triggered from Mini App upgrade popup
-    if (String(ctx.match).trim() === 'pay') {
+    // Deep-link: /start pay or /start=pay — triggered from Mini App upgrade popup
+    const matchStr = String(ctx.match || '').trim().toLowerCase();
+    if (matchStr === 'pay' || matchStr.includes('pay')) {
         await registerOrUpdate(ctx.from); // ensure user exists
         return handlePaymentCommand(ctx);
+    }
+    // Channel Membership Validation
+    const { checkChannelMembership } = await import('../utils/channel-check.util.js');
+    const isMember = await checkChannelMembership(ctx);
+    if (!isMember) {
+        return; // Access denied until they join
     }
     try {
         // Extract valid numerical referrerId from start payload (ignoring self-referrals)

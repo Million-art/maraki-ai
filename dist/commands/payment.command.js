@@ -16,10 +16,10 @@ export async function handlePaymentCommand(ctx) {
             if (expires > new Date()) {
                 const formattedDate = expires.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
                 activeNotice =
-                    `🌟 *ACTIVE VIP SUBSCRIPTION DETECTED!*\n` +
-                        `You currently have active Maraki VIP access (valid until *${formattedDate}*).\n\n` +
-                        `ℹ️ *Subscription Extension Notice:*\n` +
-                        `If you transfer & subscribe again, your new plan duration will be **added directly to your current expiration date** (your subscription will be extended with no lost days)! 🚀\n\n`;
+                    `🌟 *ያለፈበት ጊዜ ያልደረሰ VIP subscription አለዎት!*\n` +
+                        `አሁን ላይ active የሆነ የMaraki AI VIP subscription አለዎት (እስከ *${formattedDate}* የሚያገለግል)።\n\n` +
+                        `ℹ️ *የsubscription ማራዘሚያ ማሳሰቢያ፡*\n` +
+                        `ክፍያ ፈጽመው በድጋሚ ከተመዘገቡ፣ አዲሱ የsubscription ጊዜዎ **በቀጥታ አሁን ካለዎት ማብቂያ ቀን ላይ ይጨመራል** (ምንም ቀን ሳያጡ subscriptionዎ ይራዘማል)! 🚀\n\n`;
             }
         }
     }
@@ -33,10 +33,10 @@ export async function handlePaymentCommand(ctx) {
         .text("🔥 3 Months (799 ETB) - Save 11%", "pay_quarterly")
         .row()
         .text("🚀 1 Year (2,499 ETB) - Save 30%", "pay_yearly");
-    const paymentText = `💳 *Maraki VIP Subscription*\n\n` +
+    const paymentText = `💳 *የMaraki AI VIP ክፍያ*\n\n` +
         activeNotice +
-        `Unlock unlimited Maraki AI chat and real-time tutoring!\n\n` +
-        `Please select your preferred subscription tier below:`;
+        `ያልተገደበ የMaraki AI ውይይት እና የድምጽ ልምምድ ያግኙ!\n\n` +
+        `እባክዎን ከታች ከተዘረዘሩት የsubscription አማራጮች ውስጥ የሚፈልጉትን ይምረጡ፡`;
     await ctx.reply(paymentText, { parse_mode: 'Markdown', reply_markup: keyboard });
 }
 export async function handlePaymentSelection(ctx, data) {
@@ -65,7 +65,7 @@ export async function handlePaymentSelection(ctx, data) {
             if (user && (user.isMarakiPremium || user.isPremium) && user.subscriptionExpiresAt) {
                 const expires = new Date(user.subscriptionExpiresAt);
                 if (expires > new Date()) {
-                    extensionNotice = `\n\n🔄 *Extension Notice:* As an active VIP member, your new payment will *extend* your access beyond your current expiration!`;
+                    extensionNotice = `\n\n🔄 *ማሳሰቢያ፡* አዲሱ ክፍያዎ የአባልነት ጊዜዎን አሁን ካለው ማብቂያ ቀን ላይ ይጨምረዋል!`;
                 }
             }
             // Store selected tier in user session context
@@ -80,18 +80,35 @@ export async function handlePaymentSelection(ctx, data) {
     catch (e) { }
     const { InlineKeyboard } = await import('grammy');
     const keyboard = new InlineKeyboard().text("✅ Verify Payment / Submit Receipt", "submit_receipt_prompt");
-    const text = `💳 *You selected: ${tierName}*\n\n` +
-        `🏦 *Direct Bank Transfer Accounts:*\n` +
-        `• *Commercial Bank of Ethiopia (CBE)*:\n` +
-        `  \`1000342472501\` (Account: *Million Mulugeta*)\n` +
-        `• *Dashen Bank*:\n` +
-        `  \`5427280818011\` (Account: *Million Mulugeta*)\n\n` +
-        `✅ *How to Activate Instantly:*\n` +
-        `1. Transfer exactly *${amount} ETB* to one of the accounts above.\n` +
-        `2. Copy the receipt link from CBE Mobile/Dashen SuperApp (e.g., \`https://mbreciept.cbe.com.et/v2-XXXXXX\`) or reference ID.\n` +
-        `3. Click the **"Verify Payment / Submit Receipt"** button below or paste your receipt link directly in this chat!\n\n` +
-        `⚡ Our automated system will verify your receipt and upgrade/extend your account in seconds!${extensionNotice}`;
-    await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: keyboard });
+    const text = `💳 *የመረጡት፡ ${tierName}*\n\n` +
+        `🏦 *የባንክ ሂሳብ ቁጥሮች፡*\n` +
+        `• *CBE*: \`1000342472501\`\n` +
+        `• *Dashen*: \`5427280818011\`\n` +
+        `👤 ስም: *Million Mulugeta*\n` +
+        `*(ኮፒ ለማድረግ አካውንት ቁጥሩን ይንኩ)*\n\n` +
+        `✅ *እንዴት active ማድረግ ይቻላል?*\n` +
+        `1. ከላይ ካሉት ሂሳቦች ወደ **አንዱ** ብቻ በትክክል *${amount} ETB* ያስገቡ።\n` +
+        `2. ከCBE/Dashen የክፍያውን ሊንክ ኮፒ ያድርጉ ወይም reference ቁጥሩን ይውሰዱ።\n` +
+        `3. ሊንኩን እዚሁ ቻት ላይ ፔስት (Paste) ያድርጉ ወይም ከታች **"Verify Payment"** ይጫኑ!\n\n` +
+        `⚡ ክፍያዎ በሰከንዶች ውስጥ ተረጋግጦ active ይሆናል!${extensionNotice}`;
+    try {
+        await ctx.deleteMessage();
+    }
+    catch (e) {
+        console.error('Could not delete old message', e);
+    }
+    try {
+        await ctx.replyWithAnimation('CgACAgQAAxkBAAIB2mqAkuKmD1uR2rIh-JRbLjYG6qx-AALyHwACbyzwUym4AYm72uFkPQQ', {
+            caption: text,
+            parse_mode: 'Markdown',
+            reply_markup: keyboard
+        });
+    }
+    catch (mediaError) {
+        console.error('Failed to send animation, falling back to text:', mediaError);
+        // Fallback to text if the file_id is invalid
+        await ctx.reply(text, { parse_mode: 'Markdown', reply_markup: keyboard });
+    }
 }
 export async function handleReceiptVerification(ctx, referenceText) {
     if (!ctx.from)
@@ -133,17 +150,17 @@ export async function handleReceiptVerification(ctx, referenceText) {
             }
             const wasExtended = result.wasExtended;
             const headerTitle = wasExtended
-                ? '🎉 *SUBSCRIPTION EXTENDED SUCCESSFULLY!*'
-                : '🎉 *PAYMENT VERIFIED SUCCESSFULLY!*';
+                ? '🎉 *የአባልነት ጊዜዎ በተሳካ ሁኔታ ተራዝሟል!*'
+                : '🎉 *ክፍያዎ በተሳካ ሁኔታ ተረጋግጧል!*';
             const newExpiry = result.user?.subscriptionExpiresAt
                 ? new Date(result.user.subscriptionExpiresAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
                 : 'Active';
             const extensionMessage = wasExtended
-                ? `🔄 *Your VIP subscription has been extended!* (+${durationText})\n` +
-                    `📅 *New Expiration Date:* *${newExpiry}*\n\n` +
-                    `🎁 Thank you for continuing your journey with Maraki Premium!`
-                : `🎁 *CONGRATULATIONS!* You now have **${durationText}** of Maraki Premium access (valid until *${newExpiry}*)!\n` +
-                    `🌟 You have unlimited access to Maraki AI voice chat, practice modules, and exams.`;
+                ? `🔄 *የVIP አባልነትዎ ተራዝሟል!* (+${durationText})\n` +
+                    `📅 *አዲሱ ማብቂያ ቀን፡* *${newExpiry}*\n\n` +
+                    `🎁 ከMaraki Premium ጋር ጉዞዎን ስለቀጠሉ እናመሰግናለን!`
+                : `🎁 *እንኳን ደስ አሎት!* አሁን የ **${durationText}** Maraki Premium አባልነት አግኝተዋል (እስከ *${newExpiry}* የሚያገለግል)!\n` +
+                    `🌟 አሁን ያለገደብ የMaraki AI የድምጽ ውይይት፣ የልምምድ ሞጁሎች እና ፈተናዎችን መጠቀም ይችላሉ።`;
             await ctx.reply(`${headerTitle}\n\n` +
                 `Bank: *${result.result?.bankName || 'Dashen Bank'}*\n` +
                 `Amount: *${amountPaid} ETB*\n` +
@@ -152,15 +169,20 @@ export async function handleReceiptVerification(ctx, referenceText) {
         }
         else {
             const { InlineKeyboard } = await import('grammy');
-            const keyboard = new InlineKeyboard().text("💬 Contact In-Bot Support", "contact_support");
-            await ctx.reply(`❌ *Payment Verification Failed*\n\n` +
-                `Reason: ${result.message || 'Transaction could not be verified'}.\n\n` +
-                `📌 *Need Assistance?*\n` +
-                `If you transferred a partial amount or have a payment question, click **Contact In-Bot Support** below to chat with our team directly inside this bot!`, { parse_mode: 'Markdown', reply_markup: keyboard });
+            const keyboard = new InlineKeyboard().text("💬 የድጋፍ ቡድኑን ያነጋግሩ (Support)", "contact_support");
+            await ctx.reply(`❌ *ክፍያዎን ማረጋገጥ አልተቻለም*\n\n` +
+                `ምክንያት: ${result.message || 'ክፍያውን ማረጋገጥ አልተቻለም'}.\n\n` +
+                `📌 *እርዳታ ይፈልጋሉ?*\n` +
+                ` ስለክፍያዎ ጥያቄ ካለዎት፣ የድጋፍ ቡድናችንን እዚሁ ቦት ላይ ለማነጋገር ከታች ያለውን **የድጋፍ ቡድኑን ያነጋግሩ (Support)** የሚለውን ይጫኑ!`, { parse_mode: 'Markdown', reply_markup: keyboard });
         }
     }
     catch (error) {
         console.error('Receipt verification error:', error);
-        await ctx.reply(`⚠️ *Verification Error*: Unable to connect to the bank network right now. Please try again in a few moments.`);
+        try {
+            const { notifyAdminPaymentError } = await import('../utils/analytics.util.js');
+            await notifyAdminPaymentError(ctx, referenceText, error);
+        }
+        catch (e) { }
+        await ctx.reply(`⚠️ *የኔትዎርክ ችግር*: በአሁኑ ሰዓት ከባንክ ኔትዎርክ ጋር መገናኘት አልተቻለም። እባክዎን ከጥቂት ደቂቃዎች በኋላ እንደገና ይሞክሩ።`);
     }
 }

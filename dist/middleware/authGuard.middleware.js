@@ -11,6 +11,12 @@ export async function checkCentralAuthAndAccess(ctx, resource) {
         return false;
     }
     const userId = ctx.from.id;
+    // 0. Channel Membership Validation (Force Join)
+    const { checkChannelMembership } = await import('../utils/channel-check.util.js');
+    const isMember = await checkChannelMembership(ctx);
+    if (!isMember) {
+        return false; // Access denied until they join
+    }
     // 1. Centralized Authentication & Profile Synchronization
     try {
         await apiService.registerStudent({

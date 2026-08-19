@@ -3,6 +3,7 @@ import { apiService } from '../services/api.service.js';
 import {
   trackUpgradeIntent,
   trackPaymentAttempt,
+  notifyAdminPaymentError,
 } from '../utils/analytics.util.js';
 
 export async function handlePaymentCommand(ctx: Context) {
@@ -193,12 +194,16 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
         `❌ *ክፍያዎን ማረጋገጥ አልተቻለም*\n\n` +
         `ምክንያት: ${result.message || 'ክፍያውን ማረጋገጥ አልተቻለም'}.\n\n` +
         `📌 *እርዳታ ይፈልጋሉ?*\n` +
-        `ከሚፈለገው ያነሰ የገንዘብ መጠን ከላኩ ወይም ስለክፍያዎ ጥያቄ ካለዎት፣ የድጋፍ ቡድናችንን እዚሁ ቦት ላይ ለማነጋገር ከታች ያለውን **የድጋፍ ቡድኑን ያነጋግሩ (Support)** የሚለውን ይጫኑ!`,
+        ` ስለክፍያዎ ጥያቄ ካለዎት፣ የድጋፍ ቡድናችንን እዚሁ ቦት ላይ ለማነጋገር ከታች ያለውን **የድጋፍ ቡድኑን ያነጋግሩ (Support)** የሚለውን ይጫኑ!`,
         { parse_mode: 'Markdown', reply_markup: keyboard }
       );
     }
   } catch (error: any) {
     console.error('Receipt verification error:', error);
+    try {
+      await notifyAdminPaymentError(ctx, referenceText, error);
+    } catch (e) { }
+
     await ctx.reply(
       `⚠️ *የኔትዎርክ ችግር*: በአሁኑ ሰዓት ከባንክ ኔትዎርክ ጋር መገናኘት አልተቻለም። እባክዎን ከጥቂት ደቂቃዎች በኋላ እንደገና ይሞክሩ።`
     );
