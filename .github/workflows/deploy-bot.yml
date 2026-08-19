@@ -51,12 +51,17 @@ jobs:
             # Authenticate with GHCR on EC2
             echo "$GH_TOKEN" | sudo docker login ghcr.io -u $ACTOR --password-stdin
 
-            # Create hidden directory structure
-            mkdir -p /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend
-            cd /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend
+            # Auto-detect target project directory on EC2
+            TARGET_DIR="/home/${{ secrets.SERVER_USER }}/carramarket/compliance-backend"
+            if [ ! -d "/home/${{ secrets.SERVER_USER }}/carramarket" ]; then
+              TARGET_DIR="/home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend"
+            fi
+
+            mkdir -p "$TARGET_DIR"
+            cd "$TARGET_DIR"
 
             # Auto-generate .env from GitHub Secrets
-            cat << EOF > .env
+            cat << EOF > "$TARGET_DIR/.env"
             TKN=${{ secrets.TKN }}
             PORT=1000
             NODE_ENV=${{ secrets.NODE_ENV || 'production' }}
@@ -98,14 +103,14 @@ jobs:
               -p 1000:1000 \
               -e VIRTUAL_HOST=alertmanager.ptgr.io \
               -e VIRTUAL_PORT=1000 \
-              --env-file /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend/.env \
+              --env-file "$TARGET_DIR/.env" \
               ghcr.io/$REPO_LOWER/maraki-bot:latest
 
             # Reload gateway Nginx proxy if running
             sudo docker exec gateway nginx -s reload 2>/dev/null || true
 
             # Setup Auto-Healing Watchdog
-            CRON_CMD="* * * * * sudo docker ps | grep -q compliance-backend || sudo docker run -d --name compliance-backend --restart unless-stopped $NET_FLAG -p 1000:1000 -e VIRTUAL_HOST=alertmanager.ptgr.io -e VIRTUAL_PORT=1000 --env-file /home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend/.env ghcr.io/$REPO_LOWER/maraki-bot:latest"
+            CRON_CMD="* * * * * sudo docker ps | grep -q compliance-backend || sudo docker run -d --name compliance-backend --restart unless-stopped $NET_FLAG -p 1000:1000 -e VIRTUAL_HOST=alertmanager.ptgr.io -e VIRTUAL_PORT=1000 --env-file $TARGET_DIR/.env ghcr.io/$REPO_LOWER/maraki-bot:latest"
             (crontab -l 2>/dev/null | grep -v "compliance-backend"; echo "$CRON_CMD") | crontab -
 
             echo "✅ Deployment successful! Container joined network: $DOCKER_NET."
