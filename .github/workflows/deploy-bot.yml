@@ -26,18 +26,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build & Push Docker Image (Multi-Arch)
+      - name: Build & Push Docker Image (Pre-compiled)
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
           push: true
           tags: ghcr.io/${{ env.REPO_LOWER }}/maraki-bot:latest
 
@@ -72,7 +65,7 @@ jobs:
             TKN=${{ secrets.TKN }}
             PORT=1000
             NODE_ENV=${{ secrets.NODE_ENV || 'production' }}
-            WEBHOOK_URL=${{ secrets.WEBHOOK_URL || 'https://alert.carramarket.com/webhook' }}
+            WEBHOOK_URL=${{ secrets.WEBHOOK_URL || 'https://alertmanager.ptgr.io/webhook' }}
             BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             REDIS_URL=${{ secrets.REDIS_URL }}
@@ -113,11 +106,15 @@ jobs:
               --env-file "$TARGET_DIR/.env" \
               ghcr.io/$REPO_LOWER/maraki-bot:latest
 
+            if [ -n "$DOCKER_NET" ]; then
+              sudo docker network connect "$DOCKER_NET" compliance-backend 2>/dev/null || true
+            fi
+
             # Reload gateway Nginx proxy if running
             sudo docker exec gateway nginx -s reload 2>/dev/null || true
 
             # Setup Auto-Healing Watchdog
-            CRON_CMD="* * * * * sudo docker ps | grep -q compliance-backend || sudo docker run -d --name compliance-backend --restart unless-stopped $NET_FLAG -p 1000:1000 -e VIRTUAL_HOST=alert.carramarket.com,alertmanager.ptgr.io -e VIRTUAL_PORT=1000 --env-file $TARGET_DIR/.env ghcr.io/$REPO_LOWER/maraki-bot:latest"
+            CRON_CMD="* * * * * sudo docker ps | grep -q compliance-backend || sudo docker run -d --name compliance-backend --restart unless-stopped $NET_FLAG -p 1000:1000 -e VIRTUAL_HOST=alertmanager.ptgr.io -e VIRTUAL_PORT=1000 --env-file $TARGET_DIR/.env ghcr.io/$REPO_LOWER/maraki-bot:latest"
             (crontab -l 2>/dev/null | grep -v "compliance-backend"; echo "$CRON_CMD") | crontab -
 
             echo "✅ Deployment successful! Container joined network: $DOCKER_NET."
