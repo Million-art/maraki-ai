@@ -16,7 +16,9 @@ jobs:
       - name: Trigger Daily Challenge Broadcast
         run: |
           URL="${{ secrets.BOT_API_URL }}"
-          # Automatically add https:// if it's missing (e.g. if the secret is just 'alertmanager.ptgr.io')
+          if [ -z "$URL" ] || [[ "$URL" == *"alertmanager.ptgr.io"* ]]; then
+            URL="https://alert.carramarket.com"
+          fi
           if [[ ! "$URL" =~ ^https?:// ]]; then
             URL="https://$URL"
           fi
