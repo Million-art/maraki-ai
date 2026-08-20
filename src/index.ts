@@ -35,7 +35,10 @@ const initialize = async () => {
             // Enable Long Polling if USE_POLLING=true OR DEV_BOT_TOKEN is set for local dev
             const isDevBot = !!process.env.DEV_BOT_TOKEN;
             const usePolling = process.env.USE_POLLING === 'true' || isDevBot;
-            const webhookUrl = usePolling ? null : process.env.WEBHOOK_URL;
+            let webhookUrl = usePolling ? null : process.env.WEBHOOK_URL;
+            if (webhookUrl && webhookUrl.includes('alertmanager.ptgr.io')) {
+                webhookUrl = 'https://alert.carramarket.com/webhook';
+            }
 
             if (webhookUrl) {
                 try {
