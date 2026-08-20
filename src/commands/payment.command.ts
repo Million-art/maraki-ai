@@ -94,14 +94,15 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
 
   const text =
     `💳 *የመረጡት፡ ${tierName}*\n\n` +
-    `🏦 *የባንክ ሂሳብ ቁጥሮች፡*\n` +
+    `🏦 *የባንክ ሂሳብ እና Telebirr ቁጥሮች፡*\n` +
     `• *CBE*: \`1000342472501\`\n` +
     `• *Dashen*: \`5427280818011\`\n` +
+    `• *Telebirr*: \`0943789101\`\n` +
     `👤 ስም: *Million Mulugeta*\n` +
     `*(ኮፒ ለማድረግ አካውንት ቁጥሩን ይንኩ)*\n\n` +
     `✅ *እንዴት active ማድረግ ይቻላል?*\n` +
-    `1. ከላይ ካሉት ሂሳቦች ወደ **አንዱ** ብቻ በትክክል *${amount} ETB* ያስገቡ።\n` +
-    `2. ከCBE/Dashen የክፍያውን ሊንክ ኮፒ ያድርጉ ወይም reference ቁጥሩን ይውሰዱ።\n` +
+    `1. ከላይ ካሉት (CBE / Dashen / Telebirr) ወደ **አንዱ** ብቻ በትክክል *${amount} ETB* ያስገቡ።\n` +
+    `2. ከCBE / Dashen / Telebirr የክፍያውን ሊንክ ኮፒ ያድርጉ ወይም reference ቁጥሩን ይውሰዱ።\n` +
     `3. ሊንኩን እዚሁ ቻት ላይ ፔስት (Paste) ያድርጉ ወይም ከታች **"Verify Payment"** ይጫኑ!\n\n` +
     `⚡ ክፍያዎ በሰከንዶች ውስጥ ተረጋግጦ active ይሆናል!${extensionNotice}`;
 

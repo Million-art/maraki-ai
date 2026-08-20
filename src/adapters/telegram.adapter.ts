@@ -195,10 +195,12 @@ bot.on('message:text', async (ctx) => {
 
   // Auto-detect bank receipt links or tokens (e.g. mbreciept.cbe.com.et, receipts.dashenbanksc.com, or receipt.dashensuperapp.com)
   if (
-    text.includes('mbreciept.cbe.com.et') ||
-    text.includes('receipt.dashensuperapp.com') ||
+    text.includes('cbe.com.et') ||
     text.includes('dashenbanksc.com') ||
     text.includes('dashensuperapp.com') ||
+    text.includes('transactioninfo.ethiotelecom.et') ||
+    text.includes('ethiotelecom.et') ||
+    text.toLowerCase().includes('telebirr') ||
     text.toLowerCase().includes('dashen') ||
     (text.startsWith('v2-') && text.length > 8)
   ) {
@@ -328,10 +330,11 @@ bot.on('callback_query:data', async (ctx) => {
         await setSession(ctx.from.id, { mode: 'awaiting_receipt', timestamp: Date.now(), userId: ctx.from.id });
         await ctx.reply(
           `🧾 *Submit Your Payment Receipt*\n\n` +
-          `Please paste your **CBE or Dashen receipt link** (or transaction reference number) directly in this chat below:\n\n` +
+          `Please paste your **CBE, Dashen, or Telebirr receipt link** (or transaction reference number) directly in this chat below:\n\n` +
           `*Supported Link Examples:*\n` +
           `• \`https://receipts.dashenbanksc.com/receipt/XXXXX\`\n` +
           `• \`https://mbreciept.cbe.com.et/v2-XXXXXX\`\n` +
+          `• \`https://transactioninfo.ethiotelecom.et/receipt/XXXXX\`\n` +
           `• Transaction Reference: \`XXXXX\`\n\n` +
           `⚡ Our automated system will verify your receipt with the bank network instantly!`,
           { parse_mode: 'Markdown' }

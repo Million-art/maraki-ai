@@ -173,7 +173,7 @@ const broadcastJobs = new Map<string, BroadcastJob>();
 
 // Internal Webhook: Batch Broadcast Dispatch (Non-Blocking for 10k+ users)
 app.post('/internal/broadcast-message', async (req: express.Request, res: express.Response) => {
-    const { targetTelegramIds, text, parseMode = 'HTML', buttonText, buttonUrl, broadcastId: customId, stickerFileId, animationFileId, videoFileId } = req.body;
+    const { targetTelegramIds, text, parseMode = 'HTML', buttonText, buttonUrl, broadcastId: customId, stickerFileId, animationFileId, videoFileId, photoFileId, imageUrl } = req.body;
 
     if (!Array.isArray(targetTelegramIds) || targetTelegramIds.length === 0 || !text) {
         res.status(400).json({ error: 'Invalid broadcast payload. targetTelegramIds (array) and text required.' });
@@ -232,7 +232,13 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
     (async () => {
         for (const telegramId of targetTelegramIds) {
             try {
-                if (videoFileId) {
+                if (photoFileId || imageUrl) {
+                    await bot.api.sendPhoto(telegramId, photoFileId || imageUrl, {
+                        caption: sanitizedText,
+                        parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
+                        reply_markup,
+                    });
+                } else if (videoFileId) {
                     await bot.api.sendVideo(telegramId, videoFileId, {
                         caption: sanitizedText,
                         parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
