@@ -309,11 +309,10 @@ bot.on('callback_query:data', async (ctx) => {
             case 'submit_receipt_prompt':
                 await setSession(ctx.from.id, { mode: 'awaiting_receipt', timestamp: Date.now(), userId: ctx.from.id });
                 await ctx.reply(`🧾 *Submit Your Payment Receipt*\n\n` +
-                    `Please paste your **CBE or Dashen receipt link** (or transaction reference number) directly in this chat below:\n\n` +
+                    `Please paste your **CBE or Dashen receipt link** directly in this chat below:\n\n` +
                     `*Supported Link Examples:*\n` +
                     `• \`https://receipts.dashenbanksc.com/receipt/XXXXX\`\n` +
                     `• \`https://mbreciept.cbe.com.et/v2-XXXXXX\`\n` +
-                    `• Transaction Reference: \`XXXXX\`\n\n` +
                     `⚡ Our automated system will verify your receipt with the bank network instantly!`, { parse_mode: 'Markdown' });
                 break;
             case 'contact_support':
