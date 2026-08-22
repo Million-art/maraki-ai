@@ -1,29 +1,17 @@
-# Multi-stage Dockerfile for Maraki Telegram Bot
-FROM public.ecr.aws/docker/library/node:20-alpine AS builder
-
-WORKDIR /app
-
-# Install dependencies and copy source
-COPY package*.json ./
-COPY . .
-RUN npm ci
-
-# Production Stage
+# Optimized Dockerfile for AWS Graviton (ARM64)
 FROM public.ecr.aws/docker/library/node:20-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Install only production dependencies
+# Copy package manifests and install runtime-only dependencies without postinstall scripts
 COPY package*.json ./
 RUN npm ci --only=production --ignore-scripts
 
-# Copy compiled JavaScript code from builder stage
-COPY --from=builder /app/dist ./dist
+# Copy pre-compiled JavaScript dist directory
+COPY dist ./dist
 
-# Expose port (if web server endpoint is used)
 EXPOSE 1000
 
-# Start bot
 CMD ["node", "dist/index.js"]
