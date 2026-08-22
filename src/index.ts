@@ -287,6 +287,50 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
     })();
 });
 
+// Internal Webhook: Targeted Survey Broadcast
+app.post('/internal/survey-broadcast', async (req: express.Request, res: express.Response) => {
+    const { targetTelegramIds } = req.body;
+
+    if (!Array.isArray(targetTelegramIds) || targetTelegramIds.length === 0) {
+        res.status(400).json({ error: 'Invalid payload. targetTelegramIds required.' });
+        return;
+    }
+
+    console.log(`[Survey Webhook] Queuing survey for ${targetTelegramIds.length} users...`);
+
+    const text = `🗣️ We want to make Maraki better for you!
+
+If Maraki could help you with one thing every day, what would you choose?
+
+Choose what would make you want to come back and practice every day 👇`;
+
+    const reply_markup = {
+        inline_keyboard: [
+            [{ text: '🗣️ Better speaking practice', callback_data: 'survey1_speak' }],
+            [{ text: '🇬🇧 Grammar correction', callback_data: 'survey1_grammar' }],
+            [{ text: '💼 Interview preparation', callback_data: 'survey1_interview' }],
+            [{ text: '📚 English lessons', callback_data: 'survey1_lessons' }],
+            [{ text: '🎯 Personalized learning plan', callback_data: 'survey1_plan' }],
+            [{ text: '💰 Lower price', callback_data: 'survey1_price' }],
+            [{ text: '🤔 Something else', callback_data: 'survey1_other' }],
+        ]
+    };
+
+    res.status(200).json({ success: true, message: `Survey queued for ${targetTelegramIds.length} users.` });
+
+    (async () => {
+        for (const telegramId of targetTelegramIds) {
+            try {
+                await bot.api.sendMessage(telegramId, text, { reply_markup });
+                await new Promise(r => setTimeout(r, 40));
+            } catch (e: any) {
+                console.error(`[Survey Webhook] Failed for ${telegramId}:`, e.message);
+            }
+        }
+        console.log(`[Survey Webhook] Completed survey broadcast.`);
+    })();
+});
+
 // GET Endpoint to poll status of background broadcast
 app.get('/internal/broadcast-status/:id', (req: express.Request, res: express.Response) => {
     const job = broadcastJobs.get(req.params.id);
@@ -310,20 +354,19 @@ app.post('/webhook', async (req, res) => {
     }
 })
 
-// Start HTTP server on Port 1000 (required for EC2 Webhook listener)
+// Start HTTP server on Port 1000 immediately so internal webhooks are reachable
+// regardless of Redis/bot initialization state.
 if (!process.env.VERCEL) {
-    const startServer = async () => {
-        try {
-            await initialize()
-            app.listen(port, () => {
-                console.log('Compliance backend web service listening on port', port)
-            })
-        } catch (error) {
-            console.error('Failed to start server:', error)
-        }
-    }
-    startServer()
+    const listenPort = Number(port) || 1000
+    app.listen(listenPort, '0.0.0.0', () => {
+        console.log(`Compliance backend web service listening on 0.0.0.0:${listenPort}`)
+    })
+    // Initialize bot and Redis in the background after server is up
+    initialize().catch((error) => {
+        console.error('Failed to initialize bot:', error)
+    })
 }
+
 
 // Export for Vercel serverless
 export default app

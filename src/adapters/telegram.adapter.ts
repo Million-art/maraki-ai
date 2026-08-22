@@ -13,6 +13,7 @@ import { quizCommand, handleQuizAnswer } from '../commands/quiz.command.js';
 import { adminStatusCommand } from '../commands/admin.command.js';
 import { handlePaymentCommand, handleReceiptVerification } from '../commands/payment.command.js';
 import { challengeCommand } from '../commands/challenge.command.js';
+import { handleSurvey1, handleSurvey2 } from '../commands/survey.command.js';
 import { updateUserLevel } from '../services/user.service.js';
 import { setSession, getSession } from '../utils/redis.js';
 import { redis } from '../utils/redis.js';
@@ -413,6 +414,14 @@ bot.on('callback_query:data', async (ctx) => {
             await handleQuizAnswer(ctx, answerIndex);
             return;
           }
+        }
+        if (data.startsWith('survey1_')) {
+          await handleSurvey1(ctx, data);
+          return;
+        }
+        if (data.startsWith('survey2_')) {
+          await handleSurvey2(ctx, data);
+          return;
         }
         if (data.startsWith('challenge_ans_')) {
           const isCorrect = data.startsWith('challenge_ans_correct_');

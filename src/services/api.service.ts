@@ -30,6 +30,7 @@ export class ApiService {
     this.backendUrl = process.env.BACKEND_API_URL || 'http://localhost:3000';
     const internalApiKey = process.env.INTERNAL_API_KEY || 'maraki-internal-secret-key-12345';
     axios.defaults.headers.common['X-Maraki-Bot-Key'] = internalApiKey;
+    axios.defaults.headers.common['x-internal-token'] = process.env.INTERNAL_API_TOKEN || 'dev-internal-token-123';
   }
 
   // User Management via REST API
@@ -382,6 +383,21 @@ export class ApiService {
       console.error('Failed to fetch daily challenge from DB:', error);
       return null;
     }
+  }
+  // ── Survey Methods ──────────────────────────────────────────────────────────
+
+  async saveSurveyStep1(telegramId: number, primaryChoice: string): Promise<void> {
+    await axios.post(`${this.backendUrl}/survey/internal/step1`, {
+      telegramId: String(telegramId),
+      primaryChoice,
+    }, { timeout: 5000 });
+  }
+
+  async saveSurveyStep2(telegramId: number, followUpChoice: string): Promise<void> {
+    await axios.post(`${this.backendUrl}/survey/internal/step2`, {
+      telegramId: String(telegramId),
+      followUpChoice,
+    }, { timeout: 5000 });
   }
 }
 
