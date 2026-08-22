@@ -289,6 +289,13 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
 
 // Internal Webhook: Targeted Survey Broadcast
 app.post('/internal/survey-broadcast', async (req: express.Request, res: express.Response) => {
+    const token = req.headers['x-internal-token'];
+    const expectedToken = process.env.INTERNAL_API_TOKEN || 'dev-internal-token-123';
+    if (token && token !== expectedToken) {
+        res.status(401).json({ error: 'Unauthorized internal request' });
+        return;
+    }
+
     const { targetTelegramIds } = req.body;
 
     if (!Array.isArray(targetTelegramIds) || targetTelegramIds.length === 0) {
