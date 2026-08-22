@@ -326,6 +326,11 @@ Choose what would make you want to come back and practice every day 👇`;
     res.status(200).json({ success: true, message: `Survey queued for ${targetTelegramIds.length} users.` });
 
     (async () => {
+        try {
+            await initialize();
+        } catch (err: any) {
+            console.error('[Survey Webhook] Initialization warning:', err?.message);
+        }
         for (const telegramId of targetTelegramIds) {
             try {
                 await bot.api.sendMessage(telegramId, text, { reply_markup });
