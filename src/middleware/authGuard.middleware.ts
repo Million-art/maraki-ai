@@ -1,6 +1,6 @@
 import { Context, InlineKeyboard } from 'grammy';
 import { apiService } from '../services/api.service.js';
-import { quizStatsService } from '../utils/quiz-stats.util.js';
+import { checkChannelMembership } from '../utils/channel-check.util.js';
 
 export type ProtectedResource = 'lesson' | 'quiz' | 'chat';
 
@@ -21,7 +21,6 @@ export async function checkCentralAuthAndAccess(
   const userId = ctx.from.id;
 
   // 0. Channel Membership Validation (Force Join)
-  const { checkChannelMembership } = await import('../utils/channel-check.util.js');
   const isMember = await checkChannelMembership(ctx);
   if (!isMember) {
     return false; // Access denied until they join
@@ -57,16 +56,16 @@ export async function checkCentralAuthAndAccess(
 
       if (remainingLessons <= 0) {
         let resetText = "7 days after your first usage";
-        
+
         if (usage?.nextLessonReset) {
           const resetDate = new Date(usage.nextLessonReset);
           const now = new Date();
           const diffMs = resetDate.getTime() - now.getTime();
-          
+
           if (diffMs > 0) {
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
             const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            
+
             if (diffDays > 0) {
               resetText = `in **${diffDays} day(s) and ${diffHours} hour(s)**`;
             } else if (diffHours > 0) {
@@ -93,16 +92,16 @@ export async function checkCentralAuthAndAccess(
 
       if (remainingQuizzes <= 0) {
         let resetText = "7 days after your first usage";
-        
+
         if (usage?.nextQuizReset) {
           const resetDate = new Date(usage.nextQuizReset);
           const now = new Date();
           const diffMs = resetDate.getTime() - now.getTime();
-          
+
           if (diffMs > 0) {
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
             const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            
+
             if (diffDays > 0) {
               resetText = `in **${diffDays} day(s) and ${diffHours} hour(s)**`;
             } else if (diffHours > 0) {

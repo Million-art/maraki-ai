@@ -1,5 +1,6 @@
 import { Context } from 'grammy';
 import { redis } from '../utils/redis.js';
+import { getAnalyticsStats } from '../utils/analytics.util.js';
 
 // Middleware to check if user is admin
 const isAdmin = (userId: number): boolean => {
@@ -72,7 +73,6 @@ async function gatherBotStatistics() {
     stats.newUsersToday = 1;
 
     try {
-      const { getAnalyticsStats } = await import('../utils/analytics.util.js');
       stats.analytics = await getAnalyticsStats();
     } catch (e) {
       stats.analytics = { newUsers: 0, upgradeClicks: 0, paymentFailures: 0, paymentSuccesses: 0 };

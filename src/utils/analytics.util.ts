@@ -1,5 +1,7 @@
 import { Context } from 'grammy';
 import { redis } from './redis.js';
+import { InlineKeyboard } from 'grammy';
+
 
 export const ADMIN_TELEGRAM_ID = 386095768;
 
@@ -66,7 +68,6 @@ export async function trackUpgradeIntent(ctx: Context) {
   const firstName = user.first_name || 'there';
   const username = user.username ? `@${user.username}` : 'No username';
 
-  const { InlineKeyboard } = await import('grammy');
   const keyboard = new InlineKeyboard()
     .text("💬 Send Follow-up via Bot", `admin_followup_${userId}`)
     .text("🎁 Send Special Discount", `admin_discount_${userId}`);
@@ -186,7 +187,6 @@ export async function trackPaymentAttempt(
       }
     } catch (e) { }
 
-    const { InlineKeyboard } = await import('grammy');
     const keyboard = new InlineKeyboard()
       .text("💬 Contact User via Bot", `admin_followup_${userId}`)
       .row()
@@ -239,7 +239,6 @@ export async function notifyAdminPaymentError(
     errorDetails = `CBE Network 500 Error: Transaction token not found on CBE network or CBE server offline. (Raw: error.http.500)`;
   }
 
-  const { InlineKeyboard } = await import('grammy');
   const keyboard = new InlineKeyboard()
     .text("💬 Contact User via Bot", `admin_followup_${userId}`)
     .row()
@@ -267,7 +266,6 @@ export async function notifyAdminPaymentError(
 export async function handleAdminFollowupAction(ctx: Context, actionData: string) {
   if (!ctx.from || ctx.from.id !== ADMIN_TELEGRAM_ID) return;
 
-  const { InlineKeyboard } = await import('grammy');
 
   if (actionData.startsWith('admin_approve_')) {
     // Format: admin_approve_<userId>_<tier>

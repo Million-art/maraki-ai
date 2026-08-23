@@ -19,6 +19,9 @@ import { setSession, getSession } from '../utils/redis.js';
 import { redis } from '../utils/redis.js';
 import { notifyAdminOnError, ADMIN_TELEGRAM_ID } from '../utils/admin-notify.util.js';
 import { setNotifyPreference } from '../utils/daily-notify.util.js';
+import { handlePaymentSelection } from '../commands/payment.command.js';
+import { generateAndSendLesson } from '../commands/lesson.comand.js';
+import { handleAdminFollowupAction } from '../utils/analytics.util.js';
 
 
 dotenv.config();
@@ -310,7 +313,7 @@ bot.on('callback_query:data', async (ctx) => {
         const { checkChannelMembership } = await import('../utils/channel-check.util.js');
         const isMember = await checkChannelMembership(ctx);
         if (isMember) {
-          try { await ctx.deleteMessage(); } catch(e) {}
+          try { await ctx.deleteMessage(); } catch (e) { }
           await ctx.reply("✅ *ስለተቀላቀሉን እናመሰግናለን!* አሁን Maraki AIን ሙሉ በሙሉ መጠቀም ይችላሉ።", { parse_mode: 'Markdown' });
           const { startCommand } = await import('../commands/start.command.js');
           await startCommand(ctx);
@@ -324,7 +327,6 @@ bot.on('callback_query:data', async (ctx) => {
       case 'pay_monthly':
       case 'pay_quarterly':
       case 'pay_yearly':
-        const { handlePaymentSelection } = await import('../commands/payment.command.js');
         await handlePaymentSelection(ctx, data);
         break;
       case 'submit_receipt_prompt':
@@ -362,7 +364,6 @@ bot.on('callback_query:data', async (ctx) => {
       case 'lesson_start_rec': {
         const session = await getSession(ctx.from.id);
         const topic = session?.recommendedTopic || 'General English Grammar';
-        const { generateAndSendLesson } = await import('../commands/lesson.comand.js');
         await generateAndSendLesson(ctx, topic);
         break;
       }
@@ -404,7 +405,6 @@ bot.on('callback_query:data', async (ctx) => {
         return ctx.deleteMessage();
       default:
         if (data.startsWith('admin_followup_') || data.startsWith('admin_discount_') || data.startsWith('admin_approve_')) {
-          const { handleAdminFollowupAction } = await import('../utils/analytics.util.js');
           await handleAdminFollowupAction(ctx, data);
           return;
         }
@@ -456,7 +456,7 @@ export { notifyAdminOnError, ADMIN_TELEGRAM_ID };
 bot.catch(async (err) => {
   const errAny = err as any;
   const errorMsg = String(errAny?.error?.message || errAny?.error || err || '');
-  const isBenign = 
+  const isBenign =
     errorMsg.includes('bot was blocked by the user') ||
     errorMsg.includes('query is too old') ||
     errorMsg.includes('message to edit not found') ||

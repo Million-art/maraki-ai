@@ -2,6 +2,9 @@ import express, { Response } from 'express'
 import dotenv from 'dotenv'
 import { connectRedis } from './utils/redis.js'
 import { bot } from './adapters/telegram.adapter.js'
+import { getOptedInUserIds } from './utils/daily-notify.util.js'
+import { buildDailyChallengeMessage } from './commands/challenge.command.js';
+
 dotenv.config()
 
 
@@ -60,7 +63,7 @@ const initialize = async () => {
                 // Clear any existing Webhook and start Long Polling
                 try {
                     await bot.api.deleteWebhook()
-                    console.log('Cleared legacy Telegram webhook')
+                    console.log('Cleared Telegram webhook')
                 } catch (e) {
                     // Ignore if no webhook was set
                 }
@@ -102,8 +105,6 @@ app.post('/cron/daily-challenge', async (req, res: Response) => {
     }
 
     try {
-        const { getOptedInUserIds } = await import('./utils/daily-notify.util.js');
-        const { challengeCommand } = await import('./commands/challenge.command.js');
 
         const userIds = await getOptedInUserIds();
         console.log(`[Daily Broadcast] Sending to ${userIds.length} opted-in users`);
@@ -124,7 +125,6 @@ app.post('/cron/daily-challenge', async (req, res: Response) => {
                 await bot.api.sendChatAction(userId, 'typing').catch(() => { });
 
                 // Import builder to generate fresh challenge for this user
-                const { buildDailyChallengeMessage } = await import('./commands/challenge.command.js');
                 const { text, keyboard } = await buildDailyChallengeMessage(userId);
                 await bot.api.sendMessage(userId, text, { parse_mode: 'HTML', reply_markup: keyboard });
                 sent++;

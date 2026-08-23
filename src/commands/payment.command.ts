@@ -1,5 +1,8 @@
 import { Context } from 'grammy';
 import { apiService } from '../services/api.service.js';
+import { getSession, setSession } from '../utils/redis.js';
+import { InlineKeyboard } from 'grammy';
+
 import {
   trackUpgradeIntent,
   trackPaymentAttempt,
@@ -22,7 +25,7 @@ export async function handlePaymentCommand(ctx: Context) {
       if (expires > new Date()) {
         const formattedDate = expires.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
         activeNotice =
-          `🌟 *ያለፈበት ጊዜ ያልደረሰ VIP subscription አለዎት!*\n` +
+          `🌟 *ጊዜ ያልደረሰ VIP subscription አለዎት!*\n` +
           `አሁን ላይ active የሆነ የMaraki AI VIP subscription አለዎት (እስከ *${formattedDate}* የሚያገለግል)።\n\n` +
           `ℹ️ *የsubscription ማራዘሚያ ማሳሰቢያ፡*\n` +
           `ክፍያ ፈጽመው በድጋሚ ከተመዘገቡ፣ አዲሱ የsubscription ጊዜዎ **በቀጥታ አሁን ካለዎት ማብቂያ ቀን ላይ ይጨመራል** (ምንም ቀን ሳያጡ subscriptionዎ ይራዘማል)! 🚀\n\n`;
@@ -30,7 +33,6 @@ export async function handlePaymentCommand(ctx: Context) {
     }
   } catch (e) { }
 
-  const { InlineKeyboard } = await import('grammy');
   const keyboard = new InlineKeyboard()
     .text("⚡ 1 Week (99 ETB)", "pay_weekly")
     .row()
@@ -80,7 +82,6 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
       }
 
       // Store selected tier in user session context
-      const { getSession, setSession } = await import('../utils/redis.js');
       const session = await getSession(ctx.from.id);
       await setSession(ctx.from.id, {
         ...session,
@@ -89,7 +90,6 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
     }
   } catch (e) { }
 
-  const { InlineKeyboard } = await import('grammy');
   const keyboard = new InlineKeyboard().text("✅ Verify Payment / Submit Receipt", "submit_receipt_prompt");
 
   const text =
@@ -188,7 +188,6 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
         { parse_mode: 'Markdown' }
       );
     } else {
-      const { InlineKeyboard } = await import('grammy');
       const keyboard = new InlineKeyboard().text("💬 የድጋፍ ቡድኑን ያነጋግሩ (Support)", "contact_support");
 
       await ctx.reply(

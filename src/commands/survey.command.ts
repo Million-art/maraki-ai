@@ -28,8 +28,6 @@ export async function handleSurvey1(ctx: Context, action: string) {
       reply_markup.inline_keyboard = [
         [{ text: "50 ETB/week", callback_data: 'survey2_price_50' }],
         [{ text: "75 ETB/week", callback_data: 'survey2_price_75' }],
-        [{ text: "100 ETB/week", callback_data: 'survey2_price_100' }],
-        [{ text: "150 ETB/week", callback_data: 'survey2_price_150' }],
         [{ text: "I'd rather pay monthly", callback_data: 'survey2_price_monthly' }],
         [{ text: "Not about the price", callback_data: 'survey2_price_notprice' }],
       ];

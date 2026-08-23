@@ -263,7 +263,7 @@ export class ApiService {
           { timeout: 10000 }
         );
         availableQuizzes = data;
-      } catch (e) {}
+      } catch (e) { }
 
       if (!availableQuizzes || !Array.isArray(availableQuizzes) || availableQuizzes.length === 0) {
         try {
@@ -272,7 +272,7 @@ export class ApiService {
             { timeout: 10000 }
           );
           availableQuizzes = data;
-        } catch (e) {}
+        } catch (e) { }
       }
 
       if (!availableQuizzes || !Array.isArray(availableQuizzes) || availableQuizzes.length === 0) {
@@ -281,11 +281,6 @@ export class ApiService {
 
       // 3. Anti-Repeat: Filter out completed quizzes
       const unseenQuizzes = availableQuizzes.filter(q => !completedQuizIds.has(q.id));
-      
-      console.log(`🔍 [QUIZ ANTI-REPEAT LOG] User ${telegramId} | Level: ${level}`);
-      console.log(`   - Total DB Quizzes: ${availableQuizzes.length}`);
-      console.log(`   - User Completed DB Quiz IDs (${completedQuizIds.size}):`, Array.from(completedQuizIds));
-      console.log(`   - Unseen DB Quizzes Available: ${unseenQuizzes.length}`);
 
       if (unseenQuizzes.length === 0) {
         console.log(`⚠️ User ${telegramId} completed ALL DB quizzes for ${level}! Switching to dynamic AI generation.`);
@@ -323,7 +318,7 @@ export class ApiService {
                 text: o.optionText,
                 isCorrect: !!o.isCorrect
               }));
-              
+
               // Fisher-Yates random shuffle
               for (let i = optionsWithFlag.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -338,7 +333,7 @@ export class ApiService {
                 options: shuffledTexts,
                 correctAnswer: newCorrectIndex >= 0 ? newCorrectIndex : 0,
                 explanation: q.explanation || 'No explanation provided.',
-                quizId: fullQuiz.id 
+                quizId: fullQuiz.id
               };
             });
             fetchedQuizzes.push(mappedQuestions);

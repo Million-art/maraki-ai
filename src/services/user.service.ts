@@ -1,6 +1,7 @@
 import { User as TelegramUser } from "grammy/types";
 import { User } from "../types/User.js";
 import { apiService } from "./api.service.js";
+import { getLocalReferralCount } from '../utils/analytics.util.js';
 
 export const registerOrUpdate = async (
   from: TelegramUser,
@@ -54,9 +55,8 @@ export const referralCount = async (from: TelegramUser) => {
   // Combine with local Redis/memory referral tracker
   let localCount = 0;
   try {
-    const { getLocalReferralCount } = await import('../utils/analytics.util.js');
     localCount = await getLocalReferralCount(from.id);
-  } catch (e) {}
+  } catch (e) { }
 
   const finalCount = Math.max(dbCount, localCount);
   const target = 10;
@@ -72,7 +72,7 @@ export const referralCount = async (from: TelegramUser) => {
   };
 };
 
-export const getCurrentLevel = async(from: TelegramUser) => {
+export const getCurrentLevel = async (from: TelegramUser) => {
   try {
     const user = await apiService.getUserByTelegramId(from.id);
     return {
