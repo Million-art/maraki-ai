@@ -2,6 +2,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { connectRedis } from './utils/redis.js';
 import { bot } from './adapters/telegram.adapter.js';
+import { getOptedInUserIds } from './utils/daily-notify.util.js';
+import { buildDailyChallengeMessage } from './commands/challenge.command.js';
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 1000;
@@ -26,7 +28,10 @@ const initialize = async () => {
             // Enable Long Polling if USE_POLLING=true OR DEV_BOT_TOKEN is set for local dev
             const isDevBot = !!process.env.DEV_BOT_TOKEN;
             const usePolling = process.env.USE_POLLING === 'true' || isDevBot;
-            const webhookUrl = usePolling ? null : process.env.WEBHOOK_URL;
+            let webhookUrl = usePolling ? null : process.env.WEBHOOK_URL;
+            if (webhookUrl && webhookUrl.includes('alertmanager.ptgr.io')) {
+                webhookUrl = 'https://alert.carramarket.com/webhook';
+            }
             if (webhookUrl) {
                 try {
                     const webhookInfo = await bot.api.getWebhookInfo();
@@ -51,7 +56,7 @@ const initialize = async () => {
                 // Clear any existing Webhook and start Long Polling
                 try {
                     await bot.api.deleteWebhook();
-                    console.log('Cleared legacy Telegram webhook');
+                    console.log('Cleared Telegram webhook');
                 }
                 catch (e) {
                     // Ignore if no webhook was set
@@ -89,8 +94,6 @@ app.post('/cron/daily-challenge', async (req, res) => {
         return;
     }
     try {
-        const { getOptedInUserIds } = await import('./utils/daily-notify.util.js');
-        const { challengeCommand } = await import('./commands/challenge.command.js');
         const userIds = await getOptedInUserIds();
         console.log(`[Daily Broadcast] Sending to ${userIds.length} opted-in users`);
         let sent = 0;
@@ -108,7 +111,6 @@ app.post('/cron/daily-challenge', async (req, res) => {
                 // Build a minimal fake context to call existing challenge logic
                 await bot.api.sendChatAction(userId, 'typing').catch(() => { });
                 // Import builder to generate fresh challenge for this user
-                const { buildDailyChallengeMessage } = await import('./commands/challenge.command.js');
                 const { text, keyboard } = await buildDailyChallengeMessage(userId);
                 await bot.api.sendMessage(userId, text, { parse_mode: 'HTML', reply_markup: keyboard });
                 sent++;
@@ -147,7 +149,7 @@ app.post('/internal/send-message', async (req, res) => {
 const broadcastJobs = new Map();
 // Internal Webhook: Batch Broadcast Dispatch (Non-Blocking for 10k+ users)
 app.post('/internal/broadcast-message', async (req, res) => {
-    const { targetTelegramIds, text, parseMode = 'HTML', buttonText, buttonUrl, broadcastId: customId, stickerFileId, animationFileId, videoFileId } = req.body;
+    const { targetTelegramIds, text, parseMode = 'HTML', buttonText, buttonUrl, broadcastId: customId, stickerFileId, animationFileId, videoFileId, photoFileId, imageUrl } = req.body;
     if (!Array.isArray(targetTelegramIds) || targetTelegramIds.length === 0 || !text) {
         res.status(400).json({ error: 'Invalid broadcast payload. targetTelegramIds (array) and text required.' });
         return;
@@ -199,7 +201,14 @@ app.post('/internal/broadcast-message', async (req, res) => {
     (async () => {
         for (const telegramId of targetTelegramIds) {
             try {
-                if (videoFileId) {
+                if (photoFileId || imageUrl) {
+                    await bot.api.sendPhoto(telegramId, photoFileId || imageUrl, {
+                        caption: sanitizedText,
+                        parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
+                        reply_markup,
+                    });
+                }
+                else if (videoFileId) {
                     await bot.api.sendVideo(telegramId, videoFileId, {
                         caption: sanitizedText,
                         parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
@@ -247,6 +256,56 @@ app.post('/internal/broadcast-message', async (req, res) => {
         console.log(`[Broadcast Webhook] Background job ${broadcastId} completed. Sent: ${job.sent}, Failed: ${job.failed}`);
     })();
 });
+// Internal Webhook: Targeted Survey Broadcast
+app.post('/internal/survey-broadcast', async (req, res) => {
+    const token = req.headers['x-internal-token'];
+    const expectedToken = process.env.INTERNAL_API_TOKEN || 'dev-internal-token-123';
+    if (token && token !== expectedToken) {
+        res.status(401).json({ error: 'Unauthorized internal request' });
+        return;
+    }
+    const { targetTelegramIds } = req.body;
+    if (!Array.isArray(targetTelegramIds) || targetTelegramIds.length === 0) {
+        res.status(400).json({ error: 'Invalid payload. targetTelegramIds required.' });
+        return;
+    }
+    console.log(`[Survey Webhook] Queuing survey for ${targetTelegramIds.length} users...`);
+    const text = `🗣️ We want to make Maraki better for you!
+
+If Maraki could help you with one thing every day, what would you choose?
+
+Choose what would make you want to come back and practice every day 👇`;
+    const reply_markup = {
+        inline_keyboard: [
+            [{ text: '🗣️ Better speaking practice', callback_data: 'survey1_speak' }],
+            [{ text: '🇬🇧 Grammar correction', callback_data: 'survey1_grammar' }],
+            [{ text: '💼 Interview preparation', callback_data: 'survey1_interview' }],
+            [{ text: '📚 English lessons', callback_data: 'survey1_lessons' }],
+            [{ text: '🎯 Personalized learning plan', callback_data: 'survey1_plan' }],
+            [{ text: '💰 Lower price', callback_data: 'survey1_price' }],
+            [{ text: '🤔 Something else', callback_data: 'survey1_other' }],
+        ]
+    };
+    res.status(200).json({ success: true, message: `Survey queued for ${targetTelegramIds.length} users.` });
+    (async () => {
+        try {
+            await initialize();
+        }
+        catch (err) {
+            console.error('[Survey Webhook] Initialization warning:', err?.message);
+        }
+        for (const telegramId of targetTelegramIds) {
+            try {
+                await bot.api.sendMessage(telegramId, text, { reply_markup });
+                await new Promise(r => setTimeout(r, 40));
+            }
+            catch (e) {
+                console.error(`[Survey Webhook] Failed for ${telegramId}:`, e.message);
+            }
+        }
+        console.log(`[Survey Webhook] Completed survey broadcast.`);
+    })();
+});
 // GET Endpoint to poll status of background broadcast
 app.get('/internal/broadcast-status/:id', (req, res) => {
     const job = broadcastJobs.get(req.params.id);
@@ -269,20 +328,17 @@ app.post('/webhook', async (req, res) => {
         res.sendStatus(500);
     }
 });
-// Start HTTP server on Port 1000 (required for EC2 Webhook listener)
+// Start HTTP server on Port 1000 immediately so internal webhooks are reachable
+// regardless of Redis/bot initialization state.
 if (!process.env.VERCEL) {
-    const startServer = async () => {
-        try {
-            await initialize();
-            app.listen(port, () => {
-                console.log('Compliance backend web service listening on port', port);
-            });
-        }
-        catch (error) {
-            console.error('Failed to start server:', error);
-        }
-    };
-    startServer();
+    const listenPort = Number(port) || 1000;
+    app.listen(listenPort, '0.0.0.0', () => {
+        console.log(`Compliance backend web service listening on 0.0.0.0:${listenPort}`);
+    });
+    // Initialize bot and Redis in the background after server is up
+    initialize().catch((error) => {
+        console.error('Failed to initialize bot:', error);
+    });
 }
 // Export for Vercel serverless
 export default app;

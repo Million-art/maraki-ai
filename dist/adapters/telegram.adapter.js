@@ -13,11 +13,16 @@ import { quizCommand, handleQuizAnswer } from '../commands/quiz.command.js';
 import { adminStatusCommand } from '../commands/admin.command.js';
 import { handlePaymentCommand, handleReceiptVerification } from '../commands/payment.command.js';
 import { challengeCommand } from '../commands/challenge.command.js';
+import { handleSurvey1, handleSurvey2, awaitingSurveyTextUsers } from '../commands/survey.command.js';
 import { updateUserLevel } from '../services/user.service.js';
 import { setSession, getSession } from '../utils/redis.js';
 import { redis } from '../utils/redis.js';
 import { notifyAdminOnError, ADMIN_TELEGRAM_ID } from '../utils/admin-notify.util.js';
 import { setNotifyPreference } from '../utils/daily-notify.util.js';
+import { handlePaymentSelection } from '../commands/payment.command.js';
+import { generateAndSendLesson } from '../commands/lesson.comand.js';
+import { handleAdminFollowupAction } from '../utils/analytics.util.js';
+import { apiService } from '../services/api.service.js';
 dotenv.config();
 const bot_token = process.env.DEV_BOT_TOKEN || process.env.TOKEN || process.env.TKN || process.env.BOT_TOKEN;
 if (!bot_token) {
@@ -180,11 +185,22 @@ bot.on('message:text', async (ctx) => {
             }
         }
     }
+    // Handle custom text feedback from survey "Something else" selection
+    if (awaitingSurveyTextUsers.has(ctx.from.id)) {
+        awaitingSurveyTextUsers.delete(ctx.from.id);
+        const customReason = text.trim();
+        // Save custom feedback to backend
+        apiService.saveSurveyStep2(ctx.from.id, `other: ${customReason}`).catch(() => { });
+        await ctx.reply("🎉 Thank you so much for sharing your detailed feedback! We've saved your response.");
+        return;
+    }
     // Auto-detect bank receipt links or tokens (e.g. mbreciept.cbe.com.et, receipts.dashenbanksc.com, or receipt.dashensuperapp.com)
-    if (text.includes('mbreciept.cbe.com.et') ||
-        text.includes('receipt.dashensuperapp.com') ||
+    if (text.includes('cbe.com.et') ||
         text.includes('dashenbanksc.com') ||
         text.includes('dashensuperapp.com') ||
+        text.includes('transactioninfo.ethiotelecom.et') ||
+        text.includes('ethiotelecom.et') ||
+        text.toLowerCase().includes('telebirr') ||
         text.toLowerCase().includes('dashen') ||
         (text.startsWith('v2-') && text.length > 8)) {
         await handleReceiptVerification(ctx, text);
@@ -303,16 +319,17 @@ bot.on('callback_query:data', async (ctx) => {
             case 'pay_monthly':
             case 'pay_quarterly':
             case 'pay_yearly':
-                const { handlePaymentSelection } = await import('../commands/payment.command.js');
                 await handlePaymentSelection(ctx, data);
                 break;
             case 'submit_receipt_prompt':
                 await setSession(ctx.from.id, { mode: 'awaiting_receipt', timestamp: Date.now(), userId: ctx.from.id });
                 await ctx.reply(`🧾 *Submit Your Payment Receipt*\n\n` +
-                    `Please paste your **CBE or Dashen receipt link** directly in this chat below:\n\n` +
+                    `Please paste your **CBE, Dashen, or Telebirr receipt link** (or transaction reference number) directly in this chat below:\n\n` +
                     `*Supported Link Examples:*\n` +
                     `• \`https://receipts.dashenbanksc.com/receipt/XXXXX\`\n` +
                     `• \`https://mbreciept.cbe.com.et/v2-XXXXXX\`\n` +
+                    `• \`https://transactioninfo.ethiotelecom.et/receipt/XXXXX\`\n` +
+                    `• Transaction Reference: \`XXXXX\`\n\n` +
                     `⚡ Our automated system will verify your receipt with the bank network instantly!`, { parse_mode: 'Markdown' });
                 break;
             case 'contact_support':
@@ -333,7 +350,6 @@ bot.on('callback_query:data', async (ctx) => {
             case 'lesson_start_rec': {
                 const session = await getSession(ctx.from.id);
                 const topic = session?.recommendedTopic || 'General English Grammar';
-                const { generateAndSendLesson } = await import('../commands/lesson.comand.js');
                 await generateAndSendLesson(ctx, topic);
                 break;
             }
@@ -375,7 +391,6 @@ bot.on('callback_query:data', async (ctx) => {
                 return ctx.deleteMessage();
             default:
                 if (data.startsWith('admin_followup_') || data.startsWith('admin_discount_') || data.startsWith('admin_approve_')) {
-                    const { handleAdminFollowupAction } = await import('../utils/analytics.util.js');
                     await handleAdminFollowupAction(ctx, data);
                     return;
                 }
@@ -385,6 +400,14 @@ bot.on('callback_query:data', async (ctx) => {
                         await handleQuizAnswer(ctx, answerIndex);
                         return;
                     }
+                }
+                if (data.startsWith('survey1_')) {
+                    await handleSurvey1(ctx, data);
+                    return;
+                }
+                if (data.startsWith('survey2_')) {
+                    await handleSurvey2(ctx, data);
+                    return;
                 }
                 if (data.startsWith('challenge_ans_')) {
                     const isCorrect = data.startsWith('challenge_ans_correct_');

@@ -4,6 +4,9 @@ import { registerOrUpdate } from "../services/user.service.js";
 import { getSession, setSession } from "../utils/redis.js";
 import { getDailyStreak } from "../utils/streak.util.js";
 import { handlePaymentCommand } from "./payment.command.js";
+import { checkChannelMembership } from '../utils/channel-check.util.js';
+import { trackReferralJoin } from "../utils/analytics.util.js";
+import { trackNewUser } from "../utils/analytics.util.js";
 export async function startCommand(ctx) {
     if (!ctx.from)
         return;
@@ -14,7 +17,6 @@ export async function startCommand(ctx) {
         return handlePaymentCommand(ctx);
     }
     // Channel Membership Validation
-    const { checkChannelMembership } = await import('../utils/channel-check.util.js');
     const isMember = await checkChannelMembership(ctx);
     if (!isMember) {
         return; // Access denied until they join
@@ -37,14 +39,12 @@ export async function startCommand(ctx) {
         // Track referral join ONLY if user is brand new (ignore existing users clicking referral links)
         if (referrerId && isBrandNewUser) {
             try {
-                const { trackReferralJoin } = await import("../utils/analytics.util.js");
                 await trackReferralJoin(referrerId, ctx.from.id);
             }
             catch (e) { }
         }
         // Notify Admin ONLY for brand new user registrations
         if (isBrandNewUser) {
-            const { trackNewUser } = await import("../utils/analytics.util.js");
             await trackNewUser(ctx);
         }
         // Clear any active session mode when starting fresh

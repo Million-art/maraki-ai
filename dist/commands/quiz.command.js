@@ -3,6 +3,8 @@ import { setSession, getSession } from "../utils/redis.js";
 import { apiService } from "../services/api.service.js";
 import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
 import { getFallbackQuizQuestions, getFallbackMistakeQuestion } from "../config/fallbacks.config.js";
+import { redis } from '../utils/redis.js';
+import { notifyAdminOnError } from '../utils/admin-notify.util.js';
 import { checkCentralAuthAndAccess } from "../middleware/authGuard.middleware.js";
 export const quizCommand = async (ctx) => {
     if (!ctx.from)
@@ -12,11 +14,6 @@ export const quizCommand = async (ctx) => {
         const allowed = await checkCentralAuthAndAccess(ctx, 'quiz');
         if (!allowed)
             return;
-        // ── Atomic Quiz Start Lock ────────────────────────────────────────────────
-        // Use Redis NX to guarantee only ONE quiz startup can run at a time per user.
-        // This prevents the race condition where two calls read the session before
-        // either has finished writing, causing duplicate quiz start messages.
-        const { redis } = await import('../utils/redis.js');
         const quizStartLockKey = `quiz_starting:${ctx.from.id}`;
         if (redis.isOpen) {
             const acquired = await redis.set(quizStartLockKey, '1', { NX: true, EX: 30 });
@@ -53,7 +50,6 @@ export const quizCommand = async (ctx) => {
     }
     catch (error) {
         console.error('Quiz command error:', error);
-        const { notifyAdminOnError } = await import('../utils/admin-notify.util.js');
         await notifyAdminOnError(ctx, error, 'Quiz Command');
         await ctx.reply("❌ An error occurred while starting your quiz. Please try again in a moment.");
     }

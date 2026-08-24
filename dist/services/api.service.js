@@ -6,6 +6,7 @@ export class ApiService {
         this.backendUrl = process.env.BACKEND_API_URL || 'http://localhost:3000';
         const internalApiKey = process.env.INTERNAL_API_KEY || 'maraki-internal-secret-key-12345';
         axios.defaults.headers.common['X-Maraki-Bot-Key'] = internalApiKey;
+        axios.defaults.headers.common['x-internal-token'] = process.env.INTERNAL_API_TOKEN || 'dev-internal-token-123';
     }
     // User Management via REST API
     async getUserByTelegramId(telegramId) {
@@ -231,10 +232,6 @@ export class ApiService {
             }
             // 3. Anti-Repeat: Filter out completed quizzes
             const unseenQuizzes = availableQuizzes.filter(q => !completedQuizIds.has(q.id));
-            console.log(`🔍 [QUIZ ANTI-REPEAT LOG] User ${telegramId} | Level: ${level}`);
-            console.log(`   - Total DB Quizzes: ${availableQuizzes.length}`);
-            console.log(`   - User Completed DB Quiz IDs (${completedQuizIds.size}):`, Array.from(completedQuizIds));
-            console.log(`   - Unseen DB Quizzes Available: ${unseenQuizzes.length}`);
             if (unseenQuizzes.length === 0) {
                 console.log(`⚠️ User ${telegramId} completed ALL DB quizzes for ${level}! Switching to dynamic AI generation.`);
                 return null; // User finished all DB quizzes! Fallback to infinite Gemini AI generation.
@@ -315,6 +312,19 @@ export class ApiService {
             console.error('Failed to fetch daily challenge from DB:', error);
             return null;
         }
+    }
+    // ── Survey Methods ──────────────────────────────────────────────────────────
+    async saveSurveyStep1(telegramId, primaryChoice) {
+        await axios.post(`${this.backendUrl}/survey/internal/step1`, {
+            telegramId: String(telegramId),
+            primaryChoice,
+        }, { timeout: 5000 });
+    }
+    async saveSurveyStep2(telegramId, followUpChoice) {
+        await axios.post(`${this.backendUrl}/survey/internal/step2`, {
+            telegramId: String(telegramId),
+            followUpChoice,
+        }, { timeout: 5000 });
     }
 }
 export const apiService = new ApiService();

@@ -2,6 +2,7 @@ import { InlineKeyboard } from 'grammy';
 import { callGeminiGenerateContent } from '../api/gemini/callGeminiGenerateContents.js';
 import { apiService } from '../services/api.service.js';
 import { chatPrompt } from '../prompt/conversation.prompt.js';
+import { notifyAdminOnError } from '../utils/admin-notify.util.js';
 export async function chatMode(ctx) {
     const text = ctx.message?.text;
     // If the user sent normal text (not a command)
@@ -101,7 +102,6 @@ INSTRUCTIONS FOR AI TUTOR:
     }
     catch (error) {
         console.error('Chat conversation error:', error);
-        const { notifyAdminOnError } = await import('../utils/admin-notify.util.js');
         await notifyAdminOnError(ctx, error, 'AI Practice Chat');
         await ctx.reply("❌ Sorry, I'm having trouble with our conversation right now. Let's try again later!");
     }

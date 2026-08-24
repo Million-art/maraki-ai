@@ -1,4 +1,5 @@
 import { redis } from '../utils/redis.js';
+import { getAnalyticsStats } from '../utils/analytics.util.js';
 // Middleware to check if user is admin
 const isAdmin = (userId) => {
     const adminId = parseInt(process.env.ADMIN_ID || '386095768');
@@ -58,7 +59,6 @@ async function gatherBotStatistics() {
         stats.totalReferrals = 0;
         stats.newUsersToday = 1;
         try {
-            const { getAnalyticsStats } = await import('../utils/analytics.util.js');
             stats.analytics = await getAnalyticsStats();
         }
         catch (e) {

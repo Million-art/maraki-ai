@@ -13,7 +13,7 @@ import { quizCommand, handleQuizAnswer } from '../commands/quiz.command.js';
 import { adminStatusCommand } from '../commands/admin.command.js';
 import { handlePaymentCommand, handleReceiptVerification } from '../commands/payment.command.js';
 import { challengeCommand } from '../commands/challenge.command.js';
-import { handleSurvey1, handleSurvey2 } from '../commands/survey.command.js';
+import { handleSurvey1, handleSurvey2, awaitingSurveyTextUsers } from '../commands/survey.command.js';
 import { updateUserLevel } from '../services/user.service.js';
 import { setSession, getSession } from '../utils/redis.js';
 import { redis } from '../utils/redis.js';
@@ -22,6 +22,7 @@ import { setNotifyPreference } from '../utils/daily-notify.util.js';
 import { handlePaymentSelection } from '../commands/payment.command.js';
 import { generateAndSendLesson } from '../commands/lesson.comand.js';
 import { handleAdminFollowupAction } from '../utils/analytics.util.js';
+import { apiService } from '../services/api.service.js';
 
 
 dotenv.config();
@@ -195,6 +196,18 @@ bot.on('message:text', async (ctx) => {
         }
       }
     }
+  }
+
+  // Handle custom text feedback from survey "Something else" selection
+  if (awaitingSurveyTextUsers.has(ctx.from.id)) {
+    awaitingSurveyTextUsers.delete(ctx.from.id);
+    const customReason = text.trim();
+    
+    // Save custom feedback to backend
+    apiService.saveSurveyStep2(ctx.from.id, `other: ${customReason}`).catch(() => {});
+
+    await ctx.reply("🎉 Thank you so much for sharing your detailed feedback! We've saved your response.");
+    return;
   }
 
   // Auto-detect bank receipt links or tokens (e.g. mbreciept.cbe.com.et, receipts.dashenbanksc.com, or receipt.dashensuperapp.com)

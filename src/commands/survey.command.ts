@@ -1,6 +1,9 @@
 import { Context } from 'grammy';
 import { apiService } from '../services/api.service.js';
 
+// Set of Telegram IDs waiting to type a custom text response for survey
+export const awaitingSurveyTextUsers = new Set<number>();
+
 export async function handleSurvey1(ctx: Context, action: string) {
   const telegramId = ctx.from?.id;
   if (!telegramId) return;
@@ -11,7 +14,7 @@ export async function handleSurvey1(ctx: Context, action: string) {
   const primaryChoice = action.replace('survey1_', '');
 
   // Persist response to backend in background
-  apiService.saveSurveyStep1(telegramId, primaryChoice).catch((err) => {
+  apiService.saveSurveyStep1(telegramId, primaryChoice).catch((err: any) => {
     console.error(`[Survey1] Failed to save response for ${telegramId}:`, err?.message);
   });
 
@@ -63,9 +66,22 @@ export async function handleSurvey2(ctx: Context, action: string) {
   const followUpChoice = action.replace('survey2_', '');
 
   // Persist response to backend in background
-  apiService.saveSurveyStep2(telegramId, followUpChoice).catch((err) => {
+  apiService.saveSurveyStep2(telegramId, followUpChoice).catch((err: any) => {
     console.error(`[Survey2] Failed to save response for ${telegramId}:`, err?.message);
   });
+
+  if (followUpChoice.endsWith('_other') || followUpChoice === 'other') {
+    awaitingSurveyTextUsers.add(telegramId);
+    try {
+      await ctx.editMessageText(
+        "✍️ <b>Please type a short message below</b> telling us what else we can improve or help you with:",
+        { parse_mode: 'HTML' }
+      );
+    } catch (error) {
+      console.error(`[Survey2] Failed to edit message for ${telegramId}:`, error);
+    }
+    return;
+  }
 
   try {
     await ctx.editMessageText("🎉 Thank you so much for your feedback! This really helps us make Maraki better for you.");

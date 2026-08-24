@@ -1,4 +1,5 @@
 import { apiService } from "./api.service.js";
+import { getLocalReferralCount } from '../utils/analytics.util.js';
 export const registerOrUpdate = async (from, referrerId) => {
     const userData = {
         telegramId: from.id,
@@ -47,7 +48,6 @@ export const referralCount = async (from) => {
     // Combine with local Redis/memory referral tracker
     let localCount = 0;
     try {
-        const { getLocalReferralCount } = await import('../utils/analytics.util.js');
         localCount = await getLocalReferralCount(from.id);
     }
     catch (e) { }
