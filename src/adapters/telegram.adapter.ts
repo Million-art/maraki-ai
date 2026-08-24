@@ -204,7 +204,9 @@ bot.on('message:text', async (ctx) => {
     const customReason = text.trim();
     
     // Save custom feedback to backend
-    apiService.saveSurveyStep2(ctx.from.id, `other: ${customReason}`).catch(() => {});
+    apiService.saveSurveyStep2(ctx.from.id, `other: ${customReason}`).catch((err: any) => {
+      console.error('[Survey Custom Text Save ERROR]:', err?.message);
+    });
 
     await ctx.reply("🎉 Thank you so much for sharing your detailed feedback! We've saved your response.");
     return;

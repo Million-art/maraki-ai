@@ -382,17 +382,45 @@ export class ApiService {
   // ── Survey Methods ──────────────────────────────────────────────────────────
 
   async saveSurveyStep1(telegramId: number, primaryChoice: string): Promise<void> {
-    await axios.post(`${this.backendUrl}/survey/internal/step1`, {
-      telegramId: String(telegramId),
-      primaryChoice,
-    }, { timeout: 5000 });
+    const token = process.env.INTERNAL_API_TOKEN || 'dev-internal-token-123';
+    try {
+      const { data } = await axios.post(
+        `${this.backendUrl}/survey/internal/step1`,
+        { telegramId: String(telegramId), primaryChoice },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-internal-token': token,
+          },
+          timeout: 10000,
+        }
+      );
+      console.log(`[Survey Step1] Saved for Telegram ID ${telegramId}: ${primaryChoice}`);
+    } catch (error: any) {
+      console.error(`[Survey Step1 ERROR] Failed for Telegram ID ${telegramId}:`, error?.response?.data || error?.message);
+      throw error;
+    }
   }
 
   async saveSurveyStep2(telegramId: number, followUpChoice: string): Promise<void> {
-    await axios.post(`${this.backendUrl}/survey/internal/step2`, {
-      telegramId: String(telegramId),
-      followUpChoice,
-    }, { timeout: 5000 });
+    const token = process.env.INTERNAL_API_TOKEN || 'dev-internal-token-123';
+    try {
+      const { data } = await axios.post(
+        `${this.backendUrl}/survey/internal/step2`,
+        { telegramId: String(telegramId), followUpChoice },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-internal-token': token,
+          },
+          timeout: 10000,
+        }
+      );
+      console.log(`[Survey Step2] Saved for Telegram ID ${telegramId}: ${followUpChoice}`);
+    } catch (error: any) {
+      console.error(`[Survey Step2 ERROR] Failed for Telegram ID ${telegramId}:`, error?.response?.data || error?.message);
+      throw error;
+    }
   }
 }
 
