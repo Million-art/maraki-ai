@@ -6,7 +6,15 @@ import { redis } from '../utils/redis.js';
 import { hasBeenAsked, markAsAsked, getNotifyPreference } from '../utils/daily-notify.util.js';
 
 // In-memory fallback for when Redis is offline
-const memoryDailyChallengeStore = new Map<string, string>();
+export const memoryDailyChallengeStore = new Map<string, string>();
+
+export function clearDailyChallengeCache(userId?: number) {
+  if (userId) {
+    memoryDailyChallengeStore.delete(`user:daily_challenge:${userId}`);
+  } else {
+    memoryDailyChallengeStore.clear();
+  }
+}
 
 function getTodayString(): string {
   return new Date().toLocaleDateString('sv-SE', { timeZone: 'Africa/Addis_Ababa' });
@@ -214,14 +222,38 @@ export async function buildDailyChallengeMessage(userId: number): Promise<{ text
     };
   }
 
-  // Generate fresh
+  // Fetch from DB first (same as challengeCommand), or fallback to Gemini
+  let data: any = null;
   let userLevel = 'intermediate';
   try {
     const user = await apiService.getUserByTelegramId(userId);
     userLevel = user?.level || 'intermediate';
   } catch (e) {}
 
-  const prompt = `Generate a Daily English Challenge for an English learner at ${userLevel} level.
+  try {
+    const dbChallenge = await apiService.getDailyChallenge(userLevel);
+    if (dbChallenge) {
+      data = {
+        wordOfTheDay: {
+          word: dbChallenge.word,
+          partOfSpeech: dbChallenge.wordPartOfSpeech,
+          definition: dbChallenge.wordDefinition,
+          example: dbChallenge.wordExample,
+        },
+        idiomOfTheDay: {
+          idiom: dbChallenge.idiom,
+          meaning: dbChallenge.idiomMeaning,
+          example: dbChallenge.idiomExample,
+        },
+      };
+    }
+  } catch (e) {
+    console.error(`[Broadcast Challenge] Failed DB fetch for ${userId}:`, e);
+  }
+
+  if (!data) {
+    try {
+      const prompt = `Generate a unique Daily English Challenge for an English learner at ${userLevel} level.
 Return JSON format with:
 {
   "wordOfTheDay": {
@@ -236,9 +268,13 @@ Return JSON format with:
     "example": "Sample sentence using the idiom"
   }
 }`;
-
-  const aiRaw = await callGeminiGenerateContent(prompt, 'complex');
-  const data = JSON.parse(aiRaw.replace(/```json\s*|\s*```/g, ''));
+      const aiRaw = await callGeminiGenerateContent(prompt, 'complex');
+      data = JSON.parse(aiRaw.replace(/```json\s*|\s*```/g, ''));
+    } catch (e) {
+      console.error(`[Broadcast Challenge] Failed Gemini fallback for ${userId}:`, e);
+      throw e;
+    }
+  }
 
   const challengeContent =
     `💡 <b>WORD OF THE DAY</b>\n` +
