@@ -82,6 +82,24 @@ export class ApiService {
   }
 
   // Premium & Usage Management
+  async getVoiceQuota(telegramId: number): Promise<{ allowed: boolean; remainingSeconds: number; quotaSeconds: number; usedSeconds: number; tier: string; isExpired: boolean }> {
+    try {
+      const { data } = await axios.get(`${this.backendUrl}/api/student/usage/${telegramId}/voice-quota`, { timeout: 5000 });
+      return data;
+    } catch (error) {
+      return { allowed: true, remainingSeconds: 120, quotaSeconds: 120, usedSeconds: 0, tier: 'FREE', isExpired: false };
+    }
+  }
+
+  async incrementVoiceSeconds(telegramId: number, durationSeconds: number): Promise<any> {
+    try {
+      const { data } = await axios.post(`${this.backendUrl}/api/student/usage/${telegramId}/increment-live-seconds`, { durationSeconds }, { timeout: 5000 });
+      return data;
+    } catch (error) {
+      return null;
+    }
+  }
+
   async checkPremiumAccess(telegramId: number, feature: string): Promise<{ hasAccess: boolean; remaining: number; reason: string }> {
     try {
       const { data } = await axios.get(`${this.backendUrl}/api/student/usage/${telegramId}`, { timeout: 5000 });

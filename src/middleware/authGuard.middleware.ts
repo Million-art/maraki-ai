@@ -2,12 +2,12 @@ import { Context, InlineKeyboard } from 'grammy';
 import { apiService } from '../services/api.service.js';
 import { checkChannelMembership } from '../utils/channel-check.util.js';
 
-export type ProtectedResource = 'lesson' | 'quiz' | 'chat';
+export type ProtectedResource = 'lesson' | 'quiz' | 'chat' | 'voice';
 
 /**
  * Centralized Authentication & Access Control Guard.
  * Validates user identity, auto-registers student user, and checks usage limits 
- * before allowing access to lessons, quizzes, or chat practice.
+ * before allowing access to lessons, quizzes, or chat/voice practice.
  */
 export async function checkCentralAuthAndAccess(
   ctx: Context,
@@ -36,6 +36,38 @@ export async function checkCentralAuthAndAccess(
     });
   } catch (err) {
     console.warn(`[CentralAuth] Profile sync failed for user ${userId}:`, err);
+  }
+
+  // Voice quota check
+  if (resource === 'voice') {
+    try {
+      const voiceQuota = await apiService.getVoiceQuota(userId);
+      if (!voiceQuota.allowed) {
+        const keyboard = new InlineKeyboard()
+          .text("💳 1 Week Access (99 ETB)", "pay_weekly")
+          .row()
+          .text("🌟 1 Month VIP Access (299 ETB)", "pay_monthly")
+          .row()
+          .text("🔥 3 Months Pass (699 ETB)", "pay_quarterly");
+
+        const isSubActive = !voiceQuota.isExpired && voiceQuota.tier !== 'FREE';
+
+        const noticeText = isSubActive
+          ? `⏱️ *Voice AI Minute Limit Reached*\n\n` +
+            `You have used all your Voice AI practice minutes for this period.\n\n` +
+            `📚 *Your VIP Subscription is Still Active!*\n` +
+            `You still have **unlimited access to all quizzes, grammar lessons, and practice exams** through your expiration date! 🚀\n\n` +
+            `🎙️ Want to add more Voice AI minutes right now? Choose an option below to extend:`
+          : `⏱️ *Voice AI Access Limit Reached*\n\n` +
+            `Your free Voice AI practice minutes have ended. Upgrade to Maraki VIP to continue practicing voice conversations!\n\n` +
+            `✨ Get unlimited lessons, quizzes, and weekly Voice AI access!`;
+
+        await ctx.reply(noticeText, { parse_mode: 'Markdown', reply_markup: keyboard });
+        return false;
+      }
+    } catch (e) {
+      console.warn(`[CentralAuth] Voice quota check error for ${userId}:`, e);
+    }
   }
 
   // 2. Centralized Usage Quota & VIP Access Verification

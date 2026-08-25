@@ -38,9 +38,9 @@ export async function handlePaymentCommand(ctx: Context) {
     .row()
     .text("🌟 1 Month (299 ETB)", "pay_monthly")
     .row()
-    .text("🔥 3 Months (799 ETB) - Save 11%", "pay_quarterly")
+    .text("🔥 3 Months (699 ETB) - Save 22%", "pay_quarterly")
     .row()
-    .text("🚀 1 Year (2,499 ETB) - Save 30%", "pay_yearly");
+    .text("🚀 1 Year (2,499 ETB) - Save 50%", "pay_yearly");
 
   const paymentText =
     `💳 *የMaraki AI VIP ክፍያ*\n\n` +
@@ -61,7 +61,7 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
     tierName = '⚡ 1 Week VIP';
     tierParam = 'weekly';
   } else if (data === 'pay_quarterly') {
-    amount = '799';
+    amount = '699';
     tierName = '🔥 3 Months VIP';
     tierParam = 'quarterly';
   } else if (data === 'pay_yearly') {
@@ -155,7 +155,7 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
       let durationText = '1 MONTH';
       if (amountPaid >= 2499) {
         durationText = '12 MONTHS';
-      } else if (amountPaid >= 799) {
+      } else if (amountPaid >= 699) {
         durationText = '3 MONTHS';
       } else if (amountPaid >= 299) {
         durationText = '1 MONTH';
