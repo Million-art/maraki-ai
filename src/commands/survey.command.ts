@@ -38,12 +38,11 @@ export async function handleSurvey1(ctx: Context, action: string) {
       [{ text: "🤔 Something else", callback_data: 'survey2_speak_other' }],
     ];
   } else if (primaryChoice === 'price') {
-    text = "💰 Just one last question: What would feel like a reasonable price for practicing English with Maraki every week?";
+    text = "💰 Just one last question: What pricing model or feedback do you have regarding Maraki?";
     reply_markup.inline_keyboard = [
-      [{ text: "50 ETB/week", callback_data: 'survey2_price_50' }],
-      [{ text: "75 ETB/week", callback_data: 'survey2_price_75' }],
-      [{ text: "I'd rather pay monthly", callback_data: 'survey2_price_monthly' }],
+      [{ text: "📅 I'd rather pay monthly", callback_data: 'survey2_price_monthly' }],
       [{ text: "Not about the price", callback_data: 'survey2_price_notprice' }],
+      [{ text: "🤔 Tell us what price works for you", callback_data: 'survey2_price_other' }],
     ];
   } else {
     text = "Got it! Just one last question: What is the main reason stopping you from practicing every day right now?";
