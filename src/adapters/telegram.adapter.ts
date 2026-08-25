@@ -43,6 +43,12 @@ bot.use(async (ctx, next) => {
     return next();
   }
 
+  if (ctx.callbackQuery) {
+    console.log(`[Bot Callback Query] User ${ctx.from.id} clicked: ${ctx.callbackQuery.data}`);
+  } else if (ctx.message?.text) {
+    console.log(`[Bot Text Message] User ${ctx.from.id} sent: ${ctx.message.text}`);
+  }
+
   // Answer callback queries immediately to prevent Telegram from auto-retrying unacknowledged requests
   if (ctx.callbackQuery) {
     try {
@@ -203,6 +209,12 @@ bot.on('message:text', async (ctx) => {
     awaitingSurveyTextUsers.delete(ctx.from.id);
     const customReason = text.trim();
     
+    console.log(`\n======================================================`);
+    console.log(`💬 [USER CUSTOM SURVEY FEEDBACK RECEIVED]`);
+    console.log(`👤 Telegram ID: ${ctx.from.id}`);
+    console.log(`✍️ Feedback Text: "${customReason}"`);
+    console.log(`======================================================\n`);
+
     // Save custom feedback to backend
     apiService.saveSurveyStep2(ctx.from.id, `other: ${customReason}`).catch((err: any) => {
       console.error('[Survey Custom Text Save ERROR]:', err?.message);

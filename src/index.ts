@@ -370,8 +370,8 @@ app.post('/webhook', async (req, res) => {
 // regardless of Redis/bot initialization state.
 if (!process.env.VERCEL) {
     const listenPort = Number(port) || 1000
-    app.listen(listenPort, '0.0.0.0', () => {
-        console.log(`Compliance backend web service listening on 0.0.0.0:${listenPort}`)
+    app.listen(listenPort, () => {
+        console.log(`Compliance backend web service listening on port ${listenPort}`)
     })
     // Initialize bot and Redis in the background after server is up
     initialize().catch((error) => {

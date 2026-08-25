@@ -8,10 +8,16 @@ export async function handleSurvey1(ctx: Context, action: string) {
   const telegramId = ctx.from?.id;
   if (!telegramId) return;
 
+  const primaryChoice = action.replace('survey1_', '');
+
+  console.log(`\n======================================================`);
+  console.log(`📊 [SURVEY STEP 1 CHOICE SELECTED]`);
+  console.log(`👤 Telegram ID: ${telegramId}`);
+  console.log(`🎯 Option Selected: "${primaryChoice}"`);
+  console.log(`======================================================\n`);
+
   // Answer callback query immediately to stop Telegram loading spinner
   await ctx.answerCallbackQuery().catch(() => {});
-
-  const primaryChoice = action.replace('survey1_', '');
 
   // Persist response to backend in background
   apiService.saveSurveyStep1(telegramId, primaryChoice).catch((err: any) => {
@@ -60,10 +66,16 @@ export async function handleSurvey2(ctx: Context, action: string) {
   const telegramId = ctx.from?.id;
   if (!telegramId) return;
 
+  const followUpChoice = action.replace('survey2_', '');
+
+  console.log(`\n======================================================`);
+  console.log(`📊 [SURVEY STEP 2 CHOICE SELECTED]`);
+  console.log(`👤 Telegram ID: ${telegramId}`);
+  console.log(`🎯 Follow-up Option Selected: "${followUpChoice}"`);
+  console.log(`======================================================\n`);
+
   // Answer callback query immediately to stop Telegram loading spinner
   await ctx.answerCallbackQuery().catch(() => {});
-
-  const followUpChoice = action.replace('survey2_', '');
 
   // Persist response to backend in background
   apiService.saveSurveyStep2(telegramId, followUpChoice).catch((err: any) => {
