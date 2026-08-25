@@ -82,12 +82,12 @@ export class ApiService {
   }
 
   // Premium & Usage Management
-  async getVoiceQuota(telegramId: number): Promise<{ allowed: boolean; remainingSeconds: number; quotaSeconds: number; usedSeconds: number; tier: string; isExpired: boolean }> {
+  async getVoiceQuota(telegramId: number): Promise<{ allowed: boolean; remainingSeconds: number; quotaSeconds: number; usedSeconds: number; tier: string; isExpired: boolean; shouldWarnWrapUp?: boolean; wrapUpPrompt?: string }> {
     try {
       const { data } = await axios.get(`${this.backendUrl}/api/student/usage/${telegramId}/voice-quota`, { timeout: 5000 });
       return data;
     } catch (error) {
-      return { allowed: true, remainingSeconds: 120, quotaSeconds: 120, usedSeconds: 0, tier: 'FREE', isExpired: false };
+      return { allowed: true, remainingSeconds: 120, quotaSeconds: 120, usedSeconds: 0, tier: 'FREE', isExpired: false, shouldWarnWrapUp: false };
     }
   }
 
