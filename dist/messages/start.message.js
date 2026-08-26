@@ -1,5 +1,5 @@
 export const getPersonalizedStartMsg = (name) => {
-    return (`👋 Welcome to <b>Maraki AI</b>, <b>${name}</b>!\n\n` +
+    return (`👋 <b>Hi <b>${name}</b>, No speaking partner? Practice 24/7 with Maraki AI without any judgment!</b>\n\n` +
         `Your personal AI English tutor.\n\n` +
         `🎙️ Real-time English speaking\n` +
         `📚 Daily grammar & vocabulary\n` +
