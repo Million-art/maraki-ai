@@ -163,6 +163,17 @@ bot.on('message:animation', async (ctx) => {
   }
 });
 
+bot.on('message:video', async (ctx) => {
+  if (ctx.from?.id === ADMIN_TELEGRAM_ID) {
+    const fileId = ctx.message.video.file_id;
+    console.log('\n====================================');
+    console.log('🎥 VIDEO FILE ID RECEIVED:');
+    console.log(fileId);
+    console.log('====================================\n');
+    await ctx.reply(`Here is the exact VIDEO file_id:\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
+  }
+});
+
 // Catch all text messages
 bot.on('message:text', async (ctx) => {
   if (!ctx.from) return;

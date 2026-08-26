@@ -113,14 +113,13 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
   }
 
   try {
-    await ctx.replyWithVideo('AAMCBAADGQEAAS4JrGqOxrS3wIBlo4cnGBdTk8U_GKquAAJPIAAC9Ad4UHkOrY4gMu3VAQAHbQADPQQ', {
+    await ctx.replyWithVideo('BAACAgQAAxkBAAEuCaxqjsa0t8CAZaOHJxgXU5PFPxiqrgACTyAAAvQHeFB5Dq2OIDLt1T0E', {
       caption: text,
       parse_mode: 'Markdown',
       reply_markup: keyboard
     });
-  } catch (mediaError) {
+  } catch (mediaError: any) {
     console.error('Failed to send payment video, falling back to text:', mediaError);
-    // Fallback to text if the file_id is invalid
     await ctx.reply(text, { parse_mode: 'Markdown', reply_markup: keyboard });
   }
 }
