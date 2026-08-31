@@ -36,6 +36,12 @@ bot.use(async (ctx, next) => {
     if (!ctx.from) {
         return next();
     }
+    if (ctx.callbackQuery) {
+        console.log(`[Bot Callback Query] User ${ctx.from.id} clicked: ${ctx.callbackQuery.data}`);
+    }
+    else if (ctx.message?.text) {
+        console.log(`[Bot Text Message] User ${ctx.from.id} sent: ${ctx.message.text}`);
+    }
     // Answer callback queries immediately to prevent Telegram from auto-retrying unacknowledged requests
     if (ctx.callbackQuery) {
         try {
@@ -145,6 +151,16 @@ bot.on('message:animation', async (ctx) => {
         await ctx.reply(`Here is the file_id for this GIF:\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
     }
 });
+bot.on('message:video', async (ctx) => {
+    if (ctx.from?.id === ADMIN_TELEGRAM_ID) {
+        const fileId = ctx.message.video.file_id;
+        console.log('\n====================================');
+        console.log('🎥 VIDEO FILE ID RECEIVED:');
+        console.log(fileId);
+        console.log('====================================\n');
+        await ctx.reply(`Here is the exact VIDEO file_id:\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
+    }
+});
 // Catch all text messages
 bot.on('message:text', async (ctx) => {
     if (!ctx.from)
@@ -189,8 +205,15 @@ bot.on('message:text', async (ctx) => {
     if (awaitingSurveyTextUsers.has(ctx.from.id)) {
         awaitingSurveyTextUsers.delete(ctx.from.id);
         const customReason = text.trim();
+        console.log(`\n======================================================`);
+        console.log(`💬 [USER CUSTOM SURVEY FEEDBACK RECEIVED]`);
+        console.log(`👤 Telegram ID: ${ctx.from.id}`);
+        console.log(`✍️ Feedback Text: "${customReason}"`);
+        console.log(`======================================================\n`);
         // Save custom feedback to backend
-        apiService.saveSurveyStep2(ctx.from.id, `other: ${customReason}`).catch(() => { });
+        apiService.saveSurveyStep2(ctx.from.id, `other: ${customReason}`).catch((err) => {
+            console.error('[Survey Custom Text Save ERROR]:', err?.message);
+        });
         await ctx.reply("🎉 Thank you so much for sharing your detailed feedback! We've saved your response.");
         return;
     }

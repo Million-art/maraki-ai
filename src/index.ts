@@ -247,14 +247,16 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
                         parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
                         reply_markup,
                     });
+                } else if (animationFileId) {
+                    await bot.api.sendAnimation(telegramId, animationFileId, {
+                        caption: sanitizedText,
+                        parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
+                        reply_markup,
+                    });
                 } else {
                     if (stickerFileId) {
                         await bot.api.sendSticker(telegramId, stickerFileId).catch((stkErr: any) => {
                             console.warn(`[Broadcast Webhook] Sticker send failed for ${telegramId}: ${stkErr.message}`);
-                        });
-                    } else if (animationFileId) {
-                        await bot.api.sendAnimation(telegramId, animationFileId).catch((animErr: any) => {
-                            console.warn(`[Broadcast Webhook] Animation GIF send failed for ${telegramId}: ${animErr.message}`);
                         });
                     }
 

@@ -215,15 +215,17 @@ app.post('/internal/broadcast-message', async (req, res) => {
                         reply_markup,
                     });
                 }
+                else if (animationFileId) {
+                    await bot.api.sendAnimation(telegramId, animationFileId, {
+                        caption: sanitizedText,
+                        parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
+                        reply_markup,
+                    });
+                }
                 else {
                     if (stickerFileId) {
                         await bot.api.sendSticker(telegramId, stickerFileId).catch((stkErr) => {
                             console.warn(`[Broadcast Webhook] Sticker send failed for ${telegramId}: ${stkErr.message}`);
-                        });
-                    }
-                    else if (animationFileId) {
-                        await bot.api.sendAnimation(telegramId, animationFileId).catch((animErr) => {
-                            console.warn(`[Broadcast Webhook] Animation GIF send failed for ${telegramId}: ${animErr.message}`);
                         });
                     }
                     await bot.api.sendMessage(telegramId, sanitizedText, {
@@ -332,8 +334,8 @@ app.post('/webhook', async (req, res) => {
 // regardless of Redis/bot initialization state.
 if (!process.env.VERCEL) {
     const listenPort = Number(port) || 1000;
-    app.listen(listenPort, '0.0.0.0', () => {
-        console.log(`Compliance backend web service listening on 0.0.0.0:${listenPort}`);
+    app.listen(listenPort, () => {
+        console.log(`Compliance backend web service listening on port ${listenPort}`);
     });
     // Initialize bot and Redis in the background after server is up
     initialize().catch((error) => {

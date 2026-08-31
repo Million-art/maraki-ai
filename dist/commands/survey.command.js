@@ -5,9 +5,14 @@ export async function handleSurvey1(ctx, action) {
     const telegramId = ctx.from?.id;
     if (!telegramId)
         return;
+    const primaryChoice = action.replace('survey1_', '');
+    console.log(`\n======================================================`);
+    console.log(`📊 [SURVEY STEP 1 CHOICE SELECTED]`);
+    console.log(`👤 Telegram ID: ${telegramId}`);
+    console.log(`🎯 Option Selected: "${primaryChoice}"`);
+    console.log(`======================================================\n`);
     // Answer callback query immediately to stop Telegram loading spinner
     await ctx.answerCallbackQuery().catch(() => { });
-    const primaryChoice = action.replace('survey1_', '');
     // Persist response to backend in background
     apiService.saveSurveyStep1(telegramId, primaryChoice).catch((err) => {
         console.error(`[Survey1] Failed to save response for ${telegramId}:`, err?.message);
@@ -26,12 +31,11 @@ export async function handleSurvey1(ctx, action) {
         ];
     }
     else if (primaryChoice === 'price') {
-        text = "💰 Just one last question: What would feel like a reasonable price for practicing English with Maraki every week?";
+        text = "💰 Just one last question: What pricing model or feedback do you have regarding Maraki?";
         reply_markup.inline_keyboard = [
-            [{ text: "50 ETB/week", callback_data: 'survey2_price_50' }],
-            [{ text: "75 ETB/week", callback_data: 'survey2_price_75' }],
-            [{ text: "I'd rather pay monthly", callback_data: 'survey2_price_monthly' }],
+            [{ text: "📅 I'd rather pay monthly", callback_data: 'survey2_price_monthly' }],
             [{ text: "Not about the price", callback_data: 'survey2_price_notprice' }],
+            [{ text: "🤔 Tell us what price works for you", callback_data: 'survey2_price_other' }],
         ];
     }
     else {
@@ -54,9 +58,14 @@ export async function handleSurvey2(ctx, action) {
     const telegramId = ctx.from?.id;
     if (!telegramId)
         return;
+    const followUpChoice = action.replace('survey2_', '');
+    console.log(`\n======================================================`);
+    console.log(`📊 [SURVEY STEP 2 CHOICE SELECTED]`);
+    console.log(`👤 Telegram ID: ${telegramId}`);
+    console.log(`🎯 Follow-up Option Selected: "${followUpChoice}"`);
+    console.log(`======================================================\n`);
     // Answer callback query immediately to stop Telegram loading spinner
     await ctx.answerCallbackQuery().catch(() => { });
-    const followUpChoice = action.replace('survey2_', '');
     // Persist response to backend in background
     apiService.saveSurveyStep2(telegramId, followUpChoice).catch((err) => {
         console.error(`[Survey2] Failed to save response for ${telegramId}:`, err?.message);
