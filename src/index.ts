@@ -211,6 +211,23 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
         }
     }
 
+    let effectivePhotoId = photoFileId || imageUrl;
+    let effectiveVideoId = videoFileId;
+    let effectiveAnimationId = animationFileId;
+    let effectiveStickerId = stickerFileId;
+
+    // Auto-detect Telegram File ID type if mis-assigned in UI input fields (e.g. GIF file ID pasted in sticker box)
+    if (effectiveStickerId) {
+        const s = effectiveStickerId.trim();
+        if (s.startsWith('CgAC') || s.startsWith('BAAC')) {
+            effectiveAnimationId = s;
+            effectiveStickerId = undefined;
+        } else if (s.startsWith('AgAC')) {
+            effectivePhotoId = s;
+            effectiveStickerId = undefined;
+        }
+    }
+
     const job: BroadcastJob = {
         id: broadcastId,
         status: 'PROCESSING',
@@ -235,27 +252,27 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
     (async () => {
         for (const telegramId of targetTelegramIds) {
             try {
-                if (photoFileId || imageUrl) {
-                    await bot.api.sendPhoto(telegramId, photoFileId || imageUrl, {
+                if (effectivePhotoId) {
+                    await bot.api.sendPhoto(telegramId, effectivePhotoId, {
                         caption: sanitizedText,
                         parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
                         reply_markup,
                     });
-                } else if (videoFileId) {
-                    await bot.api.sendVideo(telegramId, videoFileId, {
+                } else if (effectiveVideoId) {
+                    await bot.api.sendVideo(telegramId, effectiveVideoId, {
                         caption: sanitizedText,
                         parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
                         reply_markup,
                     });
-                } else if (animationFileId) {
-                    await bot.api.sendAnimation(telegramId, animationFileId, {
+                } else if (effectiveAnimationId) {
+                    await bot.api.sendAnimation(telegramId, effectiveAnimationId, {
                         caption: sanitizedText,
                         parse_mode: parseMode === 'Markdown' ? 'Markdown' : 'HTML',
                         reply_markup,
                     });
                 } else {
-                    if (stickerFileId) {
-                        await bot.api.sendSticker(telegramId, stickerFileId).catch((stkErr: any) => {
+                    if (effectiveStickerId) {
+                        await bot.api.sendSticker(telegramId, effectiveStickerId).catch((stkErr: any) => {
                             console.warn(`[Broadcast Webhook] Sticker send failed for ${telegramId}: ${stkErr.message}`);
                         });
                     }
