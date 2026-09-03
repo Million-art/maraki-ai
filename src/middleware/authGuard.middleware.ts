@@ -44,11 +44,11 @@ export async function checkCentralAuthAndAccess(
       const voiceQuota = await apiService.getVoiceQuota(userId);
       if (!voiceQuota.allowed) {
         const keyboard = new InlineKeyboard()
-          .text("💳 1 Week Access (99 ETB)", "pay_weekly")
+          .text("💳 1 Week Access (149 ETB)", "pay_weekly")
           .row()
-          .text("🌟 1 Month VIP Access (299 ETB)", "pay_monthly")
+          .text("🌟 1 Month VIP Access (499 ETB)", "pay_monthly")
           .row()
-          .text("🔥 3 Months Pass (699 ETB)", "pay_quarterly");
+          .text("🔥 3 Months Pass (1,299 ETB)", "pay_quarterly");
 
         const isSubActive = !voiceQuota.isExpired && voiceQuota.tier !== 'FREE';
 
@@ -112,7 +112,7 @@ export async function checkCentralAuthAndAccess(
           `🚫 *Weekly Lesson Limit Reached!*\n\n` +
           `You have used all *${lessonLimit} free lessons* for your current 7-day window.\n\n` +
           `⏳ Your next free lesson unlocks ${resetText}.\n\n` +
-          `🔓 *Upgrade to VIP* for unlimited lessons, quizzes, and AI practice — 299 ETB/month!`,
+          `🔓 *Upgrade to VIP* for unlimited lessons, quizzes, and AI practice — 499 ETB/month!`,
           { parse_mode: 'Markdown', reply_markup: keyboard }
         );
         return false;
@@ -148,7 +148,7 @@ export async function checkCentralAuthAndAccess(
           `🚫 *Weekly Quiz Limit Reached!*\n\n` +
           `You have used all *${quizLimit} free quizzes* for your current 7-day window.\n\n` +
           `⏳ Your next free quiz unlocks ${resetText}.\n\n` +
-          `🔓 *Upgrade to VIP* for unlimited quizzes, lessons, and AI practice — 299 ETB/month!`,
+          `🔓 *Upgrade to VIP* for unlimited quizzes, lessons, and AI practice — 499 ETB/month!`,
           { parse_mode: 'Markdown', reply_markup: keyboard }
         );
         return false;
