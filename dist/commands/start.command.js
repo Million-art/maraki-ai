@@ -52,7 +52,7 @@ export async function startCommand(ctx) {
         // Send welcome message with optimized button arrangement & Daily Challenge
         const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
         const keyboard = new InlineKeyboard()
-            .text("🔥 Daily Challenge", "daily_challenge")
+            .text("🎯 Find My English Level", "start_assessment")
             .row();
         if (miniAppUrl.includes('t.me/')) {
             keyboard.url("🎙️ Talk with Maraki", miniAppUrl);
@@ -61,12 +61,13 @@ export async function startCommand(ctx) {
             keyboard.webApp("🎙️ Talk with Maraki", miniAppUrl);
         }
         keyboard
+            .text("🔥 Daily Challenge", "daily_challenge")
             .row()
             .text("📚 Lessons", "lesson")
             .text("🧠 Quiz", "quiz")
             .row()
             .text("🌐 Amharic-English", "translation")
-            .text("⚙️ My Progress", "level")
+            .text("📊 Maraki Level", "level")
             .row()
             .text("🎁 Premium Challenge", "referral_link");
         const welcomeMsg = getPersonalizedStartMsg(ctx.from.first_name || "there");

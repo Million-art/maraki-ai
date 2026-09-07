@@ -1,9 +1,11 @@
 import express, { Response } from 'express'
 import dotenv from 'dotenv'
+import { InlineKeyboard } from 'grammy'
 import { connectRedis } from './utils/redis.js'
 import { bot } from './adapters/telegram.adapter.js'
 import { getOptedInUserIds } from './utils/daily-notify.util.js'
 import { buildDailyChallengeMessage } from './commands/challenge.command.js';
+import { apiService } from './services/api.service.js';
 
 dotenv.config()
 
@@ -140,6 +142,63 @@ app.post('/cron/daily-challenge', async (req, res: Response) => {
     } catch (error) {
         console.error('[Daily Broadcast] Error:', error);
         res.status(500).json({ error: 'Broadcast failed' });
+    }
+})
+
+// Secured 7-Day Plan Retention Reminder endpoint — triggered by cron
+app.post('/cron/plan-reminder', async (req, res: Response) => {
+    const secret = process.env.CRON_SECRET;
+    const authHeader = req.headers['authorization'];
+
+    if (!secret || authHeader !== `Bearer ${secret}`) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+    }
+
+    try {
+        const learners = await apiService.getActivePlanLearners();
+        console.log(`[Plan Reminder Cron] Found ${learners.length} learners needing retention reminders`);
+
+        let sent = 0;
+        let failed = 0;
+
+        for (const learner of learners) {
+            try {
+                const day = learner.currentDay || 1;
+                const streak = learner.streak || 1;
+                const firstName = learner.firstName || 'Learner';
+
+                // Rate-limit: 50ms gap between Telegram API calls
+                await new Promise((r) => setTimeout(r, 50));
+
+                const messageText =
+                    `🌅 <b>Good morning, ${firstName}!</b>\n\n` +
+                    `🔥 <b>Day ${day} of your 7-Day English Plan is ready!</b>\n` +
+                    `📌 <b>Today's Goal:</b> <i>5-minute personalized fluency practice</i>\n\n` +
+                    `⏱️ Complete today's lesson to keep your <b>${streak}-day streak 🔥</b> alive!\n\n` +
+                    `Tap below to start:`;
+
+                const keyboard = new InlineKeyboard()
+                    .text(`🔥 Start Day ${day} Lesson`, `start_plan_lesson_${day}`)
+                    .row()
+                    .text('📅 View 7-Day Plan', 'view_weekly_plan');
+
+                await bot.api.sendMessage(learner.telegramId, messageText, {
+                    parse_mode: 'HTML',
+                    reply_markup: keyboard,
+                });
+                sent++;
+            } catch (err: any) {
+                console.error(`[Plan Reminder Cron] Error sending to ${learner.telegramId}:`, err?.message || err);
+                failed++;
+            }
+        }
+
+        console.log(`[Plan Reminder Cron] Done. Sent: ${sent}, Failed/Skipped: ${failed}`);
+        res.json({ success: true, sent, failed });
+    } catch (error: any) {
+        console.error('[Plan Reminder Cron] Error:', error);
+        res.status(500).json({ error: 'Plan reminder broadcast failed' });
     }
 })
 

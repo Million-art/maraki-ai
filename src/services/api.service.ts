@@ -440,6 +440,102 @@ export class ApiService {
       throw error;
     }
   }
+
+  // ── Maraki English Assessment & Maraki Level ──────────────────────────────
+
+  async getAssessmentQuestions(): Promise<any> {
+    try {
+      const { data } = await axios.get(`${this.backendUrl}/api/assessment/questions`, { timeout: 10000 });
+      return data;
+    } catch (error: any) {
+      console.error('[Assessment API] Failed to fetch questions:', error?.message);
+      return null;
+    }
+  }
+
+  async submitAssessment(payload: { telegramId: number; answers: Record<string, number>; speaking?: any; durationSeconds?: number }): Promise<any> {
+    try {
+      const { data } = await axios.post(`${this.backendUrl}/api/assessment/submit`, payload, { timeout: 30000 });
+      return data;
+    } catch (error: any) {
+      console.error('[Assessment API] Failed to submit assessment:', error?.response?.data || error?.message);
+      return null;
+    }
+  }
+
+  async getStudentMarakiLevel(telegramId: number): Promise<any> {
+    try {
+      const { data } = await axios.get(`${this.backendUrl}/api/assessment/level/${telegramId}`, { timeout: 8000 });
+      return data;
+    } catch (error: any) {
+      console.error('[Assessment API] Failed to get student level:', error?.message);
+      return null;
+    }
+  }
+
+  async evaluateSpeakingAudio(payload: { transcript?: string; audioBase64?: string; mimeType?: string; durationSeconds?: number }): Promise<any> {
+    try {
+      const { data } = await axios.post(`${this.backendUrl}/api/assessment/evaluate-speaking`, payload, { timeout: 25000 });
+      return data;
+    } catch (error: any) {
+      console.error('[Assessment API] Speaking evaluation failed:', error?.message);
+      return null;
+    }
+  }
+
+  // Persistent 7-Day Plan & Streak Management (PostgreSQL via Backend API)
+  async getStudentPlanProgress(telegramId: number): Promise<{ currentDay: number; completedDays: number[]; lastCompletedAt?: string; activeLesson?: any }> {
+    try {
+      const { data } = await axios.get(`${this.backendUrl}/api/student/${telegramId}/plan-progress`, { timeout: 5000 });
+      return data;
+    } catch (error: any) {
+      return { currentDay: 1, completedDays: [] };
+    }
+  }
+
+  async saveStudentPlanProgress(telegramId: number, body: { completedDay?: number; currentDay?: number; activeLesson?: any }): Promise<any> {
+    try {
+      const { data } = await axios.post(`${this.backendUrl}/api/student/${telegramId}/plan-progress`, body, { timeout: 5000 });
+      return data;
+    } catch (error: any) {
+      return null;
+    }
+  }
+
+  async getStudentStreak(telegramId: number): Promise<number> {
+    try {
+      const { data } = await axios.get(`${this.backendUrl}/api/student/${telegramId}/streak`, { timeout: 5000 });
+      return data?.streak || 0;
+    } catch (error: any) {
+      return 1;
+    }
+  }
+
+  async updateStudentStreak(telegramId: number): Promise<{ streak: number; isNewDay: boolean }> {
+    try {
+      const { data } = await axios.post(`${this.backendUrl}/api/student/${telegramId}/streak`, {}, { timeout: 5000 });
+      return { streak: data?.streak || 1, isNewDay: !!data?.isNewDay };
+    } catch (error: any) {
+      return { streak: 1, isNewDay: false };
+    }
+  }
+
+  async getActivePlanLearners(): Promise<Array<{
+    telegramId: number;
+    firstName: string;
+    currentDay: number;
+    completedDaysCount: number;
+    streak: number;
+    level: string;
+  }>> {
+    try {
+      const { data } = await axios.get(`${this.backendUrl}/api/student/plan/active-learners`, { timeout: 10000 });
+      return Array.isArray(data) ? data : [];
+    } catch (error: any) {
+      console.error('[ApiService] Failed to fetch active plan learners:', error?.message);
+      return [];
+    }
+  }
 }
 
 export const apiService = new ApiService();

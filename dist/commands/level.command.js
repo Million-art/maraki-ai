@@ -1,60 +1,202 @@
-import { InlineKeyboard } from "grammy";
-import { getCurrentLevel } from "../services/user.service.js";
+import { InlineKeyboard, InputFile } from "grammy";
+import * as path from "path";
+import * as fs from "fs";
+import { fileURLToPath } from "url";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { getDailyStreak } from "../utils/streak.util.js";
 import { apiService } from "../services/api.service.js";
-import { getLocalQuizStats } from '../utils/quiz-stats.util.js';
+const execFileAsync = promisify(execFile);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+function renderBar(score) {
+    const filled = Math.min(5, Math.max(0, Math.round(score / 20)));
+    const empty = 5 - filled;
+    return '🟩'.repeat(filled) + '⬜'.repeat(empty);
+}
 export const levelCommand = async (ctx) => {
     if (!ctx.from) {
         return ctx.reply("⚠️ Could not get your Telegram ID.");
     }
     const userId = ctx.from.id;
-    const currentLevel = await getCurrentLevel(ctx.from);
     const streak = await getDailyStreak(userId);
-    let totalQuizzes = 0;
-    let totalCorrect = 0;
-    let totalQuestions = 0;
-    let accuracy = 0; // Default initial accuracy percentage is 0%
-    try {
-        const localStats = await getLocalQuizStats(userId);
-        totalQuizzes = localStats.totalQuizzesCompleted;
-        totalQuestions = localStats.totalQuestions;
-        totalCorrect = localStats.totalCorrect;
-        const user = await apiService.getUserByTelegramId(userId);
-        if (user) {
-            const apiQuizzes = user.totalQuizzesCompleted || 0;
-            if (apiQuizzes > totalQuizzes) {
-                totalQuizzes = apiQuizzes;
-            }
-            if (user.quizAttempts && Array.isArray(user.quizAttempts) && user.quizAttempts.length > 0) {
-                const apiQuestions = user.quizAttempts.reduce((acc, q) => acc + (q.totalQuestions || 5), 0);
-                const apiCorrect = user.quizAttempts.reduce((acc, q) => acc + (q.correctAnswers || 0), 0);
-                if (apiQuestions > totalQuestions) {
-                    totalQuestions = apiQuestions;
-                    totalCorrect = apiCorrect;
-                }
-            }
-        }
-        if (totalQuestions > 0) {
-            accuracy = Math.round((totalCorrect / totalQuestions) * 100);
-        }
+    const report = await apiService.getStudentMarakiLevel(userId);
+    const isAssessed = report && report.isAssessed && !report.needsAssessment && report.cefrLevel !== 'UNTESTED' && report.overallScore > 0;
+    if (!isAssessed) {
+        const unassessedCard = `🎯 <b>YOUR MARAKI LEVEL</b> 🇪🇹\n\n` +
+            `⭐ <b>Status:</b> ❓ <i>Not Yet Calibrated</i>\n` +
+            `🏆 <b>English Level:</b> Pending Diagnostic Test\n` +
+            `🔥 <b>Daily Streak:</b> ${streak} ${streak === 1 ? 'Day' : 'Days'} Active\n\n` +
+            `<b>Skill Breakdown:</b>\n` +
+            `━━━━━━━━━━━━━━━━━━━━━\n` +
+            `📚 Vocabulary:   ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
+            `📝 Grammar:      ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
+            `📖 Reading:      ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
+            `🎧 Listening:    ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
+            `🗣️ Speaking:     ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
+            `━━━━━━━━━━━━━━━━━━━━━\n\n` +
+            `💡 <b>You haven't taken your English Assessment yet!</b>\n\n` +
+            `Take the 8-minute diagnostic test to:\n` +
+            `• 🎯 Discover your verified CEFR Level (A1 – C1)\n` +
+            `• 🔍 Uncover your specific Ethiopian English error patterns\n` +
+            `• 📅 Unlock your personalized 7-Day study plan\n\n` +
+            `Tap below to find your real level! 👇`;
+        const keyboard = new InlineKeyboard()
+            .text("🎯 Take 8-Min Assessment", "start_assessment")
+            .text("📊 Sample Assessment Report", "view_certificate")
+            .row()
+            .text("🔥 Daily Challenge", "daily_challenge")
+            .text("🧠 Practice Quiz", "quiz");
+        return await ctx.reply(unassessedCard, { parse_mode: "HTML", reply_markup: keyboard });
     }
-    catch (e) { }
-    const levelName = (currentLevel.level || 'Intermediate').toUpperCase();
-    const progressCard = `📈 <b>YOUR LEARNING PROGRESS DASHBOARD</b> 📊\n\n` +
-        `⭐ <b>Current Level:</b> ${levelName}\n` +
-        `🔥 <b>Daily Streak:</b> ${streak} ${streak === 1 ? 'Day' : 'Days'} Active\n` +
-        `📊 <b>Quiz Accuracy:</b> ${accuracy}% Overall\n` +
-        `🧠 <b>Quizzes Completed:</b> ${totalQuizzes}\n\n` +
-        `⚙️ <i>Want to change your English difficulty level? Select below:</i>`;
-    const normLevel = (currentLevel.level || 'intermediate').toLowerCase();
-    // Build the inline keyboard with active level indicator
+    const levelName = report.cefrLevel || 'B1';
+    const score = report.overallScore || 55;
+    const skills = report.skills || { vocabulary: 55, grammar: 55, reading: 55, listening: 55, speaking: 48 };
+    const weakness = report.primaryWeakness || 'Speaking';
+    const progressCard = `🎯 <b>YOUR MARAKI LEVEL</b> 🇪🇹\n\n` +
+        `🏆 <b>English Level:</b> ${levelName}\n` +
+        `⭐ <b>Score:</b> ${score}/100\n` +
+        `🔥 <b>Daily Streak:</b> ${streak} ${streak === 1 ? 'Day' : 'Days'} Active\n\n` +
+        `<b>Skill Breakdown:</b>\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `📚 Vocabulary:   ${renderBar(skills.vocabulary)} <b>${skills.vocabulary}</b>/100\n` +
+        `📝 Grammar:      ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
+        `📖 Reading:      ${renderBar(skills.reading)} <b>${skills.reading}</b>/100\n` +
+        `🎧 Listening:    ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
+        `🗣️ Speaking:     ${renderBar(skills.speaking)} <b>${skills.speaking}</b>/100\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `⚠️ <b>Your biggest weakness is ${weakness}.</b>\n\n` +
+        `💡 <i>${report.weaknessReport || 'Targeting your weakness in daily 5-minute sessions yields the fastest improvement.'}</i>`;
     const keyboard = new InlineKeyboard()
-        .text(normLevel === 'beginner' ? "✅ Beginner" : "🟢 Beginner", "beginner")
-        .text(normLevel === 'intermediate' ? "✅ Intermediate" : "🟡 Intermediate", "intermediate")
+        .text("📅 View 7-Day Plan", "view_weekly_plan")
+        .text("📊 View Assessment Report", "view_certificate")
         .row()
-        .text(normLevel === 'advanced' ? "✅ Advanced" : "🔴 Advanced", "advanced")
-        .row()
-        .text("🔥 Daily Challenge", "daily_challenge")
-        .text("🧠 Practice Quiz", "quiz");
+        .text(" Start Day 1 Lesson", "start_plan_lesson_1")
+        .text("🔄 Retest Level", "start_assessment");
     await ctx.reply(progressCard, { parse_mode: "HTML", reply_markup: keyboard });
 };
+/**
+ * Send the personalized 7-Day Learning Plan
+ */
+export async function sendWeeklyPlan(ctx) {
+    if (!ctx.from)
+        return;
+    const userId = ctx.from.id;
+    const report = await apiService.getStudentMarakiLevel(userId);
+    const plan = report?.recommendedPlan;
+    const weakness = report?.primaryWeakness || 'Speaking';
+    if (!plan) {
+        return ctx.reply('⚠️ Please complete your assessment first with /assessment to generate your 7-Day plan.');
+    }
+    const planText = `📅 <b>YOUR PERSONALIZED 7-DAY LEARNING PLAN</b> 🎯\n` +
+        `<i>Tailored specifically to improve your weakness: <b>${weakness}</b></i>\n\n` +
+        `<b>Day 1:</b> ${plan.day1?.title} (${plan.day1?.duration})\n` +
+        `• <i>Task:</i> ${plan.day1?.task}\n\n` +
+        `<b>Day 2:</b> ${plan.day2?.title} (${plan.day2?.duration})\n` +
+        `• <i>Task:</i> ${plan.day2?.task}\n\n` +
+        `<b>Day 3:</b> ${plan.day3?.title} (${plan.day3?.duration})\n` +
+        `• <i>Task:</i> ${plan.day3?.task}\n\n` +
+        `<b>Day 4:</b> ${plan.day4?.title} (${plan.day4?.duration})\n` +
+        `• <i>Task:</i> ${plan.day4?.task}\n\n` +
+        `<b>Day 5:</b> ${plan.day5?.title} (${plan.day5?.duration})\n` +
+        `• <i>Task:</i> ${plan.day5?.task}\n\n` +
+        `<b>Day 6:</b> ${plan.day6?.title} (${plan.day6?.duration})\n` +
+        `• <i>Task:</i> ${plan.day6?.task}\n\n` +
+        `<b>Day 7:</b> ${plan.day7?.title} (${plan.day7?.duration})\n` +
+        `• <i>Task:</i> ${plan.day7?.task}\n\n` +
+        `🚀 <i>5 minutes every day creates measurable fluency. Tap below to begin Day 1!</i>`;
+    const keyboard = new InlineKeyboard()
+        .text("🔥 Start Day 1 Lesson", "start_plan_lesson_1")
+        .text("📊 View Assessment Report", "view_certificate")
+        .row()
+        .text("⬅️ Back to Maraki Level", "level");
+    if (ctx.callbackQuery) {
+        try {
+            await ctx.editMessageText(planText, { parse_mode: "HTML", reply_markup: keyboard });
+        }
+        catch (e) {
+            await ctx.reply(planText, { parse_mode: "HTML", reply_markup: keyboard });
+        }
+    }
+    else {
+        await ctx.reply(planText, { parse_mode: "HTML", reply_markup: keyboard });
+    }
+}
+/**
+ * Send the official Maraki Milestone Certificate sample / preview
+ */
+export async function sendCertificate(ctx) {
+    if (!ctx.from)
+        return;
+    const userId = ctx.from.id;
+    const fullName = [ctx.from.first_name, ctx.from.last_name].filter(Boolean).join(' ') || 'Learner';
+    const report = await apiService.getStudentMarakiLevel(userId);
+    const levelName = report?.cefrLevel && report.cefrLevel !== 'UNTESTED' ? report.cefrLevel : 'B2';
+    const score = report?.overallScore && report.overallScore > 0 ? report.overallScore : 79;
+    const credId = `MRK-2026-${userId.toString().slice(-4)}`;
+    const skills = report?.skills || { vocabulary: 100, grammar: 70, reading: 63, listening: 100, speaking: 71 };
+    // Dynamically generate personalized certificate image with user's name & Maraki brand colors
+    const userCertPath = path.resolve('/tmp', `cert_${userId}.png`);
+    try {
+        const candidateScriptPaths = [
+            path.resolve(process.cwd(), 'scripts/generate_certificate.py'),
+            path.resolve(__dirname, '../../scripts/generate_certificate.py'),
+            '/home/million/Documents/maraki/bot/scripts/generate_certificate.py',
+        ];
+        const script = candidateScriptPaths.find((p) => fs.existsSync(p));
+        if (script) {
+            await execFileAsync('python3', [
+                script,
+                '--name', fullName,
+                '--level', levelName,
+                '--score', score.toString(),
+                '--vocab', (skills.vocabulary || 55).toString(),
+                '--grammar', (skills.grammar || 55).toString(),
+                '--reading', (skills.reading || 55).toString(),
+                '--listening', (skills.listening || 55).toString(),
+                '--speaking', (skills.speaking || 55).toString(),
+                '--cred_id', credId,
+                '--output', userCertPath,
+            ]);
+        }
+    }
+    catch (err) {
+        console.error('Dynamic cert generation error:', err);
+    }
+    const caption = `📊 <b>MARAKI ENGLISH ASSESSMENT REPORT</b> 🇪🇹\n\n` +
+        `👤 <b>Student:</b> ${fullName}\n` +
+        `🏆 <b>Diagnostic Benchmark:</b> Level ${levelName} (CEFR)\n` +
+        `⭐ <b>Overall Score:</b> ${score}/100\n` +
+        `🛡️ <b>Report ID:</b> <code>${credId}</code>\n\n` +
+        `✨ <i>Official English proficiency evaluation report from Maraki AI, evaluating real spoken fluency, grammatical accuracy, reading comprehension, and vocabulary mastery for Ethiopian learners.</i>`;
+    `🛡️ <b>Report ID:</b> ${credId}\n\n` +
+        `✨ <i>Official English proficiency evaluation report from Maraki AI, evaluating real spoken fluency, grammatical accuracy, reading comprehension, and vocabulary mastery for Ethiopian learners.</i>\n\n` +
+        `🔗 <b>Shareable on LinkedIn, Telegram & Professional CVs</b>`;
+    const keyboard = new InlineKeyboard()
+        .url("🌐 Verify Online", `https://maraki-mini-app.vercel.app/verify/${credId}`)
+        .url("💼 Add to LinkedIn", `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=Maraki%20English%20Assessment%20Report%20(${levelName})&organizationName=Maraki%20AI&issueYear=2026&issueMonth=9&certId=${credId}`)
+        .row()
+        .text("📅 View 7-Day Plan", "view_weekly_plan")
+        .text("⬅️ Back to Maraki Level", "level");
+    try {
+        const candidatePaths = [
+            userCertPath,
+            path.resolve(process.cwd(), 'assets/images/sample_certificate.jpg'),
+            path.resolve(__dirname, '../../assets/images/sample_certificate.jpg'),
+            '/home/million/Documents/maraki/bot/assets/images/sample_certificate.jpg',
+        ];
+        const imagePath = candidatePaths.find((p) => fs.existsSync(p));
+        if (imagePath) {
+            await ctx.replyWithPhoto(new InputFile(imagePath), {
+                caption,
+                parse_mode: 'HTML',
+                reply_markup: keyboard,
+            });
+            return;
+        }
+    }
+    catch (err) {
+        console.error('Failed to send certificate photo:', err);
+    }
+    await ctx.reply(caption, { parse_mode: 'HTML', reply_markup: keyboard });
+}

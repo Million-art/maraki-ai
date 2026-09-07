@@ -27,13 +27,13 @@ export async function handlePaymentCommand(ctx) {
     }
     catch (e) { }
     const keyboard = new InlineKeyboard()
-        .text("⚡ 1 Week (99 ETB)", "pay_weekly")
+        .text("⚡ 1 Week (149 ETB)", "pay_weekly")
         .row()
-        .text("🌟 1 Month (299 ETB)", "pay_monthly")
+        .text("🌟 1 Month (499 ETB)", "pay_monthly")
         .row()
-        .text("🔥 3 Months (699 ETB) - Save 22%", "pay_quarterly")
+        .text("🔥 3 Months (1,299 ETB) - Save 13%", "pay_quarterly")
         .row()
-        .text("🚀 1 Year (2,499 ETB) - Save 50%", "pay_yearly");
+        .text("🚀 1 Year (4,999 ETB) - Save 17%", "pay_yearly");
     const paymentText = `💳 *የMaraki AI VIP ክፍያ*\n\n` +
         activeNotice +
         `ያልተገደበ የMaraki AI ውይይት እና የድምጽ ልምምድ ያግኙ!\n\n` +
@@ -41,21 +41,21 @@ export async function handlePaymentCommand(ctx) {
     await ctx.reply(paymentText, { parse_mode: 'Markdown', reply_markup: keyboard });
 }
 export async function handlePaymentSelection(ctx, data) {
-    let amount = '299';
+    let amount = '499';
     let tierName = '🌟 1 Month VIP';
     let tierParam = 'monthly';
     if (data === 'pay_weekly') {
-        amount = '99';
+        amount = '149';
         tierName = '⚡ 1 Week VIP';
         tierParam = 'weekly';
     }
     else if (data === 'pay_quarterly') {
-        amount = '699';
+        amount = '1,299';
         tierName = '🔥 3 Months VIP';
         tierParam = 'quarterly';
     }
     else if (data === 'pay_yearly') {
-        amount = '2,499';
+        amount = '4,999';
         tierName = '🚀 1 Year VIP';
         tierParam = 'yearly';
     }
@@ -133,18 +133,18 @@ export async function handleReceiptVerification(ctx, referenceText) {
         }
         catch (e) { }
         if (result.success) {
-            const amountPaid = result.result?.amount || 299;
+            const amountPaid = result.result?.amount || 499;
             let durationText = '1 MONTH';
-            if (amountPaid >= 2499) {
+            if (amountPaid >= 4999) {
                 durationText = '12 MONTHS';
             }
-            else if (amountPaid >= 699) {
+            else if (amountPaid >= 1299) {
                 durationText = '3 MONTHS';
             }
-            else if (amountPaid >= 299) {
+            else if (amountPaid >= 499) {
                 durationText = '1 MONTH';
             }
-            else if (amountPaid >= 99) {
+            else if (amountPaid >= 149) {
                 durationText = '1 WEEK';
             }
             const wasExtended = result.wasExtended;
