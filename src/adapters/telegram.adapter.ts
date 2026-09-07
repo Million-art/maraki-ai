@@ -304,6 +304,71 @@ bot.on('message:text', async (ctx) => {
   } else if (session?.mode === 'lesson_followup') {
     const { handleLessonFollowup } = await import('../commands/lesson.comand.js');
     await handleLessonFollowup(ctx);
+  } else if (session?.mode === 'in_assessment') {
+    const rawText = text.trim();
+    const lowerText = rawText.toLowerCase();
+
+    // Check for cancel
+    if (
+      lowerText === '❌ cancel assessment' ||
+      lowerText === 'cancel' ||
+      lowerText === '/cancel' ||
+      lowerText === 'ሰርዝ' ||
+      lowerText === 'stop' ||
+      lowerText === 'exit'
+    ) {
+      await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
+      await ctx.reply('❌ <b>Assessment cancelled.</b> You can restart anytime with /assessment.', {
+        parse_mode: 'HTML',
+        reply_markup: { remove_keyboard: true },
+      });
+      return;
+    }
+
+    // Map A, B, C, D (or 1, 2, 3, 4) to option index
+    let optionIndex = -1;
+    if (lowerText === 'a' || lowerText === '1' || lowerText.startsWith('a.') || lowerText.startsWith('a)')) {
+      optionIndex = 0;
+    } else if (lowerText === 'b' || lowerText === '2' || lowerText.startsWith('b.') || lowerText.startsWith('b)')) {
+      optionIndex = 1;
+    } else if (lowerText === 'c' || lowerText === '3' || lowerText.startsWith('c.') || lowerText.startsWith('c)')) {
+      optionIndex = 2;
+    } else if (lowerText === 'd' || lowerText === '4' || lowerText.startsWith('d.') || lowerText.startsWith('d)')) {
+      optionIndex = 3;
+    }
+
+    if (optionIndex !== -1) {
+      const qIndex = session.questionIndex ?? 0;
+      await handleAssessmentAnswer(ctx, qIndex, optionIndex);
+      return;
+    }
+
+    await ctx.reply('⚠️ Please reply by tapping <b>A</b>, <b>B</b>, <b>C</b>, or <b>D</b> (or tap ❌ Cancel Assessment).', {
+      parse_mode: 'HTML',
+    });
+    return;
+  } else if (session?.mode === 'assessment_awaiting_voice') {
+    const rawText = text.trim().toLowerCase();
+    if (rawText === 'skip' || rawText === '/skip' || rawText.includes('skip speaking') || rawText === '⏭️ skip speaking (written score only)') {
+      await skipAssessmentVoice(ctx);
+      return;
+    }
+    if (rawText === 'cancel' || rawText === '/cancel' || rawText === 'stop' || rawText === 'ሰርዝ') {
+      await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
+      await ctx.reply('❌ <b>Assessment cancelled.</b> You can restart anytime with /assessment.', {
+        parse_mode: 'HTML',
+        reply_markup: { remove_keyboard: true },
+      });
+      return;
+    }
+    await ctx.reply(
+      '🎙️ <b>Speaking Diagnostic in Progress:</b>\n\n' +
+      'Please hold down your Telegram microphone button to record and send your 30–60 second voice note in English, or tap /skip to complete with written scores only.',
+      {
+        parse_mode: 'HTML',
+      }
+    );
+    return;
   } else if (session?.mode === 'chat_conversation') {
     await handleChatConversation(ctx);
   } else if (session?.mode === 'translation') {
@@ -472,6 +537,9 @@ bot.on('callback_query:data', async (ctx) => {
         break;
       case 'close_assessment':
         await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
+        try {
+          await ctx.reply('❌ Assessment closed.', { reply_markup: { remove_keyboard: true } });
+        } catch (e) {}
         return ctx.deleteMessage();
       case 'referral':
       case 'referral_link':

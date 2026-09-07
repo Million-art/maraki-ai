@@ -453,7 +453,7 @@ export class ApiService {
     }
   }
 
-  async submitAssessment(payload: { telegramId: number; answers: Record<string, number>; speaking?: any; durationSeconds?: number }): Promise<any> {
+  async submitAssessment(payload: { telegramId: number; answers: Record<string, number>; questions?: any[]; speaking?: any; durationSeconds?: number }): Promise<any> {
     try {
       const { data } = await axios.post(`${this.backendUrl}/api/assessment/submit`, payload, { timeout: 30000 });
       return data;
