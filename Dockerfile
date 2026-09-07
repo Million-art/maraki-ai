@@ -5,11 +5,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy package manifests and install runtime-only dependencies without postinstall scripts
+# Copy package manifests, pre-pruned production dependencies, and compiled dist
 COPY package*.json ./
-RUN npm ci --only=production --ignore-scripts
-
-# Copy pre-compiled JavaScript dist directory
+COPY node_modules ./node_modules
 COPY dist ./dist
 
 EXPOSE 1000

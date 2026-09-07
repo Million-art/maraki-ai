@@ -25,10 +25,11 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Build TypeScript Natively on Runner
+      - name: Build TypeScript Natively & Prepare Production Dependencies
         run: |
           npm ci
           npm run build
+          npm prune --omit=dev
 
       - name: Log in to GitHub Container Registry (GHCR)
         uses: docker/login-action@v3
