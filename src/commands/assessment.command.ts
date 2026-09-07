@@ -2,12 +2,15 @@ import { Context, InlineKeyboard, InputFile } from 'grammy';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
+import axios from 'axios';
 import { VoiceValidationService, type VoiceValidationResult } from '../services/voice-validation.service.js';
 import { apiService } from '../services/api.service.js';
 import { getSession, setSession } from '../utils/redis.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+let cachedListeningAudioFileId: string | null = null;
 
 // Fallback questions if backend is temporarily unreachable
 const FALLBACK_QUESTIONS = [
@@ -259,21 +262,66 @@ async function renderQuestion(ctx: Context, index: number, questions: any[]) {
 
     // 2. Send genuine audio clip to Telegram chat
     try {
-      const candidatePaths = [
-        path.resolve(process.cwd(), 'assets/audio/q9_listening.mp3'),
-        path.resolve(__dirname, '../../assets/audio/q9_listening.mp3'),
-        path.resolve(__dirname, '../../../assets/audio/q9_listening.mp3'),
-        '/home/million/Documents/maraki/bot/assets/audio/q9_listening.mp3',
-      ];
-      const audioPath = candidatePaths.find((p) => fs.existsSync(p));
+      let audioSent = false;
 
-      if (audioPath) {
-        await ctx.replyWithAudio(new InputFile(audioPath), {
-          title: 'Listening Dialogue (Cafe Conversation)',
-          performer: 'Maraki AI Diagnostic',
-          caption: `🎧 <b>Question ${questionNumber} Audio:</b> Listen to this spoken English dialogue before selecting your answer below.`,
-          parse_mode: 'HTML',
-        });
+      // Tier 1: Fast-path via cached Telegram file_id
+      if (cachedListeningAudioFileId) {
+        try {
+          await ctx.replyWithAudio(cachedListeningAudioFileId, {
+            title: 'Listening Dialogue (Cafe Conversation)',
+            performer: 'Maraki AI Diagnostic',
+            caption: `🎧 <b>Question ${questionNumber} Audio:</b> Listen to this spoken English dialogue before selecting your answer below.`,
+            parse_mode: 'HTML',
+          });
+          audioSent = true;
+        } catch (cacheErr) {
+          cachedListeningAudioFileId = null; // Stale or invalid file_id, fallback to upload
+        }
+      }
+
+      if (!audioSent) {
+        const candidatePaths = [
+          path.resolve(process.cwd(), 'assets/audio/q9_listening.mp3'),
+          path.resolve(process.cwd(), '../assets/audio/q9_listening.mp3'),
+          path.resolve(__dirname, '../../assets/audio/q9_listening.mp3'),
+          path.resolve(__dirname, '../assets/audio/q9_listening.mp3'),
+          path.resolve(__dirname, '../../../assets/audio/q9_listening.mp3'),
+          '/app/assets/audio/q9_listening.mp3',
+          '/home/million/Documents/maraki/bot/assets/audio/q9_listening.mp3',
+        ];
+        const audioPath = candidatePaths.find((p) => fs.existsSync(p));
+
+        let audioInput: InputFile | null = null;
+        if (audioPath) {
+          audioInput = new InputFile(audioPath);
+        } else {
+          // Tier 2: Remote HTTP streaming fallback from backend API
+          const backendUrl = process.env.BACKEND_API_URL || 'http://localhost:3000';
+          const remoteAudioUrl = `${backendUrl.replace(/\/$/, '')}/api/assessment/audio/q9_listening.mp3`;
+          try {
+            console.log(`[Assessment] Local audio not found, streaming from backend: ${remoteAudioUrl}`);
+            const resp = await axios.get(remoteAudioUrl, { responseType: 'arraybuffer', timeout: 10000 });
+            if (resp.data && resp.data.byteLength > 0) {
+              audioInput = new InputFile(Buffer.from(resp.data), 'q9_listening.mp3');
+            }
+          } catch (fetchErr: any) {
+            console.error('[Assessment] Failed to fetch remote audio clip from backend:', fetchErr?.message);
+          }
+        }
+
+        if (audioInput) {
+          const sentMsg = await ctx.replyWithAudio(audioInput, {
+            title: 'Listening Dialogue (Cafe Conversation)',
+            performer: 'Maraki AI Diagnostic',
+            caption: `🎧 <b>Question ${questionNumber} Audio:</b> Listen to this spoken English dialogue before selecting your answer below.`,
+            parse_mode: 'HTML',
+          });
+          if (sentMsg?.audio?.file_id) {
+            cachedListeningAudioFileId = sentMsg.audio.file_id;
+          }
+        } else {
+          console.error('[Assessment] CRITICAL: No audio file found locally or remotely for listening question!');
+        }
       }
     } catch (err) {
       console.error('Failed to send audio clip:', err);

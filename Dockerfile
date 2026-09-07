@@ -9,6 +9,7 @@ ENV NODE_ENV=production
 COPY package*.json ./
 COPY node_modules ./node_modules
 COPY dist ./dist
+COPY assets ./assets
 
 EXPOSE 1000
 
