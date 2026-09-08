@@ -191,13 +191,12 @@ export async function sendCertificate(ctx: Context) {
     `⭐ <b>Overall Score:</b> ${score}/100\n` +
     `🛡️ <b>Report ID:</b> <code>${credId}</code>\n\n` +
     `✨ <i>Official English proficiency evaluation report from Maraki AI, evaluating real spoken fluency, grammatical accuracy, reading comprehension, and vocabulary mastery for Ethiopian learners.</i>`;
-    `🛡️ <b>Report ID:</b> ${credId}\n\n` +
+  `🛡️ <b>Report ID:</b> ${credId}\n\n` +
     `✨ <i>Official English proficiency evaluation report from Maraki AI, evaluating real spoken fluency, grammatical accuracy, reading comprehension, and vocabulary mastery for Ethiopian learners.</i>\n\n` +
     `🔗 <b>Shareable on LinkedIn, Telegram & Professional CVs</b>`;
 
   const keyboard = new InlineKeyboard()
     .url("🌐 Verify Online", `https://maraki-mini-app.vercel.app/verify/${credId}`)
-    .url("💼 Add to LinkedIn", `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=Maraki%20English%20Assessment%20Report%20(${levelName})&organizationName=Maraki%20AI&issueYear=2026&issueMonth=9&certId=${credId}`)
     .row()
     .text("📅 View 7-Day Plan", "view_weekly_plan")
     .text("⬅️ Back to Maraki Level", "level");
