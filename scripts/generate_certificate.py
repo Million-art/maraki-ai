@@ -7,21 +7,21 @@ from PIL import Image, ImageDraw, ImageFont
 import qrcode
 
 def generate_report(
-    name="Million",
-    level="B2",
-    score=79,
-    vocab=100,
-    grammar=70,
-    reading=63,
-    listening=100,
-    speaking=71,
-    cred_id="MRK-2026-5768",
+    name="Learner",
+    level="B1",
+    score=55,
+    vocab=55,
+    grammar=55,
+    reading=55,
+    listening=55,
+    speaking=55,
+    cred_id="MRK-2026-0000",
     output_path="sample_report.png"
 ):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     template_candidates = [
         os.path.join(script_dir, '../assets/images/report_template.png'),
-        '/home/million/Documents/maraki/bot/assets/images/report_template.png',
+        '/home/million/Documents/testing/bot/assets/images/report_template.png',
         '/home/million/.gemini/antigravity/brain/fcbcb8d9-7295-41d7-bf4d-e78c2815388f/.user_uploaded/media_1788775433555.png'
     ]
     template_path = next((p for p in template_candidates if os.path.exists(p)), None)
@@ -87,52 +87,47 @@ def generate_report(
     iw = ibbox[2] - ibbox[0]
     draw.text(((1024 - iw) // 2, 292), intro, fill=GRAY_TEXT, font=font_intro)
 
-    # 3. Recipient Name:
-    # If the user is "Million", the template's original typography is already pixel-perfect.
-    # For any other student name, redraw cleanly with matching typography and underline.
-    clean_name = name.strip() if name else "Million"
-    if clean_name.lower() != "million":
-        draw.rectangle([340, 310, 684, 365], fill=(251, 251, 251, 255))
-        nbbox = font_name.getbbox(clean_name)
-        nw = nbbox[2] - nbbox[0]
-        name_x = (1024 - nw) // 2
-        name_y = 316
-        draw.text((name_x, name_y), clean_name, fill=NAVY_DARK, font=font_name)
-        ul_len = max(nw + 60, 260)
-        ul_x = (1024 - ul_len) // 2
-        ul_y = name_y + (nbbox[3] - nbbox[1]) + 10
-        draw.line([ul_x, ul_y, ul_x + ul_len, ul_y], fill=(154, 210, 135), width=2)
+    # 3. Recipient Name: Always draw student's actual name dynamically
+    clean_name = name.strip() if name else "Learner"
+    draw.rectangle([340, 310, 684, 365], fill=(251, 251, 251, 255))
+    nbbox = font_name.getbbox(clean_name)
+    nw = nbbox[2] - nbbox[0]
+    name_x = (1024 - nw) // 2
+    name_y = 316
+    draw.text((name_x, name_y), clean_name, fill=NAVY_DARK, font=font_name)
+    ul_len = max(nw + 60, 260)
+    ul_x = (1024 - ul_len) // 2
+    ul_y = name_y + (nbbox[3] - nbbox[1]) + 10
+    draw.line([ul_x, ul_y, ul_x + ul_len, ul_y], fill=(154, 210, 135), width=2)
 
-    # 4. CEFR Level Badge & Description:
-    # If not B2, update the pill and description
-    clean_level = level.upper().strip() if level else "B2"
-    if clean_level != "B2":
-        cefr_descriptions = {
-            'A1': 'BEGINNER',
-            'A2': 'ELEMENTARY',
-            'B1': 'INTERMEDIATE',
-            'B2': 'UPPER INTERMEDIATE',
-            'C1': 'ADVANCED',
-            'C2': 'MASTERY'
-        }
-        level_desc = cefr_descriptions.get(clean_level, 'INTERMEDIATE')
-        spaced_desc = "  ".join(level_desc.split())
+    # 4. CEFR Level Badge & Description: Always draw student's actual level dynamically
+    clean_level = level.upper().strip() if level else "B1"
+    cefr_descriptions = {
+        'A1': 'BEGINNER',
+        'A2': 'ELEMENTARY',
+        'B1': 'INTERMEDIATE',
+        'B2': 'UPPER INTERMEDIATE',
+        'C1': 'ADVANCED',
+        'C2': 'MASTERY'
+    }
+    level_desc = cefr_descriptions.get(clean_level, 'INTERMEDIATE')
+    spaced_desc = "  ".join(level_desc.split())
 
-        draw.rectangle([420, 435, 604, 520], fill=(251, 251, 251, 255))
+    draw.rectangle([420, 435, 604, 520], fill=(251, 251, 251, 255))
 
-        pill_w, pill_h = 114, 42
-        pill_x = (1024 - pill_w) // 2
-        pill_y = 442
-        draw.rounded_rectangle([pill_x, pill_y, pill_x + pill_w, pill_y + pill_h], radius=21, fill=GREEN_PILL)
+    pill_w, pill_h = 114, 42
+    pill_x = (1024 - pill_w) // 2
+    pill_y = 442
+    draw.rounded_rectangle([pill_x, pill_y, pill_x + pill_w, pill_y + pill_h], radius=21, fill=GREEN_PILL)
 
-        pbbox = font_pill.getbbox(clean_level)
-        pw = pbbox[2] - pbbox[0]
-        ph = pbbox[3] - pbbox[1]
-        draw.text((pill_x + (pill_w - pw) // 2, pill_y + (pill_h - ph) // 2 - 2), clean_level, fill=WHITE, font=font_pill)
+    pbbox = font_pill.getbbox(clean_level)
+    pw = pbbox[2] - pbbox[0]
+    ph = pbbox[3] - pbbox[1]
+    draw.text((pill_x + (pill_w - pw) // 2, pill_y + (pill_h - ph) // 2 - 2), clean_level, fill=WHITE, font=font_pill)
 
-        ldbbox = font_pill_sub.getbbox(spaced_desc)
-        ldw = ldbbox[2] - ldbbox[0]
-        draw.text(((1024 - ldw) // 2, pill_y + pill_h + 10), spaced_desc, fill=GRAY_DARK, font=font_pill_sub)
+    ldbbox = font_pill_sub.getbbox(spaced_desc)
+    ldw = ldbbox[2] - ldbbox[0]
+    draw.text(((1024 - ldw) // 2, pill_y + pill_h + 10), spaced_desc, fill=GRAY_DARK, font=font_pill_sub)
 
     # 5. Clean "Verified Certificate" / "maraki.ai" -> "Verified Assessment Report" & "Scan QR to verify on Maraki App"
     draw.rectangle([182, 544, 330, 576], fill=(250, 251, 250, 255))
@@ -154,15 +149,15 @@ def generate_report(
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--name', default='Million')
-    parser.add_argument('--level', default='B2')
-    parser.add_argument('--score', type=int, default=79)
-    parser.add_argument('--vocab', type=int, default=100)
-    parser.add_argument('--grammar', type=int, default=70)
-    parser.add_argument('--reading', type=int, default=63)
-    parser.add_argument('--listening', type=int, default=100)
-    parser.add_argument('--speaking', type=int, default=71)
-    parser.add_argument('--cred_id', default='MRK-2026-5768')
+    parser.add_argument('--name', default='Learner')
+    parser.add_argument('--level', default='B1')
+    parser.add_argument('--score', type=int, default=55)
+    parser.add_argument('--vocab', type=int, default=55)
+    parser.add_argument('--grammar', type=int, default=55)
+    parser.add_argument('--reading', type=int, default=55)
+    parser.add_argument('--listening', type=int, default=55)
+    parser.add_argument('--speaking', type=int, default=55)
+    parser.add_argument('--cred_id', default='MRK-2026-0000')
     parser.add_argument('--output', default='sample_report.png')
     args = parser.parse_args()
 

@@ -131,10 +131,10 @@ export async function sendCertificate(ctx) {
     const userId = ctx.from.id;
     const fullName = [ctx.from.first_name, ctx.from.last_name].filter(Boolean).join(' ') || 'Learner';
     const report = await apiService.getStudentMarakiLevel(userId);
-    const levelName = report?.cefrLevel && report.cefrLevel !== 'UNTESTED' ? report.cefrLevel : 'B2';
-    const score = report?.overallScore && report.overallScore > 0 ? report.overallScore : 79;
+    const levelName = report?.cefrLevel && report.cefrLevel !== 'UNTESTED' ? report.cefrLevel : 'B1';
+    const score = report?.overallScore && report.overallScore > 0 ? report.overallScore : 55;
     const credId = `MRK-2026-${userId.toString().slice(-4)}`;
-    const skills = report?.skills || { vocabulary: 100, grammar: 70, reading: 63, listening: 100, speaking: 71 };
+    const skills = report?.skills || { vocabulary: 55, grammar: 55, reading: 55, listening: 55, speaking: 55 };
     // Dynamically generate personalized certificate image with user's name & Maraki brand colors
     const userCertPath = path.resolve('/tmp', `cert_${userId}.png`);
     try {

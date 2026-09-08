@@ -150,10 +150,10 @@ export async function sendCertificate(ctx: Context) {
   const fullName = [ctx.from.first_name, ctx.from.last_name].filter(Boolean).join(' ') || 'Learner';
 
   const report = await apiService.getStudentMarakiLevel(userId);
-  const levelName = report?.cefrLevel && report.cefrLevel !== 'UNTESTED' ? report.cefrLevel : 'B2';
-  const score = report?.overallScore && report.overallScore > 0 ? report.overallScore : 79;
+  const levelName = report?.cefrLevel && report.cefrLevel !== 'UNTESTED' ? report.cefrLevel : 'B1';
+  const score = report?.overallScore && report.overallScore > 0 ? report.overallScore : 55;
   const credId = `MRK-2026-${userId.toString().slice(-4)}`;
-  const skills = report?.skills || { vocabulary: 100, grammar: 70, reading: 63, listening: 100, speaking: 71 };
+  const skills = report?.skills || { vocabulary: 55, grammar: 55, reading: 55, listening: 55, speaking: 55 };
 
   // Dynamically generate personalized certificate image with user's name & Maraki brand colors
   const userCertPath = path.resolve('/tmp', `cert_${userId}.png`);
@@ -161,7 +161,7 @@ export async function sendCertificate(ctx: Context) {
     const candidateScriptPaths = [
       path.resolve(process.cwd(), 'scripts/generate_certificate.py'),
       path.resolve(__dirname, '../../scripts/generate_certificate.py'),
-      '/home/million/Documents/maraki/bot/scripts/generate_certificate.py',
+      '/home/million/Documents/testing/bot/scripts/generate_certificate.py',
     ];
     const script = candidateScriptPaths.find((p) => fs.existsSync(p));
 
@@ -207,7 +207,7 @@ export async function sendCertificate(ctx: Context) {
       userCertPath,
       path.resolve(process.cwd(), 'assets/images/sample_certificate.jpg'),
       path.resolve(__dirname, '../../assets/images/sample_certificate.jpg'),
-      '/home/million/Documents/maraki/bot/assets/images/sample_certificate.jpg',
+      '/home/million/Documents/testing/bot/assets/images/sample_certificate.jpg',
     ];
     const imagePath = candidatePaths.find((p) => fs.existsSync(p));
 

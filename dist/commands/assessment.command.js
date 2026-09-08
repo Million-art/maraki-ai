@@ -497,6 +497,9 @@ export async function handleAssessmentVoiceSubmission(ctx) {
     await setSession(userId, { mode: null, timestamp: Date.now() });
     const payload = {
         telegramId: userId,
+        firstName: ctx.from.first_name,
+        lastName: ctx.from.last_name,
+        username: ctx.from.username,
         answers: session.answers || {},
         questions: session.questions || undefined,
         speaking: {
@@ -534,6 +537,9 @@ export async function skipAssessmentVoice(ctx) {
     await setSession(userId, { mode: null, timestamp: Date.now() });
     const payload = {
         telegramId: userId,
+        firstName: ctx.from.first_name,
+        lastName: ctx.from.last_name,
+        username: ctx.from.username,
         answers: session?.answers || {},
         questions: session?.questions || undefined,
         speaking: null,

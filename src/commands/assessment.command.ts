@@ -3,11 +3,14 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
 import axios from 'axios';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { VoiceValidationService, type VoiceValidationResult } from '../services/voice-validation.service.js';
 import { DynamicAssessmentService } from '../services/dynamic-assessment.service.js';
 import { apiService } from '../services/api.service.js';
 import { getSession, setSession } from '../utils/redis.js';
 
+const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -541,6 +544,9 @@ export async function handleAssessmentVoiceSubmission(ctx: Context) {
 
   const payload = {
     telegramId: userId,
+    firstName: ctx.from.first_name,
+    lastName: ctx.from.last_name,
+    username: ctx.from.username,
     answers: session.answers || {},
     questions: session.questions || undefined,
     speaking: {
@@ -581,6 +587,9 @@ export async function skipAssessmentVoice(ctx: Context) {
 
   const payload = {
     telegramId: userId,
+    firstName: ctx.from.first_name,
+    lastName: ctx.from.last_name,
+    username: ctx.from.username,
     answers: session?.answers || {},
     questions: session?.questions || undefined,
     speaking: null,
@@ -653,6 +662,52 @@ export async function sendMarakiLevelReport(ctx: Context, report: any) {
     .row()
     .text('🔥 Daily Challenge', 'daily_challenge')
     .text('🔄 Retest Level', 'start_assessment');
+
+  const fullName = [ctx.from?.first_name, ctx.from?.last_name].filter(Boolean).join(' ') || 'Learner';
+  const credId = `MRK-2026-${ctx.from?.id?.toString().slice(-4) || '0000'}`;
+  const userId = ctx.from?.id || 'unknown';
+
+  // Dynamically generate personalized certificate image with user's name & Maraki brand colors
+  const userCertPath = path.resolve('/tmp', `cert_${userId}.png`);
+  try {
+    const candidateScriptPaths = [
+      path.resolve(process.cwd(), 'scripts/generate_certificate.py'),
+      path.resolve(__dirname, '../../scripts/generate_certificate.py'),
+      '/home/million/Documents/testing/bot/scripts/generate_certificate.py',
+    ];
+    const script = candidateScriptPaths.find((p) => fs.existsSync(p));
+
+    if (script) {
+      await execFileAsync('python3', [
+        script,
+        '--name', fullName,
+        '--level', levelName,
+        '--score', overall.toString(),
+        '--vocab', (skills.vocabulary || 55).toString(),
+        '--grammar', (skills.grammar || 55).toString(),
+        '--reading', (skills.reading || 55).toString(),
+        '--listening', (skills.listening || 55).toString(),
+        '--speaking', (skills.speaking || 55).toString(),
+        '--cred_id', credId,
+        '--output', userCertPath,
+      ]);
+    }
+  } catch (err) {
+    console.error('Dynamic cert generation error:', err);
+  }
+
+  try {
+    if (fs.existsSync(userCertPath)) {
+      await ctx.replyWithPhoto(new InputFile(userCertPath), {
+        caption: scorecard,
+        parse_mode: 'HTML',
+        reply_markup: keyboard,
+      });
+      return;
+    }
+  } catch (err) {
+    console.error('Failed to send certificate photo:', err);
+  }
 
   await ctx.reply(scorecard, { parse_mode: 'HTML', reply_markup: keyboard });
 }
