@@ -3,6 +3,7 @@ import { apiService } from "../services/api.service.js";
 import { updateDailyStreak } from "../utils/streak.util.js";
 import { completePlanDay, getPlanProgress } from "../utils/plan-progress.util.js";
 import { DynamicLessonService, DynamicLesson } from "../services/dynamic-lesson.service.js";
+import * as googleTTS from "google-tts-api";
 
 export interface PlanLessonContent {
   title: string;
@@ -608,6 +609,28 @@ export async function startPlanLesson(ctx: Context, dayNumber: number = 1) {
     keyboard.text(opt, `plan_ans_${weakness}_${dayNumber}_${idx}`).row();
   });
   keyboard.text("📅 Back to 7-Day Plan", "view_weekly_plan").text("⬅️ Maraki Level", "level");
+
+  // Send TTS Voice Note for Listening lessons
+  if (weakness === "Listening") {
+    try {
+      let textToSpeak = lesson.passage || lesson.question;
+      // Extract quoted text if it's asking to interpret a specific phrase
+      const quoteMatch = textToSpeak.match(/'([^']+)'/);
+      if (quoteMatch && quoteMatch[1] && quoteMatch[1].length > 5) {
+        textToSpeak = quoteMatch[1];
+      }
+      if (textToSpeak.length > 200) textToSpeak = textToSpeak.substring(0, 190);
+
+      const url = googleTTS.getAudioUrl(textToSpeak, {
+        lang: 'en-US',
+        slow: false,
+        host: 'https://translate.google.com',
+      });
+      await ctx.replyWithVoice(url);
+    } catch (e) {
+      console.error('Failed to send TTS Voice Note', e);
+    }
+  }
 
   if (ctx.callbackQuery) {
     try {
