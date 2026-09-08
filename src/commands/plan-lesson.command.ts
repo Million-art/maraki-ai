@@ -612,18 +612,26 @@ export async function startPlanLesson(ctx: Context, dayNumber: number = 1) {
       `<i>"${lesson.passage}"</i>\n\n`;
   }
 
-  message += `❓ <b>Practice Question:</b>\n<b>${lesson.question}</b>`;
+  message += `❓ <b>Practice Question:</b>\n<b>${lesson.question}</b>\n\n`;
+  
+  lesson.options.forEach((opt, idx) => {
+    const letter = ['A', 'B', 'C'][idx];
+    const cleanOpt = opt.replace(/^[A-C]\)\s*/, '');
+    message += `<b>${letter})</b> ${cleanOpt}\n\n`;
+  });
 
   // Provide interactive voice recording prompt for Speaking lessons
   if (weakness === "Speaking") {
     message +=
-      `\n\n🎙️ <i>Tip: Read the correct option aloud into your microphone or voice notes to build mouth muscle memory!</i>`;
+      `🎙️ <i>Tip: Read the correct option aloud into your microphone or voice notes to build mouth muscle memory!</i>`;
   }
 
   const keyboard = new InlineKeyboard();
   lesson.options.forEach((opt, idx) => {
-    keyboard.text(opt, `plan_ans_${weakness}_${dayNumber}_${idx}`).row();
+    const letter = ['A', 'B', 'C'][idx];
+    keyboard.text(letter, `plan_ans_${weakness}_${dayNumber}_${idx}`);
   });
+  keyboard.row();
   keyboard.text("📅 Back to 7-Day Plan", "view_weekly_plan").text("⬅️ Maraki Level", "level");
 
   // Send TTS Voice Note for Listening lessons
