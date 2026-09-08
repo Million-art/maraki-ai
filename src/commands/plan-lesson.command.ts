@@ -330,102 +330,109 @@ export const LESSON_DATABASE: Record<string, Record<number, PlanLessonContent>> 
 
   Listening: {
     1: {
-      title: "Listening Comprehension",
-      topic: "Connected Speech & Word Reductions",
+      title: "Connected Speech & Natural Reductions",
+      topic: "Listening to Fast Native Audio Snippets",
       duration: "5 mins",
-      strategy: "In natural English dialogues, function words reduce: 'going to' -> /gənə/, 'want to' -> /wɑnə/, 'could have' -> /kʊdəv/. Training your ear to hear reductions prevents missing key details.\n\n🇪🇹 <b>የአማርኛ ማስታወሻ:</b> ፈጣን አነጋገር ያላቸው ሰዎች ቃላትን አያይዘው ስለሚናገሩ ቅነሳዎችን (reductions) መልመድ ያስፈልጋል።",
-      question: "When a speaker quickly says 'I could've called ya', what words are they actually saying?",
+      strategy: "Native speakers reduce function words: 'going to' becomes /gənə/, 'want to' becomes /wɑnə/. Listen closely to the voice note to catch these connected speech patterns.",
+      passage: "I'm gonna go to the store because I wanna buy some coffee. I could've called ya earlier, but I forgot.",
+      question: "Which of the following exact reduced phrases was spoken in the audio?",
       options: [
-        "A) I could of call you",
-        "B) I could have called you",
-        "C) I can have called you",
+        "A) I'm going to go to the store because I want to buy",
+        "B) I'm gonna go to the store because I wanna buy",
+        "C) I gonna go to the store because I want to buy",
       ],
       correctIndex: 1,
-      explanation: "'Could've' is the spoken reduction of 'could have', and 'ya' is the unstressed reduction of 'you'.",
+      explanation: "The audio clearly uses the reductions 'gonna' (going to) and 'wanna' (want to), which is very common in fast native speech.",
     },
     2: {
-      title: "Listening Comprehension",
-      topic: "The American Flap T /d/ Sound",
+      title: "Conversational Pragmatics",
+      topic: "Tone and 'Do you mind...?'",
       duration: "5 mins",
-      strategy: "In American English, a 't' between two vowels (like in 'water', 'city', 'meeting', 'data') is pronounced as a quick flap /d/ ('wader', 'cidy', 'meeding'). Recognizing this avoids confusion in international zoom meetings.",
-      question: "If a speaker asks 'Have you seen the latest quarter ledder?', what are they referring to?",
+      strategy: "When asked 'Do you mind...?', answering 'No, not at all' means you agree and it is fine. Listen to the tone of the speaker to determine their intention and politeness.",
+      passage: "Hi team, would you mind if we pushed our daily sync back to 3:00 PM today? I'm running a bit behind on this report.",
+      question: "Based on the speaker's tone and phrasing, what is their intention?",
       options: [
-        "A) A wooden ladder for climbing",
-        "B) A quarterly business letter or newsletter",
-        "C) A leather jacket",
+        "A) They are angrily canceling the meeting",
+        "B) They are politely asking for permission to delay the meeting",
+        "C) They are demanding everyone stay until 3:00 PM",
       ],
       correctIndex: 1,
-      explanation: "With the flap T, 'letter' sounds like 'ledder'.",
+      explanation: "'Would you mind if we...' is a polite, pragmatic way to ask for permission to change a schedule.",
     },
     3: {
-      title: "Listening Comprehension",
-      topic: "Polite Indirect Requests & Pragmatics",
+      title: "Telephone English & Fast Instructions",
+      topic: "Extracting Action Items from Voicemails",
       duration: "5 mins",
-      strategy: "In professional English, negative-sounding questions are often polite requests: 'I was wondering if you might...' or 'Would you mind checking...?' Answering 'No, not at all' signals enthusiastic agreement.",
-      question: "If a client says 'Would you mind if we moved our sync to 3 PM?', how should you agree to the move?",
+      strategy: "When listening to fast voicemails, don't try to understand every word. Focus on imperative verbs (review, send, call) to extract the required action items.",
+      passage: "Hi, it's Sarah from accounting. Before you leave today, I need you to review the Q3 budget, approve the final draft, and call the software vendor to confirm the license renewal.",
+      question: "According to the voicemail, what are the 3 required action items?",
       options: [
-        "A) 'Yes, I mind.'",
-        "B) 'No, not at all, 3 PM works perfectly.'",
-        "C) 'Yes, absolutely, I agree with your objection.'",
+        "A) Review the budget, approve the draft, and call the vendor",
+        "B) Call Sarah, write a new budget, and buy software",
+        "C) Review the Q3 budget, leave early, and email the vendor",
       ],
-      correctIndex: 1,
-      explanation: "'No, not at all' indicates you have no objection, meaning you happily accept the change.",
+      correctIndex: 0,
+      explanation: "The three action verbs were explicitly stated: 'review', 'approve', and 'call'.",
     },
     4: {
-      title: "Listening Comprehension",
-      topic: "Spoken Numbers, Dates & Financial Figures",
+      title: "Critical Numbers, Dates & Time Traps",
       duration: "5 mins",
-      strategy: "Listen carefully for the stress difference between '-teen' (fourTEEN: 14) and '-ty' (FORty: 40). In phone calls and financial presentations, mishearing this is a common source of costly errors.",
-      question: "In spoken financial reports, which syllable carries primary stress in the number 17?",
+      topic: "Numerical Dictation",
+      strategy: "Listen carefully to the stress on numbers. 'FourTEEN' stresses the end, while 'FORty' stresses the beginning. Pay close attention to the exact financial figures spoken.",
+      passage: "Our Q3 revenue was fourteen million dollars, which is a significant drop from the forty million we projected in January.",
+      question: "Based on the fast numerical audio statement, what was the actual Q3 revenue?",
       options: [
-        "A) The first syllable ('SEV-en-teen')",
-        "B) The final syllable ('seven-TEEN')",
-        "C) Both syllables have equal high pitch",
+        "A) 40 million dollars",
+        "B) 14 million dollars",
+        "C) 4 million dollars",
       ],
       correctIndex: 1,
-      explanation: "Numbers ending in '-teen' carry stress on the suffix (sevenTEEN), whereas multiples of ten stress the first syllable (SEVenty).",
+      explanation: "The speaker said 'fourteen' (14) million was the actual revenue, while 'forty' (40) was the projection.",
     },
     5: {
-      title: "Listening Comprehension",
-      topic: "Detecting Hesitation & Implied Disagreement",
+      title: "Ambient Noise & Real-World Background Listening",
+      topic: "Filtering out distractions",
       duration: "5 mins",
-      strategy: "English speakers often couch disagreement in polite hesitation phrases: 'Well, to be honest...', 'I'm not entirely convinced that...', 'That's one way to look at it, but...'. Don't mistake this for agreement.",
-      question: "A teammate says: 'Well, on paper the schedule looks great, but to be completely candid, QA testing is notoriously tight.' What are they expressing?",
+      strategy: "In real-world scenarios like airports or cafes, background noise can obscure speech. Focus entirely on the nouns and numbers that matter, ignoring the surrounding chatter.",
+      passage: "Attention passengers. Flight ET 704 to Addis Ababa is now boarding at Gate 14B. Please have your boarding passes ready.",
+      question: "Despite the ambient background noise, which flight gate was announced?",
       options: [
-        "A) Complete confidence that testing will finish ahead of time",
-        "B) Skepticism and concern that the schedule may face delays",
-        "C) A desire to cancel QA testing entirely",
+        "A) Gate 40D",
+        "B) Gate 14B",
+        "C) Gate 41B",
       ],
       correctIndex: 1,
-      explanation: "'To be completely candid' combined with 'notoriously tight' signals real concern and polite hesitation.",
+      explanation: "The announcer clearly stated 'Gate 14B'.",
     },
     6: {
-      title: "Listening Comprehension",
-      topic: "Ambient Noise & Multi-Speaker Turn Taking",
+      title: "2-Minute International News Podcast Comprehension",
+      topic: "Global Economy Report",
       duration: "6 mins",
-      strategy: "Focus on lexical keywords and speaker pitch changes when listening to multi-speaker audio with background noise.",
-      question: "In a rapid meeting exchange, Speaker A says: 'I'll take the lead on documentation,' and Speaker B replies: 'By all means!' What did Speaker B mean?",
+      strategy: "When listening to news reports or podcasts, identify the 'who, what, where, and why'. Listen to the following snippet from a global economy report.",
+      passage: "Global markets rallied significantly today as European inflation numbers finally dropped below three percent for the first time this fiscal year, signaling a potential end to aggressive rate hikes.",
+      question: "According to the podcast snippet, what is the primary reason global markets rallied?",
       options: [
-        "A) 'Definitely do it, I encourage you.'",
-        "B) 'Under no circumstances should you do it.'",
-        "C) 'Wait for everyone else to approve first.'",
+        "A) Aggressive rate hikes were increased",
+        "B) European inflation numbers dropped below 3%",
+        "C) The fiscal year just ended",
       ],
-      correctIndex: 0,
-      explanation: "'By all means' is an idiomatic affirmative expression meaning 'certainly' or 'go right ahead'.",
+      correctIndex: 1,
+      explanation: "The report explicitly links the market rally to European inflation numbers dropping below three percent.",
     },
     7: {
-      title: "Listening Comprehension",
-      topic: "Weekly Listening Benchmark & Audio Retest",
+      title: "Weekly Retest & Listening Diagnostic",
+      topic: "Comprehensive Listening Benchmark",
       duration: "8 mins",
-      strategy: "Evaluate your spoken English comprehension across reductions, pragmatics, and rapid dialogue.",
-      question: "A manager says: 'I could've sworn we had forty units left, but we're down to fourteen.' What is the manager expressing?",
+      strategy: "It's time for your weekly retest! Apply all the skills you've practiced: recognizing reductions, filtering ambient noise, and extracting action items.",
+      passage: "I'm gonna need you to touch base with the client by 4:15 PM regarding the fourteen missing shipments.",
+      question: "What is the key action required in this final diagnostic statement?",
       options: [
-        "A) Surprise that inventory dropped from 40 down to 14",
-        "B) Confidence that inventory rose from 14 up to 40",
-        "C) Relief that inventory remained completely unchanged",
+        "A) Contact the client by 4:15 PM about 14 shipments",
+        "B) Contact the client by 4:50 PM about 40 shipments",
+        "C) Ship 14 items to the client tomorrow",
       ],
       correctIndex: 0,
-      explanation: "'Could have sworn' indicates surprise, contrasting expected 'forty' (40) with actual 'fourteen' (14).",
+      explanation: "'Gonna' (going to), '4:15', and 'fourteen' were the key details extracted from the rapid speech.",
     },
   },
 
@@ -541,6 +548,9 @@ export async function startPlanLesson(ctx: Context, dayNumber: number = 1) {
   const report = await apiService.getStudentMarakiLevel(userId);
   const weakness = (report?.primaryWeakness as string) || "Reading";
   const levelName = report?.cefrLevel && report.cefrLevel !== 'UNTESTED' ? report.cefrLevel : 'B1';
+  
+  const plan = report?.recommendedPlan;
+  const dayPlan = plan ? plan[`day${dayNumber}`] : null;
 
   // 1. Check if user already has an active AI lesson saved for this day in PostgreSQL DB
   const dbProgress = await apiService.getStudentPlanProgress(userId);
@@ -557,7 +567,13 @@ export async function startPlanLesson(ctx: Context, dayNumber: number = 1) {
   // 2. If no cached active lesson, try generating a fresh one via cost-efficient Gemini
   if (!lesson) {
     try {
-      const generated = await DynamicLessonService.generateLesson(weakness, levelName, dayNumber);
+      const generated = await DynamicLessonService.generateLesson(
+        weakness, 
+        levelName, 
+        dayNumber, 
+        dayPlan?.title, 
+        dayPlan?.task
+      );
       if (generated) {
         lesson = {
           ...generated,

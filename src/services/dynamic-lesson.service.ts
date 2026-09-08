@@ -21,7 +21,9 @@ export class DynamicLessonService {
   static async generateLesson(
     weakness: string,
     cefrLevel: string = 'B1',
-    dayNumber: number = 1
+    dayNumber: number = 1,
+    dayTitle?: string,
+    dayTask?: string
   ): Promise<DynamicLesson | null> {
     const prompt = `
 You are Maraki AI's expert Ethiopian English curriculum designer.
@@ -31,9 +33,11 @@ Learner Profile:
 - Diagnosed Skill Weakness: ${weakness}
 - Target CEFR Benchmark: ${cefrLevel}
 - 7-Day Plan Milestone: Day ${dayNumber} of 7
+${dayTitle ? `- Required Lesson Title: ${dayTitle}` : ''}
+${dayTask ? `- Required Lesson Task: ${dayTask}` : ''}
 
 Requirements:
-1. Topic: Highly focused on common Ethiopian English learner friction points (Amharic-to-English translation errors, stative verbs, collocations, false friends, connected speech reductions, pronunciation/spelling traps).
+1. Topic Alignment: You MUST make the lesson content exactly match the Required Lesson Title and Task above.
 2. Setting / Context: Real Ethiopian business, tech, education, or cultural settings (Addis Ababa, Telebirr, Bole, Ethiopian Airlines, regional trade, coffee cooperatives, Hawassa/Jimma universities, tech hubs, GERD).
 3. Pedagogy:
    - strategy: Clear, punchy explanation of the rule and why Ethiopian learners make the mistake.
