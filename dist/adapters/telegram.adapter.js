@@ -164,25 +164,49 @@ bot.command('stop_daily', async (ctx) => {
     await setNotifyPreference(ctx.from.id, 'no');
     await ctx.reply(`🔕 <b>Daily challenge notifications stopped.</b>\n\nYou can always re-enable them by clicking <b>🔥 Daily Challenge</b> and opting in again.`, { parse_mode: 'HTML' });
 });
-// Utility to extract File IDs for media
+// Utility to extract File IDs for media (GIFs, Animations, Videos, Documents, Photos)
 bot.on('message:animation', async (ctx) => {
-    if (ctx.from?.id === ADMIN_TELEGRAM_ID) {
-        const fileId = ctx.message.animation.file_id;
-        console.log('\n====================================');
-        console.log('🎬 ANIMATION FILE ID RECEIVED:');
-        console.log(fileId);
-        console.log('====================================\n');
-        await ctx.reply(`Here is the file_id for this GIF:\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
-    }
+    const fileId = ctx.message.animation.file_id;
+    console.log('\n====================================');
+    console.log('🎬 ANIMATION / GIF FILE ID RECEIVED:');
+    console.log(`User: ${ctx.from?.id} (@${ctx.from?.username || 'no_user'})`);
+    console.log(fileId);
+    console.log('====================================\n');
+    await ctx.reply(`🎬 <b>Here is the file_id for this GIF:</b>\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
+});
+bot.on('message:document', async (ctx) => {
+    const doc = ctx.message.document;
+    const fileId = doc.file_id;
+    const fileName = doc.file_name || 'file';
+    const mimeType = doc.mime_type || '';
+    const isGif = fileName.toLowerCase().endsWith('.gif') || mimeType.includes('gif');
+    console.log('\n====================================');
+    console.log(`📄 DOCUMENT FILE ID RECEIVED (${fileName}, ${mimeType}):`);
+    console.log(`User: ${ctx.from?.id} (@${ctx.from?.username || 'no_user'})`);
+    console.log(fileId);
+    console.log('====================================\n');
+    const header = isGif ? '🎬 <b>Here is the file_id for this GIF:</b>' : `📄 <b>Here is the file_id for ${fileName}:</b>`;
+    await ctx.reply(`${header}\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
 });
 bot.on('message:video', async (ctx) => {
-    if (ctx.from?.id === ADMIN_TELEGRAM_ID) {
-        const fileId = ctx.message.video.file_id;
+    const fileId = ctx.message.video.file_id;
+    console.log('\n====================================');
+    console.log('🎥 VIDEO FILE ID RECEIVED:');
+    console.log(`User: ${ctx.from?.id} (@${ctx.from?.username || 'no_user'})`);
+    console.log(fileId);
+    console.log('====================================\n');
+    await ctx.reply(`🎥 <b>Here is the exact VIDEO file_id:</b>\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
+});
+bot.on('message:photo', async (ctx) => {
+    const photos = ctx.message.photo;
+    const fileId = photos[photos.length - 1]?.file_id;
+    if (fileId) {
         console.log('\n====================================');
-        console.log('🎥 VIDEO FILE ID RECEIVED:');
+        console.log('📸 PHOTO FILE ID RECEIVED:');
+        console.log(`User: ${ctx.from?.id} (@${ctx.from?.username || 'no_user'})`);
         console.log(fileId);
         console.log('====================================\n');
-        await ctx.reply(`Here is the exact VIDEO file_id:\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
+        await ctx.reply(`📸 <b>Here is the PHOTO file_id:</b>\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
     }
 });
 // Catch all text messages
