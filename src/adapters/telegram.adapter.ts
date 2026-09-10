@@ -174,17 +174,8 @@ bot.command('stop_daily', async (ctx) => {
   );
 });
 
-// Utility to extract File IDs for media
 // Utility to extract File IDs for media (GIFs, Animations, Videos, Documents, Photos)
 bot.on('message:animation', async (ctx) => {
-  if (ctx.from?.id === ADMIN_TELEGRAM_ID) {
-    const fileId = ctx.message.animation.file_id;
-    console.log('\n====================================');
-    console.log('🎬 ANIMATION FILE ID RECEIVED:');
-    console.log(fileId);
-    console.log('====================================\n');
-    await ctx.reply(`Here is the file_id for this GIF:\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
-  }
   const fileId = ctx.message.animation.file_id;
   console.log('\n====================================');
   console.log('🎬 ANIMATION / GIF FILE ID RECEIVED:');
@@ -212,8 +203,6 @@ bot.on('message:document', async (ctx) => {
 });
 
 bot.on('message:video', async (ctx) => {
-  if (ctx.from?.id === ADMIN_TELEGRAM_ID) {
-    const fileId = ctx.message.video.file_id;
   const fileId = ctx.message.video.file_id;
   console.log('\n====================================');
   console.log('🎥 VIDEO FILE ID RECEIVED:');
@@ -228,12 +217,10 @@ bot.on('message:photo', async (ctx) => {
   const fileId = photos[photos.length - 1]?.file_id;
   if (fileId) {
     console.log('\n====================================');
-    console.log('🎥 VIDEO FILE ID RECEIVED:');
     console.log('📸 PHOTO FILE ID RECEIVED:');
     console.log(`User: ${ctx.from?.id} (@${ctx.from?.username || 'no_user'})`);
     console.log(fileId);
     console.log('====================================\n');
-    await ctx.reply(`Here is the exact VIDEO file_id:\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
     await ctx.reply(`📸 <b>Here is the PHOTO file_id:</b>\n\n<code>${fileId}</code>`, { parse_mode: 'HTML' });
   }
 });
