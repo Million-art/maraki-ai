@@ -9,6 +9,7 @@ import { VoiceValidationService } from '../services/voice-validation.service.js'
 import { DynamicAssessmentService } from '../services/dynamic-assessment.service.js';
 import { apiService } from '../services/api.service.js';
 import { getSession, setSession } from '../utils/redis.js';
+import { getPhotoScorecard, getDetailedDiagnosisMessage, getFullTextMessage, getReportKeyboard, } from '../utils/report-formatter.util.js';
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -564,52 +565,28 @@ export async function skipAssessmentVoice(ctx) {
 /**
  * Format and send the killer feature: "🎯 YOUR MARAKI LEVEL" Card
  */
+/**
+ * Format and send the killer feature: "🎯 MARAKI LEVEL REPORT" Card with Doctor's Diagnosis & Prescription
+ */
 export async function sendMarakiLevelReport(ctx, report) {
     if (!report) {
-        return ctx.reply('⚠️ Could not generate Maraki Level card. Try again with /level.');
+        return ctx.reply('⚠️ Could not generate Maraki Level report. Try again with /level.');
     }
     const levelName = report.cefrLevel || 'B1';
     const overall = report.overallScore || 55;
     const skills = report.skills || { vocabulary: 55, grammar: 55, reading: 55, listening: 55, speaking: null };
-    const weakness = report.primaryWeakness || 'Speaking';
     const speakingScoreNum = typeof skills?.speaking === 'number' ? skills.speaking : Number(skills?.speaking);
     const isSpeakingTested = Boolean(report.speakingTested !== false &&
         skills?.speaking !== null &&
         skills?.speaking !== undefined &&
         !isNaN(speakingScoreNum));
-    const speakingLine = isSpeakingTested
-        ? `🗣️ Speaking:     ${renderBar(speakingScoreNum)} <b>${speakingScoreNum}</b>/100\n`
-        : `🗣️ Speaking:     ⏭️ <i>Skipped (Untested)</i>\n`;
-    const speakingNotice = !isSpeakingTested
-        ? `🎙️ <i>Note: Speaking was skipped. Tap "🎙️ Practice Speaking" anytime to calibrate your voice score!</i>\n\n`
-        : '';
-    const scorecard = `🎯 <b>YOUR MARAKI LEVEL</b> 🇪🇹\n\n` +
-        `🏆 <b>English Level: ${levelName}</b>\n` +
-        `⭐ <b>Score: ${overall}/100</b>\n\n` +
-        `<b>Skill Breakdown:</b>\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n` +
-        `📚 Vocabulary:   ${renderBar(skills.vocabulary)} <b>${skills.vocabulary}</b>/100\n` +
-        `📝 Grammar:      ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
-        `📖 Reading:      ${renderBar(skills.reading)} <b>${skills.reading}</b>/100\n` +
-        `🎧 Listening:    ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
-        speakingLine +
-        `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-        `⚠️ <b>Your biggest weakness is ${weakness}.</b>\n\n` +
-        `💡 <i>${report.weaknessReport || 'Target this weakness to unlock the next CEFR level.'}</i>\n\n` +
-        speakingNotice +
-        `📅 <b>Your Personalized 7-Day Plan is ready!</b>\n` +
-        `• Day 1 Focus: ${report.recommendedPlan?.day1?.title || 'Daily Quick Practice'}`;
-    const keyboard = new InlineKeyboard()
-        .text('📅 View 7-Day Plan', 'view_weekly_plan')
-        .text('🎙️ Practice Speaking', 'start_speaking_flow')
-        .row()
-        .text('🔥 Daily Challenge', 'daily_challenge')
-        .text('🔄 Retest Level', 'start_assessment');
     const fullName = [ctx.from?.first_name, ctx.from?.last_name].filter(Boolean).join(' ') || 'Learner';
     const credId = `MRK-2026-${ctx.from?.id?.toString().slice(-4) || '0000'}`;
     const userId = ctx.from?.id || 'unknown';
-    // Dynamically generate personalized certificate image with user's name & Maraki brand colors
+    const keyboard = getReportKeyboard({ isAssessed: true, speakingTested: isSpeakingTested });
+    // Dynamically generate personalized report image with user's name & Maraki brand colors
     const userCertPath = path.resolve('/tmp', `cert_${userId}.png`);
+    let imageGenerated = false;
     try {
         const candidateScriptPaths = [
             path.resolve(process.cwd(), 'scripts/generate_certificate.py'),
@@ -631,29 +608,32 @@ export async function sendMarakiLevelReport(ctx, report) {
                 '--cred_id', credId,
                 '--output', userCertPath,
             ]);
+            imageGenerated = fs.existsSync(userCertPath);
         }
     }
     catch (err) {
-        console.error('Dynamic cert generation error:', err);
+        console.error('Dynamic report generation error:', err);
     }
-    try {
-        if (fs.existsSync(userCertPath)) {
+    const photoCaption = getPhotoScorecard(report, fullName, credId);
+    const detailedDiagnosis = getDetailedDiagnosisMessage(report);
+    if (imageGenerated) {
+        try {
             await ctx.replyWithPhoto(new InputFile(userCertPath), {
-                caption: scorecard,
+                caption: photoCaption,
+                parse_mode: 'HTML',
+            });
+            // Send the clinical doctor's diagnosis & prescription message with interactive keyboard
+            await ctx.reply(detailedDiagnosis, {
                 parse_mode: 'HTML',
                 reply_markup: keyboard,
             });
             return;
         }
+        catch (err) {
+            console.error('Failed to send report photo sequence:', err);
+        }
     }
-    catch (err) {
-        console.error('Failed to send certificate photo:', err);
-    }
-    await ctx.reply(scorecard, { parse_mode: 'HTML', reply_markup: keyboard });
-}
-function renderBar(score) {
-    const num = typeof score === 'number' ? score : Number(score) || 0;
-    const filled = Math.min(5, Math.max(0, Math.round(num / 20)));
-    const empty = 5 - filled;
-    return '🟩'.repeat(filled) + '⬜'.repeat(empty);
+    // Fallback to unified comprehensive text message
+    const fullText = getFullTextMessage(report, fullName, credId);
+    await ctx.reply(fullText, { parse_mode: 'HTML', reply_markup: keyboard });
 }

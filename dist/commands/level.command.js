@@ -6,14 +6,10 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { getDailyStreak } from "../utils/streak.util.js";
 import { apiService } from "../services/api.service.js";
+import { renderBar, getLinguisticDiagnosisFallback, getCareerTranslationFallback, getReportKeyboard, } from "../utils/report-formatter.util.js";
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-function renderBar(score) {
-    const filled = Math.min(5, Math.max(0, Math.round(score / 20)));
-    const empty = 5 - filled;
-    return '🟩'.repeat(filled) + '⬜'.repeat(empty);
-}
 export const levelCommand = async (ctx) => {
     if (!ctx.from) {
         return ctx.reply("⚠️ Could not get your Telegram ID.");
@@ -51,11 +47,22 @@ export const levelCommand = async (ctx) => {
     }
     const levelName = report.cefrLevel || 'B1';
     const score = report.overallScore || 55;
-    const skills = report.skills || { vocabulary: 55, grammar: 55, reading: 55, listening: 55, speaking: 48 };
+    const skills = report.skills || { vocabulary: 55, grammar: 55, reading: 55, listening: 55, speaking: null };
     const weakness = report.primaryWeakness || 'Speaking';
+    const speakingScoreNum = typeof skills?.speaking === 'number' ? skills.speaking : Number(skills?.speaking);
+    const isSpeakingTested = Boolean(report.speakingTested !== false &&
+        skills?.speaking !== null &&
+        skills?.speaking !== undefined &&
+        !isNaN(speakingScoreNum));
+    const speakingLine = isSpeakingTested
+        ? `🗣️ Speaking:     ${renderBar(speakingScoreNum)} <b>${speakingScoreNum}</b>/100\n`
+        : `🗣️ Speaking:     ⏭️ <i>Skipped (Untested)</i>\n`;
+    const diagnosis = report.diagnosis || getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
+    const career = report.careerTranslation || getCareerTranslationFallback(levelName);
+    const plan = report.recommendedPlan;
+    const day1Title = plan?.day1?.title || 'Core Foundational Drills';
     const progressCard = `🎯 <b>YOUR MARAKI LEVEL</b> 🇪🇹\n\n` +
-        `🏆 <b>English Level:</b> ${levelName}\n` +
-        `⭐ <b>Score:</b> ${score}/100\n` +
+        `🏆 <b>English Level:</b> ${levelName} (${score}/100)\n` +
         `🔥 <b>Daily Streak:</b> ${streak} ${streak === 1 ? 'Day' : 'Days'} Active\n\n` +
         `<b>Skill Breakdown:</b>\n` +
         `━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -63,16 +70,18 @@ export const levelCommand = async (ctx) => {
         `📝 Grammar:      ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
         `📖 Reading:      ${renderBar(skills.reading)} <b>${skills.reading}</b>/100\n` +
         `🎧 Listening:    ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
-        `🗣️ Speaking:     ${renderBar(skills.speaking)} <b>${skills.speaking}</b>/100\n` +
+        speakingLine +
         `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-        `⚠️ <b>Your biggest weakness is ${weakness}.</b>\n\n` +
-        `💡 <i>${report.weaknessReport || 'Targeting your weakness in daily 5-minute sessions yields the fastest improvement.'}</i>`;
-    const keyboard = new InlineKeyboard()
-        .text("📅 View 7-Day Plan", "view_weekly_plan")
-        .text("📊 View Assessment Report", "view_certificate")
-        .row()
-        .text(" Start Day 1 Lesson", "start_plan_lesson_1")
-        .text("🔄 Retest Level", "start_assessment");
+        `🔍 <b>Diagnosis:</b> <b>${diagnosis.tag}</b>\n` +
+        `<i>(${diagnosis.headlineAmharic || 'የክህሎት ትንታኔ'})</i>\n` +
+        `${diagnosis.summary}\n\n` +
+        `💼 <b>Career & Opportunity Reality:</b>\n` +
+        `• <b>Now (${levelName}):</b> ${career.currentLevelReality}\n` +
+        `• <b>Next Unlock (${career.targetLevel}):</b> ${career.targetUnlock}\n\n` +
+        `💊 <b>The Doctor's Prescription (የመፍትሄው መንገድ):</b>\n` +
+        `• <b>Day 1 Antidote:</b> ${day1Title}\n` +
+        `• <b>Daily Dose:</b> 5 minutes targeted daily practice`;
+    const keyboard = getReportKeyboard({ isAssessed: true, speakingTested: isSpeakingTested });
     await ctx.reply(progressCard, { parse_mode: "HTML", reply_markup: keyboard });
 };
 /**
@@ -168,14 +177,14 @@ export async function sendCertificate(ctx) {
         `🏆 <b>Diagnostic Benchmark:</b> Level ${levelName} (CEFR)\n` +
         `⭐ <b>Overall Score:</b> ${score}/100\n` +
         `🛡️ <b>Report ID:</b> <code>${credId}</code>\n\n` +
-        `✨ <i>Official English proficiency evaluation report from Maraki AI, evaluating real spoken fluency, grammatical accuracy, reading comprehension, and vocabulary mastery for Ethiopian learners.</i>`;
-    `🛡️ <b>Report ID:</b> ${credId}\n\n` +
         `✨ <i>Official English proficiency evaluation report from Maraki AI, evaluating real spoken fluency, grammatical accuracy, reading comprehension, and vocabulary mastery for Ethiopian learners.</i>\n\n` +
         `🔗 <b>Shareable on LinkedIn, Telegram & Professional CVs</b>`;
     const keyboard = new InlineKeyboard()
         .url("🌐 Verify Online", `https://maraki-mini-app.vercel.app/verify/${credId}`)
         .row()
+        .text("🚀 Start Day 1 Prescription", "start_plan_lesson_1")
         .text("📅 View 7-Day Plan", "view_weekly_plan")
+        .row()
         .text("⬅️ Back to Maraki Level", "level");
     try {
         const candidatePaths = [
