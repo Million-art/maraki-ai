@@ -78,6 +78,7 @@ const initialize = async () => {
             }
 
             isInitialized = true
+            startWeeklyAdminDigestScheduler();
         } catch (error) {
             console.error('Failed to initialize:', error)
             initializationPromise = null
@@ -205,6 +206,26 @@ app.post('/cron/plan-reminder', async (req, res: Response) => {
         res.status(500).json({ error: 'Plan reminder broadcast failed' });
     }
 })
+
+// Secured Weekly Assessment Intelligence Digest endpoint — triggered by cron or external caller
+app.post('/cron/weekly-digest', async (req: express.Request, res: Response) => {
+    const secret = process.env.CRON_SECRET;
+    const authHeader = req.headers['authorization'];
+
+    if (!secret || authHeader !== `Bearer ${secret}`) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+    }
+
+    try {
+        console.log('[Weekly Digest Cron] Triggering admin weekly intelligence briefing...');
+        await sendWeeklyAdminDigest(bot.api);
+        res.json({ success: true, timestamp: new Date().toISOString() });
+    } catch (error: any) {
+        console.error('[Weekly Digest Cron] Error:', error);
+        res.status(500).json({ error: 'Weekly digest failed', details: error?.message });
+    }
+});
 
 // Internal Webhook: Direct Message Dispatch from Dashboard-Backend
 app.post('/internal/send-message', async (req: express.Request, res: express.Response) => {
