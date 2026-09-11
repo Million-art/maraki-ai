@@ -24,8 +24,8 @@ export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: st
     if (gap >= 12 && readingGrammarMax >= 50) {
       return {
         tag: 'The Silent English Trap',
-        headlineAmharic: 'የዝምታ እንግሊዝኛ ወጥመድ',
-        summary: `Your Reading & Grammar (${readingGrammarMax}/100) are strong, but your Spoken English (${speakingScore}/100) lags behind by ${gap} points. This is the classic Ethiopian academic gap: 12+ years of reading textbooks and passing exams without spontaneous conversational practice. You understand the language in your head, but freeze or hesitate when speaking aloud.`,
+        headlineAmharic: 'የዝምታ እንግሊዝኛ ወጥመድ (Silent English)',
+        summary: `ንባብና ሰዋሰውህ ምርጥ ነው (${readingGrammarMax}/100)፤ ነገር ግን ማውራት ላይ የ${gap} ነጥብ ልዩነት አለ። በጭንቅላትህ የምታውቀውን በአፍህ ለማውጣት ትፈራለህ። በት/ቤት 12 ዓመት ሙሉ አንብበን እንጂ አውርተን ስላላደግን አብዛኛውን ኢትዮጵያዊ የሚያጋጥመው ይሄው ነው።`,
         isSilentTrap: true,
         gapPoints: gap,
       };
@@ -35,8 +35,8 @@ export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: st
   if (!isSpeakingTested) {
     return {
       tag: 'Receptive Knowledge Calibrated (Speaking Untested)',
-      headlineAmharic: 'የንግግር ክህሎት ያልተፈተነ',
-      summary: `Your reading, grammar, and vocabulary show a solid foundation (${readingGrammarMax}/100). However, 78% of Ethiopian learners test 1–2 CEFR bands lower in spontaneous speaking due to lecture-style schooling. Practice speaking aloud to ensure you avoid the Silent English Trap.`,
+      headlineAmharic: 'የጽሑፍ እውቀትህ አሪፍ ነው (ድምፅ አልተፈተነም)',
+      summary: `የንባብና ሰዋሰው መሠረትህ በጣም ጥሩ ነው (${readingGrammarMax}/100)። ነገር ግን 78% የሚሆኑ ተማሪዎች ጽሑፍ ላይ ጎበዝ ሆነው ሲያወሩ ይቸገራሉ። ድምፅህን ሞክረህ ትክክለኛውን ደረጃህን ማወቅ ይመረጣል።`,
       isSilentTrap: false,
     };
   }
@@ -44,44 +44,44 @@ export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: st
   switch (weakness) {
     case 'Speaking':
       return {
-        tag: 'Conversational Retrieval Friction',
-        headlineAmharic: 'የንግግር ማመንጨት እና የፍጥነት ውስንነት',
-        summary: `Your speaking score is ${speakingScore}/100. Your primary challenge is mental Amharic-to-English translation before vocalizing, leading to pauses and hesitations. Daily 2-minute spontaneous verbal drills will rewire your automatic speech reflexes.`,
+        tag: 'Conversational Friction',
+        headlineAmharic: 'የንግግር መገታት እና የፍጥነት ውስንነት',
+        summary: `ዋናው ፈተናህ በጭንቅላትህ ከአማርኛ ወደ እንግሊዝኛ እየተረጎምክ ማውራትህ ነው። ቃላቶች እየጠፉብህ እንድትቆም ያደርግሃል። በየቀኑ አጭር ልምምድ ማድረግ አፍህን ይፈታዋል!`,
         isSilentTrap: true,
       };
     case 'Grammar':
       return {
-        tag: 'L1 Amharic Syntax Interference',
-        headlineAmharic: 'የቋንቋ መዋቅር እና የትርጉም ተጽዕኖ',
-        summary: `Your grammar score is ${skills.grammar}/100. Errors stem from direct translation of Amharic sentence patterns into English: using stative verbs in continuous tense ("I am having" vs "I have"), redundant prepositions ("discuss about"), and countable noun mixups ("advices").`,
+        tag: 'L1 Translation Interference',
+        headlineAmharic: 'የቀጥታ ትርጉም ተጽዕኖ (Grammar)',
+        summary: `ጥያቄዎችን ስትመልስ ከአማርኛ በቀጥታ ስለምትተረጉም ስህተቶች ይመጣሉ (ለምሳሌ፡ 'I am having'፣ 'discuss about')። ሰዋሰውን በደንብ መለማመድ ያስፈልግሃል።`,
         isSilentTrap: false,
       };
     case 'Vocabulary':
       return {
-        tag: 'Collocation & Professional Lexicon Gap',
-        headlineAmharic: 'የቃላት ትስስር እና ሙያዊ አገላለጽ እጥረት',
-        summary: `Your vocabulary score is ${skills.vocabulary}/100. You know isolated words, but struggle with natural collocations ("make a favor" vs "do a favor") and high-yield workplace phrasal verbs necessary for professional fluency.`,
+        tag: 'Lexicon & Collocation Gap',
+        headlineAmharic: 'የተግባር ቃላት እጥረት (Vocabulary)',
+        summary: `ነጠላ ቃላትን ታውቃለህ፤ ግን አብረው የሚሄዱ ቃላትን (Collocations) በንግግርህና በስራህ ላይ አቀላጥፈህ ለመጠቀም ልምምድ ያንሰሃል።`,
         isSilentTrap: false,
       };
     case 'Listening':
       return {
-        tag: 'Acoustic Connected-Speech Barrier',
-        headlineAmharic: 'የፈጣን ንግግር ማዳመጥ ፈተና',
-        summary: `Your listening score is ${skills.listening}/100. You understand written English, but native reductions, elisions, and fast connected speech ("whaddya think") present an auditory hurdle.`,
+        tag: 'Fast Speech Barrier',
+        headlineAmharic: 'የፈጣን ንግግር ማዳመጥ ፈተና (Listening)',
+        summary: `የተጻፈ ጽሑፍ ይገባሃል፤ ነገር ግን የውጭ አገር ሰዎች ፈጣን ንግግር (Connected Speech) ጆሮህ ላይ ግራ ይጋባል። ጥቂት የድምፅ ልምምዶች ጆሮህን ይከፍቱታል።`,
         isSilentTrap: false,
       };
     case 'Reading':
       return {
-        tag: 'Subvocalization & Inference Bottleneck',
-        headlineAmharic: 'የንባብ ፍጥነት እና ጥልቅ ትንታኔ ክፍተት',
-        summary: `Your reading score is ${skills.reading}/100. You tend to translate word-by-word into Amharic rather than absorbing text in semantic chunks, which slows comprehension during long articles and official documents.`,
+        tag: 'Reading Speed Bottleneck',
+        headlineAmharic: 'የንባብ ፍጥነት እና መረዳት (Reading)',
+        summary: `እያንዳንዱን ቃል በአማርኛ ለመተርጎም ስለምትሞክር ረጅም ጽሑፎችን በፍጥነት አንብቦ ለመረዳት ጊዜ ይወስድብሃል።`,
         isSilentTrap: false,
       };
     default:
       return {
         tag: `${weakness} Growth Area`,
-        headlineAmharic: 'የማሻሻያ መስክ',
-        summary: `Your diagnosed growth area is ${weakness}. Focusing targeted practice here unlocks the next CEFR level.`,
+        headlineAmharic: `የ${weakness} ማሻሻያ መስክ`,
+        summary: `ዋናው ማሻሻያህ ${weakness} ነው። በቀን ጥቂት ደቂቃ በመለማመድ ደረጃህን ማሳደግ ትችላለህ።`,
         isSilentTrap: false,
       };
   }
@@ -93,34 +93,34 @@ export function getCareerTranslationFallback(cefrLevel: string) {
     case 'A1':
     case 'A2':
       return {
-        currentLevelReality: 'Basic social greetings & short messages. High hesitation during formal interviews and complex work emails; constant Amharic-to-English translation in head.',
+        currentLevelReality: 'መሰረታዊ ሰላምታ ትችላለህ፤ ግን የስራ ቃለ-መጠይቅና የቢሮ ኢሜይል ላይ ትቸገራለህ።',
         targetLevel: 'B1',
-        targetUnlock: 'Handle routine professional emails with ease, conduct basic client calls, and pass standard workplace English screenings without freezing.',
+        targetUnlock: 'የስራ ቃለ-መጠይቆችን ሳትደናገጥ ማለፍና የቢሮ ኢሜይሎችን በልበ-ሙሉነት መጻፍ ያስችልሃል።',
       };
     case 'B1':
       return {
-        currentLevelReality: 'Understands university lectures and standard office emails, but hesitates during high-stakes job interviews, technical presentations, or spontaneous English discussions.',
-        targetLevel: 'B2',
-        targetUnlock: 'The "Global Passport": Unlocks competitive candidacy for international remote work (Upwork, Remotebase), multinational companies (Safaricom, Ethiopian Airlines, UNDP/NGOs), and prestigious international scholarships (Mastercard Foundation, Chevening).',
+        currentLevelReality: 'የቢሮ ኢሜይልና ጽሑፍ ይገባሃል፤ ግን ፈጣን ቃለ-መጠይቅና ንግግር ላይ ቃላት ይጠፉብሃል።',
+        targetLevel: 'B2 (የስራ ፓስፖርት)',
+        targetUnlock: 'ለውጭ Remote ስራዎች (Upwork)፣ እንደ Safaricom እና አየር መንገድ ያሉ ተቋማት፣ እንዲሁም ለስኮላርሺፕ (Mastercard) በር ይከፍትልሃል!',
       };
     case 'B2':
       return {
-        currentLevelReality: 'Comfortable in most professional settings and standard interviews. Occasional hesitations under intense pressure or with nuanced idiomatic expressions.',
-        targetLevel: 'C1',
-        targetUnlock: 'Executive-level communication: Effortlessly lead international cross-functional teams, negotiate high-stakes deals, deliver conference presentations, and publish authoritative reports.',
+        currentLevelReality: 'በማንኛውም የስራ ቦታ እና ቃለ-መጠይቅ ላይ አሪፍ ነህ፤ ከፍተኛ ጫና ሲኖር ብቻ ትንሽ ትቆማለህ።',
+        targetLevel: 'C1 (ከፍተኛ አመራር)',
+        targetUnlock: 'ከአለም አቀፍ ድርጅቶች ጋር ኮንትራት መደራደር፣ ትልልቅ ስብሰባዎችን መምራትና በልበ-ሙሉነት መናገር ያስችልሃል።',
       };
     case 'C1':
     case 'C2':
       return {
-        currentLevelReality: 'Fluent, spontaneous, highly articulated expression across academic, executive, and international environments.',
+        currentLevelReality: 'እንግሊዝኛህ ፈሳሽና የተዋጣለት ነው፤ በማንኛውም መድረክ በልበ-ሙሉነት ትናገራለህ።',
         targetLevel: 'C2',
-        targetUnlock: 'Native-level rhetorical precision, diplomatic negotiation, and top-tier global leadership mastery.',
+        targetUnlock: 'ከፍተኛ የአለም አቀፍ አመራር እና ዲፕሎማሲያዊ ንግግር።',
       };
     default:
       return {
-        currentLevelReality: 'Foundational English communication capable of handling structured everyday tasks.',
+        currentLevelReality: 'መሰረታዊ ተግባቦት ትችላለህ፤ ግን ቀጣዩን ደረጃ መያዝ ያስፈልግሃል።',
         targetLevel: 'B2',
-        targetUnlock: 'High-value career opportunities with international NGOs, tech companies, and overseas academic programs.',
+        targetUnlock: 'ለአለም አቀፍ እና ለሀገር ውስጥ ምርጥ የስራ ዕድሎች ዝግጁ ያደርግሃል።',
       };
   }
 }
@@ -158,7 +158,7 @@ export function getPhotoScorecard(report: any, fullName: string, credId: string)
     `🎧 Listening:    ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
     speakingLine +
     `━━━━━━━━━━━━━━━━━━━━━\n` +
-    `🔍 <b>Diagnosis:</b> ${diagnosis.tag}`
+    `🔍 <b>Diagnosis:</b> ${diagnosis.headlineAmharic || diagnosis.tag}`
   );
 }
 
@@ -178,26 +178,22 @@ export function getDetailedDiagnosisMessage(report: any): string {
   const diagnosis = report.diagnosis || getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
   const career = report.careerTranslation || getCareerTranslationFallback(levelName);
   const plan = report.recommendedPlan;
-  const day1Title = plan?.day1?.title || 'Core Foundational Drills';
-  const day1Task = plan?.day1?.task || '5-minute targeted practice';
+  const day1Title = plan?.day1?.title || 'የመጀመሪያ ቀን ልምምድ';
 
   const speakingNote = !isSpeakingTested
-    ? `\n🎙️ <i>Note: Speaking was skipped. Tap "🎙️ Practice Speaking" to test your vocal fluency!</i>\n`
+    ? `\n🎙️ <i>ማስታወሻ፦ ድምፅህን አልሞከርክም። አፍህን ለመፍታት ከታች "🎙️ ድምፅህን ፈትን" የሚለውን ንካ!</i>`
     : '';
 
   return (
-    `🩺 <b>MARAKI CLINICAL DIAGNOSIS & PRESCRIPTION</b> 🇪🇹\n\n` +
-    `🔍 <b>The Diagnosis:</b> <b>${diagnosis.tag}</b>\n` +
-    `<i>(${diagnosis.headlineAmharic || 'የክህሎት ትንታኔ'})</i>\n` +
+    `🩺 <b>የማራኪ ምርመራ እና መፍትሔ</b> 🇪🇹\n\n` +
+    `🔍 <b>ምርመራህ፡</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
     `${diagnosis.summary}\n\n` +
-    `💼 <b>Career & Opportunity Reality:</b>\n` +
-    `• <b>Current Reality (${levelName}):</b> ${career.currentLevelReality}\n` +
-    `• <b>Next Unlock (${career.targetLevel}):</b> ${career.targetUnlock}\n\n` +
-    `💊 <b>The Doctor's Prescription (የመፍትሄው መንገድ):</b>\n` +
-    `• <b>Root Cause:</b> Cramming grammar textbooks will NOT cure ${weakness}. You need active, low-friction daily micro-practice.\n` +
-    `• <b>Daily Dose:</b> 5 minutes daily targeted drills\n` +
-    `• <b>Day 1 Antidote:</b> ${day1Title}\n` +
-    `• <i>Task:</i> ${day1Task}${speakingNote}`
+    `💼 <b>በስራ ዓለም ምን ማለት ነው?</b>\n` +
+    `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
+    `• <b>ቀጣዩ ደረጃ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
+    `💊 <b>የዶክተሩ ማዘዣ (የ7 ቀን መፍትሔ)፦</b>\n` +
+    `• <b>መድኃኒቱ፦</b> በቀን 5 ደቂቃ ፈጣን ልምምድ ማድረግ።\n` +
+    `• <b>የቀን 1 መነሻ፦</b> ${day1Title}${speakingNote}`
   );
 }
 
@@ -209,18 +205,18 @@ export function getFullTextMessage(report: any, fullName: string, credId: string
 
 export function getReportKeyboard(options?: { isAssessed?: boolean; speakingTested?: boolean }): InlineKeyboard {
   const keyboard = new InlineKeyboard()
-    .text('🚀 Start Day 1 Prescription', 'start_plan_lesson_1')
+    .text('🚀 የቀን 1 ልምምድ ጀምር', 'start_plan_lesson_1')
     .row()
-    .text('📊 View Assessment Report', 'view_certificate')
-    .text('📅 View 7-Day Plan', 'view_weekly_plan')
+    .text('📊 የፈተና ሪፖርት', 'view_certificate')
+    .text('📅 የ7 ቀን ፕላን', 'view_weekly_plan')
     .row();
 
   if (options?.speakingTested === false) {
-    keyboard.text('🎙️ Practice Speaking', 'start_speaking_flow');
+    keyboard.text('🎙️ ድምፅህን ፈትን', 'start_speaking_flow');
   } else {
-    keyboard.text('🔥 Daily Challenge', 'daily_challenge');
+    keyboard.text('🔥 ዕለታዊ ቻሌንጅ', 'daily_challenge');
   }
 
-  keyboard.text('🔄 Retest Level', 'start_assessment');
+  keyboard.text('🔄 እንደገና ፈትን', 'start_assessment');
   return keyboard;
 }

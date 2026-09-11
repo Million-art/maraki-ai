@@ -60,11 +60,11 @@ export const levelCommand = async (ctx) => {
     const diagnosis = report.diagnosis || getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
     const career = report.careerTranslation || getCareerTranslationFallback(levelName);
     const plan = report.recommendedPlan;
-    const day1Title = plan?.day1?.title || 'Core Foundational Drills';
-    const progressCard = `🎯 <b>YOUR MARAKI LEVEL</b> 🇪🇹\n\n` +
-        `🏆 <b>English Level:</b> ${levelName} (${score}/100)\n` +
-        `🔥 <b>Daily Streak:</b> ${streak} ${streak === 1 ? 'Day' : 'Days'} Active\n\n` +
-        `<b>Skill Breakdown:</b>\n` +
+    const day1Title = plan?.day1?.title || 'የመጀመሪያ ቀን ልምምድ';
+    const progressCard = `🎯 <b>የማራኪ ደረጃህ</b> 🇪🇹\n\n` +
+        `🏆 <b>የእንግሊዝኛ ደረጃህ፦</b> Level ${levelName} (${score}/100)\n` +
+        `🔥 <b>ቀጣይነት (Streak)፦</b> ${streak} ${streak === 1 ? 'ቀን' : 'ቀናት'}\n\n` +
+        `<b>የክህሎት ዝርዝር፦</b>\n` +
         `━━━━━━━━━━━━━━━━━━━━━\n` +
         `📚 Vocabulary:   ${renderBar(skills.vocabulary)} <b>${skills.vocabulary}</b>/100\n` +
         `📝 Grammar:      ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
@@ -72,15 +72,14 @@ export const levelCommand = async (ctx) => {
         `🎧 Listening:    ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
         speakingLine +
         `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-        `🔍 <b>Diagnosis:</b> <b>${diagnosis.tag}</b>\n` +
-        `<i>(${diagnosis.headlineAmharic || 'የክህሎት ትንታኔ'})</i>\n` +
+        `🔍 <b>ምርመራህ፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
         `${diagnosis.summary}\n\n` +
-        `💼 <b>Career & Opportunity Reality:</b>\n` +
-        `• <b>Now (${levelName}):</b> ${career.currentLevelReality}\n` +
-        `• <b>Next Unlock (${career.targetLevel}):</b> ${career.targetUnlock}\n\n` +
-        `💊 <b>The Doctor's Prescription (የመፍትሄው መንገድ):</b>\n` +
-        `• <b>Day 1 Antidote:</b> ${day1Title}\n` +
-        `• <b>Daily Dose:</b> 5 minutes targeted daily practice`;
+        `💼 <b>በስራ ዓለም ምን ማለት ነው?</b>\n` +
+        `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
+        `• <b>ቀጣዩ ደረጃ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
+        `💊 <b>የዶክተሩ ማዘዣ (የ7 ቀን መፍትሔ)፦</b>\n` +
+        `• <b>መድኃኒቱ፦</b> በቀን 5 ደቂቃ ፈጣን ልምምድ ማድረግ።\n` +
+        `• <b>የቀን 1 መነሻ፦</b> ${day1Title}`;
     const keyboard = getReportKeyboard({ isAssessed: true, speakingTested: isSpeakingTested });
     await ctx.reply(progressCard, { parse_mode: "HTML", reply_markup: keyboard });
 };
