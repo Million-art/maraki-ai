@@ -6,6 +6,7 @@ import { bot } from './adapters/telegram.adapter.js';
 import { getOptedInUserIds } from './utils/daily-notify.util.js';
 import { buildDailyChallengeMessage } from './commands/challenge.command.js';
 import { apiService } from './services/api.service.js';
+import { sendWeeklyAdminDigest } from './commands/admin.command.js';
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 1000;
@@ -70,6 +71,7 @@ const initialize = async () => {
                 console.log('🤖 Bot started in Long Polling mode (Development / Continuous Listener)');
             }
             isInitialized = true;
+            startWeeklyAdminDigestScheduler();
         }
         catch (error) {
             console.error('Failed to initialize:', error);
@@ -79,6 +81,30 @@ const initialize = async () => {
     })();
     return initializationPromise;
 };
+// Weekly Admin Product Digest Scheduler (Monday 09:00 AM East Africa Time / UTC+3)
+let lastSentDigestWeek = '';
+function startWeeklyAdminDigestScheduler() {
+    setInterval(async () => {
+        try {
+            const now = new Date();
+            const eatDate = new Date(now.getTime() + 3 * 3600 * 1000);
+            const dayOfWeek = eatDate.getUTCDay(); // 1 = Monday
+            const hour = eatDate.getUTCHours(); // 9 = 9 AM
+            const year = eatDate.getUTCFullYear();
+            const oneJan = new Date(Date.UTC(year, 0, 1));
+            const weekNumber = Math.ceil((((eatDate.getTime() - oneJan.getTime()) / 86400000) + oneJan.getUTCDay() + 1) / 7);
+            const currentWeekKey = `${year}_W${weekNumber}`;
+            if (dayOfWeek === 1 && hour === 9 && lastSentDigestWeek !== currentWeekKey) {
+                lastSentDigestWeek = currentWeekKey;
+                console.log(`[Weekly Digest Scheduler] Triggering Monday 9:00 AM EAT product intelligence briefing (${currentWeekKey})...`);
+                await sendWeeklyAdminDigest(bot.api);
+            }
+        }
+        catch (err) {
+            console.error('[Weekly Digest Scheduler Error]:', err?.message || err);
+        }
+    }, 15 * 60 * 1000); // Check every 15 minutes
+}
 // Health check endpoint
 app.get('/', (req, res) => {
     res.send('Practice English is running');
@@ -180,6 +206,24 @@ app.post('/cron/plan-reminder', async (req, res) => {
     catch (error) {
         console.error('[Plan Reminder Cron] Error:', error);
         res.status(500).json({ error: 'Plan reminder broadcast failed' });
+    }
+});
+// Secured Weekly Assessment Intelligence Digest endpoint — triggered by cron or external caller
+app.post('/cron/weekly-digest', async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    const authHeader = req.headers['authorization'];
+    if (!secret || authHeader !== `Bearer ${secret}`) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+    }
+    try {
+        console.log('[Weekly Digest Cron] Triggering admin weekly intelligence briefing...');
+        await sendWeeklyAdminDigest(bot.api);
+        res.json({ success: true, timestamp: new Date().toISOString() });
+    }
+    catch (error) {
+        console.error('[Weekly Digest Cron] Error:', error);
+        res.status(500).json({ error: 'Weekly digest failed', details: error?.message });
     }
 });
 // Internal Webhook: Direct Message Dispatch from Dashboard-Backend

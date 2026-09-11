@@ -472,7 +472,6 @@ async function renderSpeakingPrompt(ctx: Context) {
  * Handle speaking voice note submitted via Telegram
  */
 export async function handleAssessmentVoiceSubmission(ctx: Context) {
-  if (!ctx.from || !ctx.message?.voice) return;
   const voiceOrAudio = ctx.message?.voice || ctx.message?.audio;
   if (!ctx.from || !voiceOrAudio) return;
   const userId = ctx.from.id;
@@ -482,11 +481,8 @@ export async function handleAssessmentVoiceSubmission(ctx: Context) {
     return; // Not in assessment voice mode
   }
 
-  const voice = ctx.message.voice;
-  const durationSeconds = voice.duration || 30;
   const durationSeconds = voiceOrAudio.duration || 20;
 
-  const statusMsg = await ctx.reply('⏳ <i>Analyzing your voice note with Gemini AI (verifying language, speech clarity & fluency)...</i>', { parse_mode: 'HTML' });
   const statusMsg = await ctx.reply('⏳ <i>Great job speaking up! Analyzing your speech with Maraki AI (clarity, vocabulary & fluency)...</i>', { parse_mode: 'HTML' });
 
   // Download Telegram voice note
@@ -515,8 +511,6 @@ export async function handleAssessmentVoiceSubmission(ctx: Context) {
       validation = {
         isValid: false,
         reason: 'too_short',
-        userMessageEn: 'Your voice recording was too short to evaluate. Please record for at least 15–30 seconds.',
-        userMessageAm: 'የድምፅ መልእክትዎ በጣም አጭር ነው። እባክዎ ቢያንስ ለ15-30 ሰከንዶች በእንግሊዝኛ ይናገሩ።',
         userMessageEn: 'Your voice recording was too short to evaluate. Please record for at least 10–20 seconds.',
         userMessageAm: 'የድምፅ መልእክትዎ በጣም አጭር ነው። እባክዎ ቢያንስ ለ10-20 ሰከንዶች በእንግሊዝኛ ይናገሩ።',
       };

@@ -407,6 +407,16 @@ export class ApiService {
             return null;
         }
     }
+    async getAssessmentProductIntelligence() {
+        try {
+            const { data } = await axios.get(`${this.backendUrl}/api/assessment/admin/intelligence`, { timeout: 15000 });
+            return data;
+        }
+        catch (error) {
+            console.error('[Assessment API] Failed to get product intelligence:', error?.message);
+            return null;
+        }
+    }
     // Persistent 7-Day Plan & Streak Management (PostgreSQL via Backend API)
     async getStudentPlanProgress(telegramId) {
         try {

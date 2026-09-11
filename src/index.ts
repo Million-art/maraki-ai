@@ -89,6 +89,32 @@ const initialize = async () => {
     return initializationPromise
 }
 
+// Weekly Admin Product Digest Scheduler (Monday 09:00 AM East Africa Time / UTC+3)
+let lastSentDigestWeek = '';
+function startWeeklyAdminDigestScheduler() {
+    setInterval(async () => {
+        try {
+            const now = new Date();
+            const eatDate = new Date(now.getTime() + 3 * 3600 * 1000);
+            const dayOfWeek = eatDate.getUTCDay(); // 1 = Monday
+            const hour = eatDate.getUTCHours(); // 9 = 9 AM
+            
+            const year = eatDate.getUTCFullYear();
+            const oneJan = new Date(Date.UTC(year, 0, 1));
+            const weekNumber = Math.ceil((((eatDate.getTime() - oneJan.getTime()) / 86400000) + oneJan.getUTCDay() + 1) / 7);
+            const currentWeekKey = `${year}_W${weekNumber}`;
+
+            if (dayOfWeek === 1 && hour === 9 && lastSentDigestWeek !== currentWeekKey) {
+                lastSentDigestWeek = currentWeekKey;
+                console.log(`[Weekly Digest Scheduler] Triggering Monday 9:00 AM EAT product intelligence briefing (${currentWeekKey})...`);
+                await sendWeeklyAdminDigest(bot.api);
+            }
+        } catch (err: any) {
+            console.error('[Weekly Digest Scheduler Error]:', err?.message || err);
+        }
+    }, 15 * 60 * 1000); // Check every 15 minutes
+}
+
 // Health check endpoint
 app.get('/', (req, res: Response) => {
     res.send('Practice English is running')
