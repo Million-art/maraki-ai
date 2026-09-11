@@ -73,8 +73,8 @@ export const levelCommand = async (ctx: Context) => {
   );
 
   const speakingLine = isSpeakingTested
-    ? `🗣️ ንግግር (Speaking):  ${renderBar(speakingScoreNum)} <b>${speakingScoreNum}</b>/100\n`
-    : `🗣️ ንግግር (Speaking):  ⏭️ <i>አልተፈተነም</i>\n`;
+    ? `🗣️ Speaking:     ${renderBar(speakingScoreNum)} <b>${speakingScoreNum}</b>/100\n`
+    : `🗣️ Speaking:     ⏭️ <i>Skipped (Untested)</i>\n`;
 
   const diagnosis = report.diagnosis || getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
   const career = report.careerTranslation || getCareerTranslationFallback(levelName);
@@ -82,25 +82,25 @@ export const levelCommand = async (ctx: Context) => {
   const day1Title = plan?.day1?.title || 'የመጀመሪያ ቀን ልምምድ';
 
   const progressCard =
-    `🎯 <b>የእንግሊዝኛ ችሎታዎ</b> 🇪🇹\n\n` +
-    `🏆 <b>ችሎታዎ፦</b> Level ${levelName} (${score}/100)\n` +
+    `🎯 <b>የእንግሊዘኛ ቇንቇ ችሎታ</b> 🇪🇹\n\n` +
+    `🏆 <b>የእንግሊዝኛ ደረጃህ፦</b> Level ${levelName} (${score}/100)\n` +
     `🔥 <b>ቀጣይነት (Streak)፦</b> ${streak} ${streak === 1 ? 'ቀን' : 'ቀናት'}\n\n` +
-    `<b>የውጤትዎ ዝርዝር፦</b>\n` +
+    `<b>የክህሎት ዝርዝር፦</b>\n` +
     `━━━━━━━━━━━━━━━━━━━━━\n` +
-    `📚 ቃላት (Vocabulary):   ${renderBar(skills.vocabulary)} <b>${skills.vocabulary}</b>/100\n` +
-    `📝 ሰዋሰው (Grammar):     ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
-    `📖 ንባብ (Reading):      ${renderBar(skills.reading)} <b>${skills.reading}</b>/100\n` +
-    `🎧 ማዳመጥ (Listening):   ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
+    `📚 Vocabulary:   ${renderBar(skills.vocabulary)} <b>${skills.vocabulary}</b>/100\n` +
+    `📝 Grammar:      ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
+    `📖 Reading:      ${renderBar(skills.reading)} <b>${skills.reading}</b>/100\n` +
+    `🎧 Listening:    ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
     speakingLine +
     `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `🔍 <b>ያለብዎት ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
+    `🔍 <b>ምርመራህ፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
     `${diagnosis.summary}\n\n` +
-    `💼 <b>ይህ ችሎታ ለስራዎ ምን ይጠቅማል?</b>\n` +
+    `💼 <b>በስራ ዓለም ምን ማለት ነው?</b>\n` +
     `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
-    `• <b>ቀጣዩ ችሎታ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
-    `💡 <b>መፍትሔው (የ7 ቀን እቅድ)፦</b>\n` +
-    `• <b>ምን ማድረግ አለብዎት?</b> በቀን 5 ደቂቃ አጭር ልምምድ።\n` +
-    `• <b>የዛሬው ልምምድዎ፦</b> ${day1Title}`;
+    `• <b>ቀጣዩ ደረጃ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
+    `💊 <b>የዶክተሩ ማዘዣ (የ7 ቀን መፍትሔ)፦</b>\n` +
+    `• <b>መድኃኒቱ፦</b> በቀን 5 ደቂቃ ፈጣን ልምምድ ማድረግ።\n` +
+    `• <b>የቀን 1 መነሻ፦</b> ${day1Title}`;
 
   const keyboard = getReportKeyboard({ isAssessed: true, speakingTested: isSpeakingTested });
 
@@ -207,8 +207,7 @@ export async function sendCertificate(ctx: Context) {
     `🏆 <b>Diagnostic Benchmark:</b> Level ${levelName} (CEFR)\n` +
     `⭐ <b>Overall Score:</b> ${score}/100\n` +
     `🛡️ <b>Report ID:</b> <code>${credId}</code>\n\n` +
-    `✨ <i>Official English proficiency evaluation report from Maraki AI, evaluating real spoken fluency, grammatical accuracy, reading comprehension, and vocabulary mastery for Ethiopian learners.</i>\n\n` +
-    `🔗 <b>Shareable on LinkedIn, Telegram & Professional CVs</b>`;
+    `✨ <i>Official English proficiency evaluation report from Maraki AI, evaluating real spoken fluency, grammatical accuracy, reading comprehension, and vocabulary mastery for Ethiopian learners.</i>\n\n` 
 
   const keyboard = new InlineKeyboard()
     .url("🌐 Verify Online", `https://maraki-mini-app.vercel.app/verify/${credId}`)
