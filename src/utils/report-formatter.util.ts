@@ -25,7 +25,7 @@ export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: st
       return {
         tag: 'The Silent English Trap',
         headlineAmharic: 'የዝምታ እንግሊዝኛ (Silent English)',
-        summary: `ማንበብና ሰዋሰው ላይ በጣም ጎበዝ ነህ (${readingGrammarMax}/100)፤ ችግሩ ማውራት ላይ ነው። በጭንቅላትህ የምታውቀውን በአፍህ ለማውጣት ቃላት ይጠፉብሃል ወይም ትፈራለህ። በትምህርት ቤት አንብበን እንጂ አውርተን ስላልተማርን አብዛኛውን ሰው የሚያጋጥመው ይሄው ነው።`,
+        summary: `ማንበብና ሰዋሰው ላይ በጣም ጎበዝ ኖት (${readingGrammarMax}/100)፤ ችግሩ ማውራት ላይ ነው። በጭንቅላትዎ የሚያውቁትን በአፍዎ ለማውጣት ቃላት ይጠፉብዎታል ወይም ፍርሃት ይሰማዎታል። በትምህርት ቤት አንብበን እንጂ አውርተን ስላልተማርን አብዛኛውን ሰው የሚያጋጥመው ይሄው ነው።`,
         isSilentTrap: true,
         gapPoints: gap,
       };
@@ -35,8 +35,8 @@ export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: st
   if (!isSpeakingTested) {
     return {
       tag: 'Speaking Untested',
-      headlineAmharic: 'ድምፅህን አልሞከርክም',
-      summary: `የጽሑፍ ውጤትህ በጣም ጥሩ ነው (${readingGrammarMax}/100)። ነገር ግን አብዛኛው ሰው በጽሑፍ ጎበዝ ሆኖ ማውራት ላይ ስለሚቸገር፣ ትክክለኛ ችሎታህን ለማወቅ ድምፅህን መፈተን ይመረጣል።`,
+      headlineAmharic: 'ድምፅዎን አልሞከሩም',
+      summary: `የጽሑፍ ውጤትዎ በጣም ጥሩ ነው (${readingGrammarMax}/100)። ነገር ግን አብዛኛው ሰው በጽሑፍ ጎበዝ ሆኖ ማውራት ላይ ስለሚቸገር፣ ትክክለኛ ችሎታዎን ለማወቅ ድምፅዎን መፈተን ይመረጣል።`,
       isSilentTrap: false,
     };
   }
@@ -46,42 +46,42 @@ export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: st
       return {
         tag: 'Conversational Friction',
         headlineAmharic: 'የንግግር መቆራረጥ እና ፍርሃት',
-        summary: `ዋናው ችግር በጭንቅላትህ ከአማርኛ ወደ እንግሊዝኛ እየተረጎምክ ማውራትህ ነው። ቃላት እየጠፉብህ እንድትቆም ያደርግሃል። በየቀኑ አጭር ልምምድ ማድረግ አፍህን ይፈታዋል!`,
+        summary: `ዋናው ችግር በጭንቅላትዎ ከአማርኛ ወደ እንግሊዝኛ እየተረጎሙ ማውራትዎ ነው። ቃላት እየጠፉብዎት እንዲቆሙ ያደርጋል። በየቀኑ አጭር ልምምድ ማድረግ አፍዎን ይፈታዋል!`,
         isSilentTrap: true,
       };
     case 'Grammar':
       return {
         tag: 'Grammar Errors',
         headlineAmharic: 'የሰዋሰው (Grammar) ስህተት',
-        summary: `ከአማርኛ በቀጥታ ስለምትተረጉም የተለመዱ የሰዋሰው ስህተቶች ይታዩብሃል (ለምሳሌ፦ 'I am having'፣ 'discuss about')። ሰዋሰውን በተግባር መለማመድ ያስፈልግሃል።`,
+        summary: `ከአማርኛ በቀጥታ ስለሚተረጎም የተለመዱ የሰዋሰው ስህተቶች ይታያሉ (ለምሳሌ፦ 'I am having'፣ 'discuss about')። ሰዋሰውን በተግባር መለማመድ ያስፈልጋል።`,
         isSilentTrap: false,
       };
     case 'Vocabulary':
       return {
         tag: 'Vocabulary Gap',
         headlineAmharic: 'የቃላት (Vocabulary) እጥረት',
-        summary: `ነጠላ ቃላትን ታውቃለህ፤ ግን አብረው የሚሄዱ ቃላትን በስራህና በንግግርህ ላይ አቀላጥፈህ ለመጠቀም ልምምድ ያንሰሃል።`,
+        summary: `ነጠላ ቃላትን ያውቃሉ፤ ግን አብረው የሚሄዱ ቃላትን በስራዎና በንግግርዎ ላይ አቀላጥፈው ለመጠቀም ልምምድ ያንሳል።`,
         isSilentTrap: false,
       };
     case 'Listening':
       return {
         tag: 'Listening Barrier',
         headlineAmharic: 'የማዳመጥ (Listening) ክፍተት',
-        summary: `ጽሑፍ ሲሆን ይገባሃል፤ ነገር ግን ፈጣን የውጭ አገር ሰዎች ንግግር ጆሮህ ላይ ግራ ይጋባል። ጥቂት የድምፅ ልምምዶች ጆሮህን ይከፍቱታል።`,
+        summary: `ጽሑፍ ሲሆን ይገባዎታል፤ ነገር ግን ፈጣን የውጭ አገር ሰዎች ንግግር ጆሮ ላይ ግራ ይጋባል። ጥቂት የድምፅ ልምምዶች ጆሮዎን ይከፍቱታል።`,
         isSilentTrap: false,
       };
     case 'Reading':
       return {
         tag: 'Reading Speed',
         headlineAmharic: 'የንባብ ፍጥነት (Reading)',
-        summary: `እያንዳንዱን ቃል በአማርኛ ለመተርጎም ስለምትሞክር ረጅም ጽሑፎችን በፍጥነት አንብቦ ለመረዳት ጊዜ ይወስድብሃል።`,
+        summary: `እያንዳንዱን ቃል በአማርኛ ለመተርጎም ስለሚሞከር ረጅም ጽሑፎችን በፍጥነት አንብቦ ለመረዳት ጊዜ ይወስዳል።`,
         isSilentTrap: false,
       };
     default:
       return {
         tag: `${weakness} Gap`,
         headlineAmharic: `የ${weakness} ክፍተት`,
-        summary: `ዋናው ማሻሻያህ ${weakness} ነው። በየቀኑ ጥቂት ደቂቃ በመለማመድ ችሎታህን ማሳደግ ትችላለህ።`,
+        summary: `ዋናው ማሻሻያዎ ${weakness} ነው። በየቀኑ ጥቂት ደቂቃ በመለማመድ ችሎታዎን ማሳደግ ይችላሉ።`,
         isSilentTrap: false,
       };
   }
@@ -93,34 +93,34 @@ export function getCareerTranslationFallback(cefrLevel: string) {
     case 'A1':
     case 'A2':
       return {
-        currentLevelReality: 'መሰረታዊ ሰላምታ ትችላለህ፤ ግን የስራ ቃለ-መጠይቅና የቢሮ ኢሜይል ላይ ትቸገራለህ።',
+        currentLevelReality: 'መሰረታዊ ሰላምታ እና አጫጭር ቃላት መናገር ይችላሉ፤ ነገር ግን የስራ ቃለ-መጠይቅ (Interview) እና ረጅም ውይይት ይከብዳል።',
         targetLevel: 'B1',
-        targetUnlock: 'የስራ ቃለ-መጠይቆችን በልበ-ሙሉነት እንድታልፍና የቢሮ ኢሜይሎችን ያለፍርሃት እንድትጽፍ ይረዳሃል።',
+        targetUnlock: 'የስራ ቃለ-መጠይቆችን በልበ-ሙሉነት ለማለፍ እና የቢሮ ኢሜይሎችን ያለ ፍርሃት ለመጻፍ ያግዛል።',
       };
     case 'B1':
       return {
-        currentLevelReality: 'የቢሮ ኢሜይልና ጽሑፍ ይገባሃል፤ ግን ቃለ-መጠይቅና ፈጣን ንግግር ላይ ቃላት ይጠፉብሃል።',
+        currentLevelReality: 'የተጻፈ ጽሑፍ ይገባዎታል፤ ነገር ግን በድንገት ከሰው ጋር ሲያወሩ ወይም የስራ ቃለ-መጠይቅ ላይ ቃላት ይጠፉብዎታል።',
         targetLevel: 'B2',
-        targetUnlock: 'እንደ Safaricom፣ አየር መንገድ ወይም የውጭ Remote ስራዎች (Upwork) እና ለስኮላርሺፕ በር ይከፍትልሃል!',
+        targetUnlock: 'ጥሩ ደመወዝ ያላቸው ስራዎችን ለማግኘት፣ የነፃ የትምህርት ዕድል (Scholarship) ለመጠቀም እና ከሰው ጋር ያለፍርሃት ለመግባባት በር ይከፍታል!',
       };
     case 'B2':
       return {
-        currentLevelReality: 'በማንኛውም የስራ ቦታና ቃለ-መጠይቅ ላይ ጥሩ ነህ፤ ጫና ሲበዛ ብቻ ትንሽ ትቆማለህ።',
+        currentLevelReality: 'በማንኛውም ቦታ እና የስራ ቃለ-መጠይቅ ላይ ጥሩ ተግባቦት አለዎት፤ ፈጣን እና ከባድ ውይይት ሲሆን ብቻ ትንሽ ይቆማሉ።',
         targetLevel: 'C1',
-        targetUnlock: 'ከአለም አቀፍ ድርጅቶች ጋር ኮንትራት መደራደር፣ ትልልቅ ስብሰባዎችን መምራትና በልበ-ሙሉነት መናገር ያስችልሃል።',
+        targetUnlock: 'በማንኛውም ስራ እና ትልልቅ ስብሰባዎች ላይ እንደ ልብ አቀላጥፈው ለመናገር እና ለመምራት ያስችላል።',
       };
     case 'C1':
     case 'C2':
       return {
-        currentLevelReality: 'እንግሊዝኛህ ፈሳሽና የተዋጣለት ነው፤ በማንኛውም ቦታ በልበ-ሙሉነት ትናገራለህ።',
+        currentLevelReality: 'እንግሊዝኛዎ ፈሳሽ እና በጣም ጥሩ ነው፤ በማንኛውም ቦታ በልበ-ሙሉነት ይናገራሉ።',
         targetLevel: 'C2',
-        targetUnlock: 'ከፍተኛ የአለም አቀፍ አመራር እና ንግግር።',
+        targetUnlock: 'ከፍተኛ የአመራር ደረጃ እና ፍጹም የሆነ የቋንቋ ቅልጥፍና።',
       };
     default:
       return {
-        currentLevelReality: 'መሰረታዊ ተግባቦት ትችላለህ፤ ግን ቀጣዩን ችሎታ ማዳበር ያስፈልግሃል።',
+        currentLevelReality: 'መሰረታዊ ተግባቦት ይችላሉ፤ ነገር ግን የተሻለ ደረጃ ላይ ለመድረስ ልምምድ ያስፈልጋል።',
         targetLevel: 'B2',
-        targetUnlock: 'ለአለም አቀፍ እና ለሀገር ውስጥ ምርጥ የስራ ዕድሎች ዝግጁ ያደርግሃል።',
+        targetUnlock: 'የተሻለ የስራ እና የትምህርት ዕድሎችን ለመጠቀም ያግዛል።',
       };
   }
 }
@@ -148,9 +148,9 @@ export function getPhotoScorecard(report: any, fullName: string, credId: string)
   return (
     `🎯 <b>የእንግሊዝኛ የፈተና ውጤት</b> 🇪🇹\n\n` +
     `👤 <b>ተማሪ፦</b> ${fullName}\n` +
-    `🏆 <b>ችሎታህ፦</b> Level ${levelName} (CEFR)\n` +
+    `🏆 <b>ችሎታዎ፦</b> Level ${levelName} (CEFR)\n` +
     `⭐ <b>ውጤት፦</b> ${overall}/100 | 🛡️ <b>መለያ፦</b> <code>${credId}</code>\n\n` +
-    `<b>የውጤትህ ዝርዝር፦</b>\n` +
+    `<b>የውጤትዎ ዝርዝር፦</b>\n` +
     `━━━━━━━━━━━━━━━━━━━━━\n` +
     `📚 ቃላት (Vocabulary):   ${renderBar(skills.vocabulary)} <b>${skills.vocabulary}</b>/100\n` +
     `📝 ሰዋሰው (Grammar):     ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
@@ -158,7 +158,7 @@ export function getPhotoScorecard(report: any, fullName: string, credId: string)
     `🎧 ማዳመጥ (Listening):   ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
     speakingLine +
     `━━━━━━━━━━━━━━━━━━━━━\n` +
-    `🔍 <b>ያለብህ ክፍተት፦</b> ${diagnosis.headlineAmharic || diagnosis.tag}`
+    `🔍 <b>ያለብዎት ክፍተት፦</b> ${diagnosis.headlineAmharic || diagnosis.tag}`
   );
 }
 
@@ -181,19 +181,19 @@ export function getDetailedDiagnosisMessage(report: any): string {
   const day1Title = plan?.day1?.title || 'የመጀመሪያ ቀን ልምምድ';
 
   const speakingNote = !isSpeakingTested
-    ? `\n🎙️ <i>ማስታወሻ፦ ድምፅህን አልሞከርክም። አፍህን ለመፍታት ከታች "🎙️ ድምፅህን ሞክር" የሚለውን ንካ!</i>`
+    ? `\n🎙️ <i>ማስታወሻ፦ ድምፅዎን አልሞከሩም። አፍዎን ለመፍታት ከታች "🎙️ ድምፅዎን ይሞክሩ" የሚለውን ይጫኑ!</i>`
     : '';
 
   return (
-    `🎯 <b>የእንግሊዝኛ ችሎታህ እና መፍትሔው</b> 🇪🇹\n\n` +
-    `🔍 <b>ያለብህ ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
+    `🎯 <b>የእንግሊዝኛ ችሎታዎ እና መፍትሔው</b> 🇪🇹\n\n` +
+    `🔍 <b>ያለብዎት ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
     `${diagnosis.summary}\n\n` +
-    `💼 <b>ይህ ችሎታ ለስራህ ምን ይጠቅማል?</b>\n` +
+    `💼 <b>ይህ ችሎታ ለስራዎ ምን ይጠቅማል?</b>\n` +
     `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
     `• <b>ቀጣዩ ችሎታ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
     `💡 <b>መፍትሔው (የ7 ቀን እቅድ)፦</b>\n` +
-    `• <b>ምን ማድረግ አለብህ?</b> በቀን 5 ደቂቃ አጭር ልምምድ።\n` +
-    `• <b>የዛሬው ልምምድ፦</b> ${day1Title}${speakingNote}`
+    `• <b>ምን ማድረግ አለብዎት?</b> በቀን 5 ደቂቃ አጭር ልምምድ ማድረግ።\n` +
+    `• <b>የዛሬው ልምምድዎ፦</b> ${day1Title}${speakingNote}`
   );
 }
 
@@ -212,7 +212,7 @@ export function getReportKeyboard(options?: { isAssessed?: boolean; speakingTest
     .row();
 
   if (options?.speakingTested === false) {
-    keyboard.text('🎙️ ድምፅህን ሞክር', 'start_speaking_flow');
+    keyboard.text('🎙️ ድምፅዎን ይሞክሩ', 'start_speaking_flow');
   } else {
     keyboard.text('🔥 ዕለታዊ ቻሌንጅ', 'daily_challenge');
   }

@@ -82,10 +82,10 @@ export const levelCommand = async (ctx: Context) => {
   const day1Title = plan?.day1?.title || 'የመጀመሪያ ቀን ልምምድ';
 
   const progressCard =
-    `🎯 <b>የእንግሊዝኛ ችሎታህ</b> 🇪🇹\n\n` +
-    `🏆 <b>ችሎታህ፦</b> Level ${levelName} (${score}/100)\n` +
-    `🔥 <b>Streak፦</b> ${streak} ${streak === 1 ? 'ቀን' : 'ቀናት'}\n\n` +
-    `<b>የውጤትህ ዝርዝር፦</b>\n` +
+    `🎯 <b>የእንግሊዝኛ ችሎታዎ</b> 🇪🇹\n\n` +
+    `🏆 <b>ችሎታዎ፦</b> Level ${levelName} (${score}/100)\n` +
+    `🔥 <b>ቀጣይነት (Streak)፦</b> ${streak} ${streak === 1 ? 'ቀን' : 'ቀናት'}\n\n` +
+    `<b>የውጤትዎ ዝርዝር፦</b>\n` +
     `━━━━━━━━━━━━━━━━━━━━━\n` +
     `📚 ቃላት (Vocabulary):   ${renderBar(skills.vocabulary)} <b>${skills.vocabulary}</b>/100\n` +
     `📝 ሰዋሰው (Grammar):     ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
@@ -93,14 +93,14 @@ export const levelCommand = async (ctx: Context) => {
     `🎧 ማዳመጥ (Listening):   ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
     speakingLine +
     `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `🔍 <b>ያለብህ ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
+    `🔍 <b>ያለብዎት ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
     `${diagnosis.summary}\n\n` +
-    `💼 <b>ይህ ችሎታ ለስራህ ምን ይጠቅማል?</b>\n` +
+    `💼 <b>ይህ ችሎታ ለስራዎ ምን ይጠቅማል?</b>\n` +
     `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
     `• <b>ቀጣዩ ችሎታ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
     `💡 <b>መፍትሔው (የ7 ቀን እቅድ)፦</b>\n` +
-    `• <b>ምን ማድረግ አለብህ?</b> በቀን 5 ደቂቃ አጭር ልምምድ።\n` +
-    `• <b>የዛሬው ልምምድ፦</b> ${day1Title}`;
+    `• <b>ምን ማድረግ አለብዎት?</b> በቀን 5 ደቂቃ አጭር ልምምድ።\n` +
+    `• <b>የዛሬው ልምምድዎ፦</b> ${day1Title}`;
 
   const keyboard = getReportKeyboard({ isAssessed: true, speakingTested: isSpeakingTested });
 
