@@ -398,15 +398,15 @@ async function renderSpeakingPrompt(ctx) {
         reply_markup: { remove_keyboard: true },
     });
     const speakingText = `🎙️ <b>FINAL STEP: Spoken English Diagnostic</b>\n\n` +
-        `Now let's evaluate your <b>Speaking & Pronunciation</b>!\n\n` +
-        `Record a <b>30–60 second voice note</b> in English answering:\n` +
-        `1. <i>What is your name and what do you do or study in Ethiopia?</i>\n` +
-        `2. <i>Why is mastering English important for your career or education?</i>\n` +
-        `3. <i>What is one challenge you experience when speaking English?</i>\n\n` +
-        `🇪🇹 <i>የ30-60 ሰከንድ ድምፅ በእንግሊዝኛ ይቅረጹ እና አሁን ይላኩ።</i>\n\n` +
-        `👇 <b>Hold down your Telegram microphone button to record & send!</b>`;
+        `💪 <b>አይጨነቁ — ፍጹም እንግሊዝኛ መናገር አይጠበቅብዎትም!</b>\n` +
+        `<i>AIው እርስዎን ለመመዘን ሳይሆን ትክክለኛ ደረጃዎን አውቆ ለማገዝ ነው የተሰራው። ስህተት ቢኖርም እንኳን በድፍረት ይናገሩ!</i>\n\n` +
+        `⏱️ <b>Just 15–30 seconds</b> (3 to 4 sentences is plenty!).\n\n` +
+        `Choose <b>ONE</b> topic that feels easiest for you:\n` +
+        `• ☕ <b>Option A (Daily Life):</b> <i>What is your favorite Ethiopian food, or what do you enjoy doing on weekends?</i>\n` +
+        `• 💼 <b>Option B (Career/Study):</b> <i>What do you study or work on, and why do you want to master English?</i>\n\n` +
+        `👇 <b>Hold down the Telegram microphone button below to record & send!</b>`;
     const keyboard = new InlineKeyboard()
-        .text('⏭️ Skip Speaking (Written Score Only)', 'assess_skip_voice')
+        .text('⏭️ Skip Speaking (Untested)', 'assess_skip_voice')
         .row();
     if (ctx.callbackQuery) {
         try {
@@ -424,16 +424,16 @@ async function renderSpeakingPrompt(ctx) {
  * Handle speaking voice note submitted via Telegram
  */
 export async function handleAssessmentVoiceSubmission(ctx) {
-    if (!ctx.from || !ctx.message?.voice)
+    const voiceOrAudio = ctx.message?.voice || ctx.message?.audio;
+    if (!ctx.from || !voiceOrAudio)
         return;
     const userId = ctx.from.id;
     const session = await getSession(userId);
     if (!session || session.mode !== 'assessment_awaiting_voice') {
         return; // Not in assessment voice mode
     }
-    const voice = ctx.message.voice;
-    const durationSeconds = voice.duration || 30;
-    const statusMsg = await ctx.reply('⏳ <i>Analyzing your voice note with Gemini AI (verifying language, speech clarity & fluency)...</i>', { parse_mode: 'HTML' });
+    const durationSeconds = voiceOrAudio.duration || 20;
+    const statusMsg = await ctx.reply('⏳ <i>Great job speaking up! Analyzing your speech with Maraki AI (clarity, vocabulary & fluency)...</i>', { parse_mode: 'HTML' });
     // Download Telegram voice note
     let audioBuffer = null;
     try {
@@ -461,8 +461,8 @@ export async function handleAssessmentVoiceSubmission(ctx) {
             validation = {
                 isValid: false,
                 reason: 'too_short',
-                userMessageEn: 'Your voice recording was too short to evaluate. Please record for at least 15–30 seconds.',
-                userMessageAm: 'የድምፅ መልእክትዎ በጣም አጭር ነው። እባክዎ ቢያንስ ለ15-30 ሰከንዶች በእንግሊዝኛ ይናገሩ።',
+                userMessageEn: 'Your voice recording was too short to evaluate. Please record for at least 10–20 seconds.',
+                userMessageAm: 'የድምፅ መልእክትዎ በጣም አጭር ነው። እባክዎ ቢያንስ ለ10-20 ሰከንዶች በእንግሊዝኛ ይናገሩ።',
             };
         }
         else {
@@ -488,7 +488,7 @@ export async function handleAssessmentVoiceSubmission(ctx) {
                 ? '<b>Recording Too Short / መልእክትዎ በጣም አጭር ነው</b>'
                 : '<b>No Speech Detected / ምንም ድምፅ አልተሰማም</b>';
         const retryKeyboard = new InlineKeyboard()
-            .text('⏭️ Skip Speaking (Written Score Only)', 'assess_skip_voice')
+            .text('⏭️ Skip Speaking (Untested)', 'assess_skip_voice')
             .row();
         await ctx.reply(`${errorIcon} ${errorTitle}\n\n` +
             `${validation.userMessageEn}\n\n` +

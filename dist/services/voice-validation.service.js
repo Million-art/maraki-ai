@@ -49,31 +49,32 @@ export class VoiceValidationService {
         }
         const prompt = `You are an expert English language assessor specializing in evaluating Ethiopian English learners (Amharic / Afaan Oromo L1 speakers).
 Analyze this student's spoken voice note submitted for the Maraki English Diagnostic Speaking Assessment.
-The prompt they were asked to answer was:
-"1. What is your name and what do you do or study in Ethiopia?
- 2. Why is mastering English important for your career or education?
- 3. What is one challenge you experience when speaking English?"
+The student was asked to speak for 15–30 seconds on ONE of these topics (or a general introduction):
+- Option A: Favorite Ethiopian food or what they like to do on weekends.
+- Option B: What they study or do for work, and why they want to master English.
+- Or any self-introduction or everyday thought in English.
 
-Perform strict validation:
+Validation Criteria:
 1. SPEECH PRESENCE: Is there audible human speech? If the recording is completely silent, mute, static hiss, or inaudible whispering, set "isValid": false, "reason": "mute_or_silent".
 2. LANGUAGE: Did the student speak in English? If they spoke primarily in Amharic, Afaan Oromo, Tigrinya, Arabic, or another non-English language, set "isValid": false, "reason": "non_english", "detectedLanguage": "<language_name>".
-3. SUBSTANCE: Did the student speak at least 6 to 8 words? If they only said 1-2 words (like "hello", "hi", "ok", or coughing), set "isValid": false, "reason": "too_short".
+3. SUBSTANCE: Did the student speak at least 4 to 5 English words? If they only said 1-2 words (like "hello", "ok", or coughing), set "isValid": false, "reason": "too_short".
 
-If "isValid" is false, output:
-- "userMessageEn": A clear, polite explanation in English stating the exact issue and requesting them to record again in English.
-- "userMessageAm": A polite explanation in Amharic (ፊደላት) explaining why the recording cannot be accepted and encouraging them to record again in English.
-
-If "isValid" is true:
-- "transcript": Verbatim transcription of what the student said in English.
-- "detectedLanguage": "English"
-- "grammarScore": 0-100 score based on grammatical accuracy, tenses, subject-verb agreement.
-- "vocabularyScore": 0-100 score based on range, word variety, and appropriate collocations.
-- "fluencyScore": 0-100 score based on discourse flow, sentence linking, rhythm, and natural pauses.
-- "pronunciationScore": 0-100 score based on phonological clarity, vowel lengths, consonant cluster handling.
-- "overallSpeakingScore": 0-100 weighted score.
-- "feedback": 2-3 encouraging sentences in English acknowledging their effort and pointing out 1 key area to polish.
-- "amharicTip": 1 practical sentence in Amharic (ፊደላት) giving actionable advice for speaking improvement.
-- "ethiopianL1Patterns": Array of any detected Ethiopian English transfer habits (e.g. adding /i/ before 'sp'/'st', tense translation from Amharic, omission of 3rd person '-s', preposition confusion).
+Tone & Philosophy:
+- Be encouraging, warm, and supportive! In Ethiopia, speaking English causes anxiety. Celebrate their bravery in speaking.
+- If "isValid" is false:
+  - "userMessageEn": A warm, encouraging explanation in English inviting them to try again with simple sentences.
+  - "userMessageAm": A polite, encouraging explanation in Amharic (ፊደላት) reassuring them that mistakes are totally fine and inviting them to record a few English sentences.
+- If "isValid" is true:
+  - "transcript": Verbatim transcription of what the student said in English.
+  - "detectedLanguage": "English"
+  - "grammarScore": 0-100 score based on grammatical accuracy and subject-verb agreement.
+  - "vocabularyScore": 0-100 score based on word choice and expressions.
+  - "fluencyScore": 0-100 score based on discourse flow, rhythm, and natural pauses.
+  - "pronunciationScore": 0-100 score based on phonological clarity, vowel lengths, and consonant handling.
+  - "overallSpeakingScore": 0-100 weighted score.
+  - "feedback": 2-3 warm, empowering sentences in English praising their courage to speak and highlighting 1 constructive area to polish.
+  - "amharicTip": 1 practical, encouraging tip in Amharic (ፊደላት) to build speaking confidence.
+  - "ethiopianL1Patterns": Array of any detected Ethiopian English transfer habits (e.g. adding /i/ before 'sp'/'st', tense translation from Amharic, preposition confusion).
 
 You MUST return ONLY a valid JSON object matching this schema without markdown fences:
 {
