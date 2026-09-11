@@ -61,8 +61,8 @@ export const levelCommand = async (ctx) => {
     const career = report.careerTranslation || getCareerTranslationFallback(levelName);
     const plan = report.recommendedPlan;
     const day1Title = plan?.day1?.title || 'የመጀመሪያ ቀን ልምምድ';
-    const progressCard = `🎯 <b>የእንግሊዝኛ ደረጃህ</b> 🇪🇹\n\n` +
-        `🏆 <b>ደረጃህ፦</b> Level ${levelName} (${score}/100)\n` +
+    const progressCard = `🎯 <b>የእንግሊዝኛ ችሎታህ</b> 🇪🇹\n\n` +
+        `🏆 <b>ችሎታህ፦</b> Level ${levelName} (${score}/100)\n` +
         `🔥 <b>Streak፦</b> ${streak} ${streak === 1 ? 'ቀን' : 'ቀናት'}\n\n` +
         `<b>የውጤትህ ዝርዝር፦</b>\n` +
         `━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -74,9 +74,9 @@ export const levelCommand = async (ctx) => {
         `━━━━━━━━━━━━━━━━━━━━━\n\n` +
         `🔍 <b>ያለብህ ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
         `${diagnosis.summary}\n\n` +
-        `💼 <b>ይህ ደረጃ ለስራህ ምን ይጠቅማል?</b>\n` +
+        `💼 <b>ይህ ችሎታ ለስራህ ምን ይጠቅማል?</b>\n` +
         `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
-        `• <b>ቀጣዩ ደረጃ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
+        `• <b>ቀጣዩ ችሎታ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
         `💡 <b>መፍትሔው (የ7 ቀን እቅድ)፦</b>\n` +
         `• <b>ምን ማድረግ አለብህ?</b> በቀን 5 ደቂቃ አጭር ልምምድ።\n` +
         `• <b>የዛሬው ልምምድ፦</b> ${day1Title}`;

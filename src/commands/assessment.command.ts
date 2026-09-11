@@ -629,7 +629,7 @@ export async function skipAssessmentVoice(ctx: Context) {
  * Format and send the killer feature: "🎯 YOUR MARAKI LEVEL" Card
  */
 /**
- * Format and send the killer feature: "🎯 MARAKI LEVEL REPORT" Card with Doctor's Diagnosis & Prescription
+ * Format and send the "🎯 MARAKI LEVEL REPORT" Card with English Skill Feedback & 7-Day Plan
  */
 export async function sendMarakiLevelReport(ctx: Context, report: any) {
   if (!report) {
@@ -696,7 +696,7 @@ export async function sendMarakiLevelReport(ctx: Context, report: any) {
         parse_mode: 'HTML',
       });
 
-      // Send the clinical doctor's diagnosis & prescription message with interactive keyboard
+      // Send the skill feedback & 7-day plan message with interactive keyboard
       await ctx.reply(detailedDiagnosis, {
         parse_mode: 'HTML',
         reply_markup: keyboard,

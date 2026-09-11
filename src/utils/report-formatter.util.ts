@@ -36,7 +36,7 @@ export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: st
     return {
       tag: 'Speaking Untested',
       headlineAmharic: 'ድምፅህን አልሞከርክም',
-      summary: `የጽሑፍ ውጤትህ በጣም ጥሩ ነው (${readingGrammarMax}/100)። ነገር ግን አብዛኛው ሰው በጽሑፍ ጎበዝ ሆኖ ማውራት ላይ ስለሚቸገር፣ ትክክለኛ ደረጃህን ለማወቅ ድምፅህን መፈተን ይመረጣል።`,
+      summary: `የጽሑፍ ውጤትህ በጣም ጥሩ ነው (${readingGrammarMax}/100)። ነገር ግን አብዛኛው ሰው በጽሑፍ ጎበዝ ሆኖ ማውራት ላይ ስለሚቸገር፣ ትክክለኛ ችሎታህን ለማወቅ ድምፅህን መፈተን ይመረጣል።`,
       isSilentTrap: false,
     };
   }
@@ -81,7 +81,7 @@ export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: st
       return {
         tag: `${weakness} Gap`,
         headlineAmharic: `የ${weakness} ክፍተት`,
-        summary: `ዋናው ማሻሻያህ ${weakness} ነው። በየቀኑ ጥቂት ደቂቃ በመለማመድ ደረጃህን ማሳደግ ትችላለህ።`,
+        summary: `ዋናው ማሻሻያህ ${weakness} ነው። በየቀኑ ጥቂት ደቂቃ በመለማመድ ችሎታህን ማሳደግ ትችላለህ።`,
         isSilentTrap: false,
       };
   }
@@ -118,7 +118,7 @@ export function getCareerTranslationFallback(cefrLevel: string) {
       };
     default:
       return {
-        currentLevelReality: 'መሰረታዊ ተግባቦት ትችላለህ፤ ግን ቀጣዩን ደረጃ መያዝ ያስፈልግሃል።',
+        currentLevelReality: 'መሰረታዊ ተግባቦት ትችላለህ፤ ግን ቀጣዩን ችሎታ ማዳበር ያስፈልግሃል።',
         targetLevel: 'B2',
         targetUnlock: 'ለአለም አቀፍ እና ለሀገር ውስጥ ምርጥ የስራ ዕድሎች ዝግጁ ያደርግሃል።',
       };
@@ -146,9 +146,9 @@ export function getPhotoScorecard(report: any, fullName: string, credId: string)
   const diagnosis = report.diagnosis || getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
 
   return (
-    `🎯 <b>የእንግሊዝኛ የፈተና ሪፖርት</b> 🇪🇹\n\n` +
+    `🎯 <b>የእንግሊዝኛ የፈተና ውጤት</b> 🇪🇹\n\n` +
     `👤 <b>ተማሪ፦</b> ${fullName}\n` +
-    `🏆 <b>ደረጃህ፦</b> Level ${levelName} (CEFR)\n` +
+    `🏆 <b>ችሎታህ፦</b> Level ${levelName} (CEFR)\n` +
     `⭐ <b>ውጤት፦</b> ${overall}/100 | 🛡️ <b>መለያ፦</b> <code>${credId}</code>\n\n` +
     `<b>የውጤትህ ዝርዝር፦</b>\n` +
     `━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -158,7 +158,7 @@ export function getPhotoScorecard(report: any, fullName: string, credId: string)
     `🎧 ማዳመጥ (Listening):   ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
     speakingLine +
     `━━━━━━━━━━━━━━━━━━━━━\n` +
-    `🔍 <b>ዋና ክፍተትህ፦</b> ${diagnosis.headlineAmharic || diagnosis.tag}`
+    `🔍 <b>ያለብህ ክፍተት፦</b> ${diagnosis.headlineAmharic || diagnosis.tag}`
   );
 }
 
@@ -185,12 +185,12 @@ export function getDetailedDiagnosisMessage(report: any): string {
     : '';
 
   return (
-    `🎯 <b>የፈተናህ ውጤት እና መፍትሔው</b> 🇪🇹\n\n` +
+    `🎯 <b>የእንግሊዝኛ ችሎታህ እና መፍትሔው</b> 🇪🇹\n\n` +
     `🔍 <b>ያለብህ ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
     `${diagnosis.summary}\n\n` +
-    `💼 <b>ይህ ደረጃ ለስራህ ምን ይጠቅማል?</b>\n` +
+    `💼 <b>ይህ ችሎታ ለስራህ ምን ይጠቅማል?</b>\n` +
     `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
-    `• <b>ቀጣዩ ደረጃ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
+    `• <b>ቀጣዩ ችሎታ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
     `💡 <b>መፍትሔው (የ7 ቀን እቅድ)፦</b>\n` +
     `• <b>ምን ማድረግ አለብህ?</b> በቀን 5 ደቂቃ አጭር ልምምድ።\n` +
     `• <b>የዛሬው ልምምድ፦</b> ${day1Title}${speakingNote}`
