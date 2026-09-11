@@ -6,6 +6,7 @@ import { bot } from './adapters/telegram.adapter.js'
 import { getOptedInUserIds } from './utils/daily-notify.util.js'
 import { buildDailyChallengeMessage } from './commands/challenge.command.js';
 import { apiService } from './services/api.service.js';
+import { sendWeeklyAdminDigest } from './commands/admin.command.js';
 
 dotenv.config()
 

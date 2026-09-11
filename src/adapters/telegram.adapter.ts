@@ -592,6 +592,10 @@ bot.on('callback_query:data', async (ctx) => {
         break;
       case 'close':
         return ctx.deleteMessage();
+      case 'admin_intel_refresh':
+      case 'admin_status_refresh':
+        await handleAdminCallback(ctx, data);
+        return;
       default:
         if (data.startsWith('start_plan_lesson_')) {
           const dayNum = parseInt(data.replace('start_plan_lesson_', ''), 10);
