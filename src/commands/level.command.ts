@@ -210,7 +210,6 @@ export async function sendCertificate(ctx: Context) {
     `✨ <i>Official English proficiency evaluation report from Maraki AI, evaluating real spoken fluency, grammatical accuracy, reading comprehension, and vocabulary mastery for Ethiopian learners.</i>\n\n` 
 
   const keyboard = new InlineKeyboard()
-    .url("🌐 Verify Online", `https://maraki-mini-app.vercel.app/verify/${credId}`)
     .row()
     .text("🚀 Start Day 1 Prescription", "start_plan_lesson_1")
     .text("📅 View 7-Day Plan", "view_weekly_plan")
