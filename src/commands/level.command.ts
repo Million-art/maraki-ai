@@ -73,8 +73,8 @@ export const levelCommand = async (ctx: Context) => {
   );
 
   const speakingLine = isSpeakingTested
-    ? `🗣️ Speaking:     ${renderBar(speakingScoreNum)} <b>${speakingScoreNum}</b>/100\n`
-    : `🗣️ Speaking:     ⏭️ <i>Skipped (Untested)</i>\n`;
+    ? `🗣️ ንግግር (Speaking):  ${renderBar(speakingScoreNum)} <b>${speakingScoreNum}</b>/100\n`
+    : `🗣️ ንግግር (Speaking):  ⏭️ <i>አልተፈተነም</i>\n`;
 
   const diagnosis = report.diagnosis || getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
   const career = report.careerTranslation || getCareerTranslationFallback(levelName);
@@ -82,25 +82,25 @@ export const levelCommand = async (ctx: Context) => {
   const day1Title = plan?.day1?.title || 'የመጀመሪያ ቀን ልምምድ';
 
   const progressCard =
-    `🎯 <b>የማራኪ ደረጃህ</b> 🇪🇹\n\n` +
-    `🏆 <b>የእንግሊዝኛ ደረጃህ፦</b> Level ${levelName} (${score}/100)\n` +
-    `🔥 <b>ቀጣይነት (Streak)፦</b> ${streak} ${streak === 1 ? 'ቀን' : 'ቀናት'}\n\n` +
-    `<b>የክህሎት ዝርዝር፦</b>\n` +
+    `🎯 <b>የእንግሊዝኛ ደረጃህ</b> 🇪🇹\n\n` +
+    `🏆 <b>ደረጃህ፦</b> Level ${levelName} (${score}/100)\n` +
+    `🔥 <b>Streak፦</b> ${streak} ${streak === 1 ? 'ቀን' : 'ቀናት'}\n\n` +
+    `<b>የውጤትህ ዝርዝር፦</b>\n` +
     `━━━━━━━━━━━━━━━━━━━━━\n` +
-    `📚 Vocabulary:   ${renderBar(skills.vocabulary)} <b>${skills.vocabulary}</b>/100\n` +
-    `📝 Grammar:      ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
-    `📖 Reading:      ${renderBar(skills.reading)} <b>${skills.reading}</b>/100\n` +
-    `🎧 Listening:    ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
+    `📚 ቃላት (Vocabulary):   ${renderBar(skills.vocabulary)} <b>${skills.vocabulary}</b>/100\n` +
+    `📝 ሰዋሰው (Grammar):     ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
+    `📖 ንባብ (Reading):      ${renderBar(skills.reading)} <b>${skills.reading}</b>/100\n` +
+    `🎧 ማዳመጥ (Listening):   ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
     speakingLine +
     `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `🔍 <b>ምርመራህ፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
+    `🔍 <b>ያለብህ ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
     `${diagnosis.summary}\n\n` +
-    `💼 <b>በስራ ዓለም ምን ማለት ነው?</b>\n` +
+    `💼 <b>ይህ ደረጃ ለስራህ ምን ይጠቅማል?</b>\n` +
     `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
     `• <b>ቀጣዩ ደረጃ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
-    `💊 <b>የዶክተሩ ማዘዣ (የ7 ቀን መፍትሔ)፦</b>\n` +
-    `• <b>መድኃኒቱ፦</b> በቀን 5 ደቂቃ ፈጣን ልምምድ ማድረግ።\n` +
-    `• <b>የቀን 1 መነሻ፦</b> ${day1Title}`;
+    `💡 <b>መፍትሔው (የ7 ቀን እቅድ)፦</b>\n` +
+    `• <b>ምን ማድረግ አለብህ?</b> በቀን 5 ደቂቃ አጭር ልምምድ።\n` +
+    `• <b>የዛሬው ልምምድ፦</b> ${day1Title}`;
 
   const keyboard = getReportKeyboard({ isAssessed: true, speakingTested: isSpeakingTested });
 
