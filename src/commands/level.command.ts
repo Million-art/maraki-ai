@@ -30,31 +30,16 @@ export const levelCommand = async (ctx: Context) => {
 
   if (!isAssessed) {
     const unassessedCard =
-      `🎯 <b>YOUR MARAKI LEVEL</b> 🇪🇹\n\n` +
-      `⭐ <b>Status:</b> ❓ <i>Not Yet Calibrated</i>\n` +
-      `🏆 <b>English Level:</b> Pending Diagnostic Test\n` +
-      `🔥 <b>Daily Streak:</b> ${streak} ${streak === 1 ? 'Day' : 'Days'} Active\n\n` +
-      `<b>Skill Breakdown:</b>\n` +
-      `━━━━━━━━━━━━━━━━━━━━━\n` +
-      `📚 Vocabulary:   ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
-      `📝 Grammar:      ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
-      `📖 Reading:      ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
-      `🎧 Listening:    ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
-      `🗣️ Speaking:     ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
-      `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `💡 <b>You haven't taken your English Assessment yet!</b>\n\n` +
-      `Take the 8-minute diagnostic test to:\n` +
-      `• 🎯 Discover your verified CEFR Level (A1 – C1)\n` +
-      `• 🔍 Uncover your specific Ethiopian English error patterns\n` +
-      `• 📅 Unlock your personalized 7-Day study plan\n\n` +
-      `Tap below to find your real level! 👇`;
+      `🎯 <b>የእንግሊዝኛ ችሎታዎ</b> 🇪🇹\n\n` +
+      `እስካሁን የችሎታ መለያ ፈተና አልወሰዱም!\n\n` +
+      `የእንግሊዝኛ ችሎታዎን (A1 – C1) ለማወቅ እና ድክመትዎን የሚቀርፍ ዕለታዊ ልምምድ ለመጀመር አሁኑኑ ፈተናውን ይውሰዱ።\n\n` +
+      `⏱️ <b>የሚፈጀው ጊዜ፦</b> 3 ደቂቃ ብቻ\n` +
+      `🎯 <b>ምን ያገኛሉ?</b> የችሎታ ውጤት፣ ያለብዎት ክፍተት እና ዕለታዊ ቻሌንጅ!`;
 
     const keyboard = new InlineKeyboard()
-      .text("🎯 Take 8-Min Assessment", "start_assessment")
-      .text("📊 Sample Assessment Report", "view_certificate")
+      .text("🎯 የችሎታ መለያ ፈተና ጀምር (3 ደቂቃ)", "start_assessment")
       .row()
-      .text("🔥 Daily Challenge", "daily_challenge")
-      .text("🧠 Practice Quiz", "quiz");
+      .text("🔥 የዛሬውን ነፃ ቻሌንጅ ሞክር", "daily_challenge");
 
     return await ctx.reply(unassessedCard, { parse_mode: "HTML", reply_markup: keyboard });
   }
@@ -73,8 +58,8 @@ export const levelCommand = async (ctx: Context) => {
   );
 
   const speakingLine = isSpeakingTested
-    ? `🗣️ Speaking:     ${renderBar(speakingScoreNum)} <b>${speakingScoreNum}</b>/100\n`
-    : `🗣️ Speaking:     ⏭️ <i>Skipped (Untested)</i>\n`;
+    ? `🗣️ ንግግር (Speaking):  ${renderBar(speakingScoreNum)} <b>${speakingScoreNum}</b>/100\n`
+    : `🗣️ ንግግር (Speaking):  ⏭️ <i>አልተፈተነም</i>\n`;
 
   const diagnosis = report.diagnosis || getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
   const career = report.careerTranslation || getCareerTranslationFallback(levelName);
@@ -82,25 +67,25 @@ export const levelCommand = async (ctx: Context) => {
   const day1Title = plan?.day1?.title || 'የመጀመሪያ ቀን ልምምድ';
 
   const progressCard =
-    `🎯 <b>የእንግሊዘኛ ቇንቇ ችሎታ</b> 🇪🇹\n\n` +
-    `🏆 <b>የእንግሊዝኛ ደረጃህ፦</b> Level ${levelName} (${score}/100)\n` +
+    `🎯 <b>የእንግሊዝኛ ችሎታዎ</b> 🇪🇹\n\n` +
+    `🏆 <b>ችሎታዎ፦</b> Level ${levelName} (${score}/100)\n` +
     `🔥 <b>ቀጣይነት (Streak)፦</b> ${streak} ${streak === 1 ? 'ቀን' : 'ቀናት'}\n\n` +
-    `<b>የክህሎት ዝርዝር፦</b>\n` +
+    `<b>የውጤትዎ ዝርዝር፦</b>\n` +
     `━━━━━━━━━━━━━━━━━━━━━\n` +
-    `📚 Vocabulary:   ${renderBar(skills.vocabulary)} <b>${skills.vocabulary}</b>/100\n` +
-    `📝 Grammar:      ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
-    `📖 Reading:      ${renderBar(skills.reading)} <b>${skills.reading}</b>/100\n` +
-    `🎧 Listening:    ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
+    `📚 ቃላት (Vocabulary):   ${renderBar(skills.vocabulary)} <b>${skills.vocabulary}</b>/100\n` +
+    `📝 ሰዋሰው (Grammar):     ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
+    `📖 ንባብ (Reading):      ${renderBar(skills.reading)} <b>${skills.reading}</b>/100\n` +
+    `🎧 ማዳመጥ (Listening):   ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
     speakingLine +
     `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `🔍 <b>ምርመራህ፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
+    `🔍 <b>ያለብዎት ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
     `${diagnosis.summary}\n\n` +
-    `💼 <b>በስራ ዓለም ምን ማለት ነው?</b>\n` +
+    `💼 <b>ይህ ችሎታ ለስራዎ ምን ይጠቅማል?</b>\n` +
     `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
-    `• <b>ቀጣዩ ደረጃ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
-    `💊 <b>የዶክተሩ ማዘዣ (የ7 ቀን መፍትሔ)፦</b>\n` +
-    `• <b>መድኃኒቱ፦</b> በቀን 5 ደቂቃ ፈጣን ልምምድ ማድረግ።\n` +
-    `• <b>የቀን 1 መነሻ፦</b> ${day1Title}`;
+    `• <b>ቀጣዩ ችሎታ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
+    `💡 <b>የመፍትሔው መንገድ፦</b>\n` +
+    `• <b>ምን ማድረግ አለብዎት?</b> በቀን 5 ደቂቃ አጭር ልምምድ።\n` +
+    `• <b>የዛሬው ልምምድዎ፦</b> ${day1Title}`;
 
   const keyboard = getReportKeyboard({ isAssessed: true, speakingTested: isSpeakingTested });
 

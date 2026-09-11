@@ -181,19 +181,19 @@ export function getDetailedDiagnosisMessage(report: any): string {
   const day1Title = plan?.day1?.title || 'የመጀመሪያ ቀን ልምምድ';
 
   const speakingNote = !isSpeakingTested
-    ? `\n🎙️ <i>ማስታወሻ፦ ድምፅህን አልሞከርክም። አፍህን ለመፍታት ከታች "🎙️ ድምፅህን ፈትን" የሚለውን ንካ!</i>`
+    ? `\n🎙️ <i>ማስታወሻ፦ ድምፅዎን አልሞከሩም። አፍዎን ለመፍታት ከታች "🎙️ ድምፅዎን ይሞክሩ" የሚለውን ይጫኑ!</i>`
     : '';
 
   return (
-    `🩺 <b>የማራኪ ምርመራ እና መፍትሔ</b> 🇪🇹\n\n` +
-    `🔍 <b>ምርመራህ፡</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
+    `🎯 <b>የእንግሊዝኛ ችሎታዎ እና መፍትሔው</b> 🇪🇹\n\n` +
+    `🔍 <b>ያለብዎት ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
     `${diagnosis.summary}\n\n` +
-    `💼 <b>በስራ ዓለም ምን ማለት ነው?</b>\n` +
+    `💼 <b>ይህ ችሎታ ለስራዎ ምን ይጠቅማል?</b>\n` +
     `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
-    `• <b>ቀጣዩ ደረጃ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
-    `💊 <b>የዶክተሩ ማዘዣ (የ7 ቀን መፍትሔ)፦</b>\n` +
-    `• <b>መድኃኒቱ፦</b> በቀን 5 ደቂቃ ፈጣን ልምምድ ማድረግ።\n` +
-    `• <b>የቀን 1 መነሻ፦</b> ${day1Title}${speakingNote}`
+    `• <b>ቀጣዩ ችሎታ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
+    `💡 <b>የመፍትሔው መንገድ፦</b>\n` +
+    `• <b>ምን ማድረግ አለብዎት?</b> በቀን 5 ደቂቃ አጭር ልምምድ ማድረግ።\n` +
+    `• <b>የዛሬው ልምምድዎ፦</b> ${day1Title}${speakingNote}`
   );
 }
 
@@ -205,14 +205,14 @@ export function getFullTextMessage(report: any, fullName: string, credId: string
 
 export function getReportKeyboard(options?: { isAssessed?: boolean; speakingTested?: boolean }): InlineKeyboard {
   const keyboard = new InlineKeyboard()
-    .text('🚀 የቀን 1 ልምምድ ጀምር', 'start_plan_lesson_1')
+    .text('🚀 የዛሬውን ልምምድ ጀምር', 'start_plan_lesson_1')
     .row()
-    .text('📊 የፈተና ሪፖርት', 'view_certificate')
-    .text('📅 የ7 ቀን ፕላን', 'view_weekly_plan')
+    .text('📊 የፈተና ውጤት', 'view_certificate')
+    .text('📅 የልምምድ እቅድ', 'view_weekly_plan')
     .row();
 
   if (options?.speakingTested === false) {
-    keyboard.text('🎙️ ድምፅህን ፈትን', 'start_speaking_flow');
+    keyboard.text('🎙️ ድምፅዎን ይሞክሩ', 'start_speaking_flow');
   } else {
     keyboard.text('🔥 ዕለታዊ ቻሌንጅ', 'daily_challenge');
   }

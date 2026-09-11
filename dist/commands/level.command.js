@@ -19,30 +19,15 @@ export const levelCommand = async (ctx) => {
     const report = await apiService.getStudentMarakiLevel(userId);
     const isAssessed = report && report.isAssessed && !report.needsAssessment && report.cefrLevel !== 'UNTESTED' && report.overallScore > 0;
     if (!isAssessed) {
-        const unassessedCard = `🎯 <b>YOUR MARAKI LEVEL</b> 🇪🇹\n\n` +
-            `⭐ <b>Status:</b> ❓ <i>Not Yet Calibrated</i>\n` +
-            `🏆 <b>English Level:</b> Pending Diagnostic Test\n` +
-            `🔥 <b>Daily Streak:</b> ${streak} ${streak === 1 ? 'Day' : 'Days'} Active\n\n` +
-            `<b>Skill Breakdown:</b>\n` +
-            `━━━━━━━━━━━━━━━━━━━━━\n` +
-            `📚 Vocabulary:   ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
-            `📝 Grammar:      ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
-            `📖 Reading:      ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
-            `🎧 Listening:    ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
-            `🗣️ Speaking:     ⬜⬜⬜⬜⬜ <b>--</b>/100\n` +
-            `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-            `💡 <b>You haven't taken your English Assessment yet!</b>\n\n` +
-            `Take the 8-minute diagnostic test to:\n` +
-            `• 🎯 Discover your verified CEFR Level (A1 – C1)\n` +
-            `• 🔍 Uncover your specific Ethiopian English error patterns\n` +
-            `• 📅 Unlock your personalized 7-Day study plan\n\n` +
-            `Tap below to find your real level! 👇`;
+        const unassessedCard = `🎯 <b>የእንግሊዝኛ ችሎታዎ</b> 🇪🇹\n\n` +
+            `እስካሁን የችሎታ መለያ ፈተና አልወሰዱም!\n\n` +
+            `የእንግሊዝኛ ችሎታዎን (A1 – C1) ለማወቅ እና ድክመትዎን የሚቀርፍ ዕለታዊ ልምምድ ለመጀመር አሁኑኑ ፈተናውን ይውሰዱ።\n\n` +
+            `⏱️ <b>የሚፈጀው ጊዜ፦</b> 3 ደቂቃ ብቻ\n` +
+            `🎯 <b>ምን ያገኛሉ?</b> የችሎታ ውጤት፣ ያለብዎት ክፍተት እና ዕለታዊ ቻሌንጅ!`;
         const keyboard = new InlineKeyboard()
-            .text("🎯 Take 8-Min Assessment", "start_assessment")
-            .text("📊 Sample Assessment Report", "view_certificate")
+            .text("🎯 የችሎታ መለያ ፈተና ጀምር (3 ደቂቃ)", "start_assessment")
             .row()
-            .text("🔥 Daily Challenge", "daily_challenge")
-            .text("🧠 Practice Quiz", "quiz");
+            .text("🔥 የዛሬውን ነፃ ቻሌንጅ ሞክር", "daily_challenge");
         return await ctx.reply(unassessedCard, { parse_mode: "HTML", reply_markup: keyboard });
     }
     const levelName = report.cefrLevel || 'B1';
@@ -77,7 +62,7 @@ export const levelCommand = async (ctx) => {
         `💼 <b>ይህ ችሎታ ለስራዎ ምን ይጠቅማል?</b>\n` +
         `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
         `• <b>ቀጣዩ ችሎታ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
-        `💡 <b>መፍትሔው (የ7 ቀን እቅድ)፦</b>\n` +
+        `💡 <b>የመፍትሔው መንገድ፦</b>\n` +
         `• <b>ምን ማድረግ አለብዎት?</b> በቀን 5 ደቂቃ አጭር ልምምድ።\n` +
         `• <b>የዛሬው ልምምድዎ፦</b> ${day1Title}`;
     const keyboard = getReportKeyboard({ isAssessed: true, speakingTested: isSpeakingTested });
@@ -176,10 +161,8 @@ export async function sendCertificate(ctx) {
         `🏆 <b>Diagnostic Benchmark:</b> Level ${levelName} (CEFR)\n` +
         `⭐ <b>Overall Score:</b> ${score}/100\n` +
         `🛡️ <b>Report ID:</b> <code>${credId}</code>\n\n` +
-        `✨ <i>Official English proficiency evaluation report from Maraki AI, evaluating real spoken fluency, grammatical accuracy, reading comprehension, and vocabulary mastery for Ethiopian learners.</i>\n\n` +
-        `🔗 <b>Shareable on LinkedIn, Telegram & Professional CVs</b>`;
+        `✨ <i>Official English proficiency evaluation report from Maraki AI, evaluating real spoken fluency, grammatical accuracy, reading comprehension, and vocabulary mastery for Ethiopian learners.</i>\n\n`;
     const keyboard = new InlineKeyboard()
-        .url("🌐 Verify Online", `https://maraki-mini-app.vercel.app/verify/${credId}`)
         .row()
         .text("🚀 Start Day 1 Prescription", "start_plan_lesson_1")
         .text("📅 View 7-Day Plan", "view_weekly_plan")
