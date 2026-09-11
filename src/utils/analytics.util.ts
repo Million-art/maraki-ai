@@ -48,8 +48,8 @@ export async function trackNewUser(ctx: Context) {
   }
 }
 
-// Track and Notify Upgrade/Payment Click with 1-Click Admin Follow-up & Scheduled Auto Nudge
-export async function trackUpgradeIntent(ctx: Context) {
+// Track and Notify Upgrade/Payment Detail View with 1-Click Admin Follow-up & Scheduled Auto Nudge
+export async function trackUpgradeIntent(ctx: Context, tierName?: string, amount?: string) {
   if (!ctx.from) return;
 
   // Prevent admin self-notifications
@@ -72,12 +72,16 @@ export async function trackUpgradeIntent(ctx: Context) {
     .text("💬 Send Follow-up via Bot", `admin_followup_${userId}`)
     .text("🎁 Send Special Discount", `admin_discount_${userId}`);
 
+  const planLine = tierName ? `🎯 <b>Selected Plan:</b> ${tierName} (${amount} ETB)\n` : '';
+
   const alertMsg =
-    `💳 <b>User Clicked Upgrade / VIP!</b>\n\n` +
+    `💳 <b>User Viewed Payment Details!</b>\n\n` +
     `👤 <b>Name:</b> ${name}\n` +
     `💬 <b>Username:</b> ${username}\n` +
-    `🆔 <b>User ID:</b> <code>${userId}</code>\n\n` +
-    `💡 <i>Click below to send an automated follow-up message to this user directly via Maraki Bot!</i>`;
+    `🆔 <b>User ID:</b> <code>${userId}</code>\n` +
+    planLine +
+    `\n🏦 <i>User selected a plan and viewed the CBE, Dashen & Telebirr account details. If they do not submit a receipt, they may be hesitating about manual bank transfer.</i>\n\n` +
+    `💡 <i>Click below to send an automated follow-up or discount to this user directly via Maraki Bot!</i>`;
 
   try {
     await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML', reply_markup: keyboard });
@@ -87,7 +91,7 @@ export async function trackUpgradeIntent(ctx: Context) {
   // Store follow-up intent in Redis with 15-minute TTL for zero server memory overhead & persistence
   try {
     if (redis.isOpen) {
-      await redis.set(`followup:intent:${userId}`, JSON.stringify({ userId, firstName, timestamp: Date.now() }), { EX: 900 });
+      await redis.set(`followup:intent:${userId}`, JSON.stringify({ userId, firstName, tierName, amount, timestamp: Date.now() }), { EX: 900 });
     }
   } catch (e) { }
 
@@ -118,13 +122,14 @@ export async function trackUpgradeIntent(ctx: Context) {
         .row()
         .text("💬 Chat with Support", "contact_support");
 
+      const planMention = tierName ? `for the **${tierName}**` : 'options';
       await ctx.api.sendMessage(
         userId,
         `👋 *Hi ${firstName}!*\n\n` +
-        `We noticed you were checking out Maraki VIP subscription options earlier.\n\n` +
-        `❓ *Need any assistance?*\n` +
-        `Our bank verification works automatically with **CBE (1000342472501)** & **Dashen (5427280818011)** in < 5 seconds!\n\n` +
-        `Click below if you have any questions or would like help activating your account:`,
+        `We noticed you checked out the payment details ${planMention} earlier.\n\n` +
+        `❓ *Need any help with the bank transfer?*\n` +
+        `Our automatic verification works with **CBE (1000342472501)**, **Dashen (5427280818011)** & **Telebirr (0943789101)** in seconds!\n\n` +
+        `Click below if you have any questions or would like assistance:`,
         { parse_mode: 'Markdown', reply_markup: followupKeyboard }
       );
     } catch (e) {

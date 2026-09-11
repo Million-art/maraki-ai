@@ -27,9 +27,12 @@ const initialize = async () => {
             await connectRedis();
             await bot.init();
             console.log('Bot initialized');
-            // Enable Long Polling if USE_POLLING=true OR DEV_BOT_TOKEN is set for local dev
-            const isDevBot = !!process.env.DEV_BOT_TOKEN;
-            const usePolling = process.env.USE_POLLING === 'true' || isDevBot;
+            // Determine polling vs webhook mode
+            const isProduction = process.env.NODE_ENV === 'production';
+            const isDevBot = !isProduction && !!process.env.DEV_BOT_TOKEN;
+            const usePolling = isProduction
+                ? process.env.USE_POLLING === 'true'
+                : (process.env.USE_POLLING === 'true' || isDevBot);
             let webhookUrl = usePolling ? null : process.env.WEBHOOK_URL;
             if (webhookUrl && webhookUrl.includes('alertmanager.ptgr.io')) {
                 webhookUrl = 'https://alert.carramarket.com/webhook';

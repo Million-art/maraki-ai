@@ -141,7 +141,7 @@ export async function sendCertificate(ctx) {
         const candidateScriptPaths = [
             path.resolve(process.cwd(), 'scripts/generate_certificate.py'),
             path.resolve(__dirname, '../../scripts/generate_certificate.py'),
-            '/home/million/Documents/maraki/bot/scripts/generate_certificate.py',
+            '/home/million/Documents/testing/bot/scripts/generate_certificate.py',
         ];
         const script = candidateScriptPaths.find((p) => fs.existsSync(p));
         if (script) {
@@ -174,7 +174,6 @@ export async function sendCertificate(ctx) {
         `🔗 <b>Shareable on LinkedIn, Telegram & Professional CVs</b>`;
     const keyboard = new InlineKeyboard()
         .url("🌐 Verify Online", `https://maraki-mini-app.vercel.app/verify/${credId}`)
-        .url("💼 Add to LinkedIn", `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=Maraki%20English%20Assessment%20Report%20(${levelName})&organizationName=Maraki%20AI&issueYear=2026&issueMonth=9&certId=${credId}`)
         .row()
         .text("📅 View 7-Day Plan", "view_weekly_plan")
         .text("⬅️ Back to Maraki Level", "level");
@@ -183,7 +182,7 @@ export async function sendCertificate(ctx) {
             userCertPath,
             path.resolve(process.cwd(), 'assets/images/sample_certificate.jpg'),
             path.resolve(__dirname, '../../assets/images/sample_certificate.jpg'),
-            '/home/million/Documents/maraki/bot/assets/images/sample_certificate.jpg',
+            '/home/million/Documents/testing/bot/assets/images/sample_certificate.jpg',
         ];
         const imagePath = candidatePaths.find((p) => fs.existsSync(p));
         if (imagePath) {

@@ -12,11 +12,6 @@ import {
 export async function handlePaymentCommand(ctx: Context) {
   if (!ctx.from) return;
 
-  // Track user upgrade click & notify admin for follow-up
-  try {
-    await trackUpgradeIntent(ctx);
-  } catch (e) { }
-
   let activeNotice = '';
   try {
     const user = await apiService.getUserByTelegramId(ctx.from.id);
@@ -69,6 +64,11 @@ export async function handlePaymentSelection(ctx: Context, data: string) {
     tierName = '🚀 1 Year VIP';
     tierParam = 'yearly';
   }
+
+  // Track user plan selection & notify admin that user viewed payment details (CBE, Dashen, Telebirr)
+  try {
+    await trackUpgradeIntent(ctx, tierName, amount);
+  } catch (e) { }
 
   let extensionNotice = '';
   try {
