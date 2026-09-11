@@ -78,10 +78,7 @@ export async function trackUpgradeIntent(ctx: Context, tierName?: string, amount
     `💳 <b>User Viewed Payment Details!</b>\n\n` +
     `👤 <b>Name:</b> ${name}\n` +
     `💬 <b>Username:</b> ${username}\n` +
-    `🆔 <b>User ID:</b> <code>${userId}</code>\n` +
-    planLine +
-    `\n🏦 <i>User selected a plan and viewed the CBE, Dashen & Telebirr account details. If they do not submit a receipt, they may be hesitating about manual bank transfer.</i>\n\n` +
-    `💡 <i>Click below to send an automated follow-up or discount to this user directly via Maraki Bot!</i>`;
+    `🆔 <b>User ID:</b> <code>${userId}</code>\n` 
 
   try {
     await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML', reply_markup: keyboard });
