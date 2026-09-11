@@ -10,7 +10,7 @@ import { helpCommand } from '../commands/help.command.js';
 import { translationCommand, handleTranslation, startTranslation } from '../commands/translation.command.js';
 import { usageCommand } from '../commands/usage.command.js';
 import { quizCommand, handleQuizAnswer } from '../commands/quiz.command.js';
-import { adminStatusCommand } from '../commands/admin.command.js';
+import { adminStatusCommand, adminIntelligenceCommand, handleAdminCallback } from '../commands/admin.command.js';
 import { handlePaymentCommand, handleReceiptVerification } from '../commands/payment.command.js';
 import { challengeCommand } from '../commands/challenge.command.js';
 import { handleSurvey1, handleSurvey2, awaitingSurveyTextUsers } from '../commands/survey.command.js';
@@ -158,9 +158,8 @@ bot.command('pay', handlePaymentCommand);
 bot.command('subscribe', handlePaymentCommand);
 
 bot.command('admin_status', adminStatusCommand);
+bot.command(['intel', 'digest', 'admin_intel'], adminIntelligenceCommand);
 
-// Handle Spoken Voice Notes (Diagnostic Speaking Assessment)
-bot.on('message:voice', async (ctx) => {
 // Handle Spoken Voice Notes & Audio Clips (Diagnostic Speaking Assessment)
 bot.on(['message:voice', 'message:audio'], async (ctx) => {
   await handleAssessmentVoiceSubmission(ctx);

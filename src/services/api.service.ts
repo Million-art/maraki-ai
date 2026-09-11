@@ -483,6 +483,16 @@ export class ApiService {
     }
   }
 
+  async getAssessmentProductIntelligence(): Promise<any> {
+    try {
+      const { data } = await axios.get(`${this.backendUrl}/api/assessment/admin/intelligence`, { timeout: 15000 });
+      return data;
+    } catch (error: any) {
+      console.error('[Assessment API] Failed to get product intelligence:', error?.message);
+      return null;
+    }
+  }
+
   // Persistent 7-Day Plan & Streak Management (PostgreSQL via Backend API)
   async getStudentPlanProgress(telegramId: number): Promise<{ currentDay: number; completedDays: number[]; lastCompletedAt?: string; activeLesson?: any }> {
     try {
