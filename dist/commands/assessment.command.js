@@ -405,7 +405,7 @@ async function renderSpeakingPrompt(ctx) {
         `3. <i>What is one challenge you experience when speaking English?</i>\n\n` +
         `🇪🇹 <i>የ30-60 ሰከንድ ድምፅ በእንግሊዝኛ ይቅረጹ እና አሁን ይላኩ።</i>\n\n` +
         `👇 <b>Hold down your Telegram microphone button to record & send!</b>`;
-    `💪 <b>አይጨነቁ — ፍጹም እንግሊዝኛ መናገር አይጠበቅብዎትም!</b>\n` +
+    `💪 <b>አይጨነቁ   ፍጹም እንግሊዝኛ መናገር አይጠበቅብዎትም!</b>\n` +
         `<i>AIው እርስዎን ለመመዘን ሳይሆን ትክክለኛ ደረጃዎን አውቆ ለማገዝ ነው የተሰራው። ስህተት ቢኖርም እንኳን በድፍረት ይናገሩ!</i>\n\n` +
         `⏱️ <b>Just 15–30 seconds</b> (3 to 4 sentences is plenty!).\n\n` +
         `Choose <b>ONE</b> topic that feels easiest for you:\n` +

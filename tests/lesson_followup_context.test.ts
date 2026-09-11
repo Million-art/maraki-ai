@@ -66,12 +66,12 @@ describe('Lesson Follow-up Context Memory', () => {
 
   // ─────────────────────────────────────────────────────────────────────────────
   test('should show error when session has NO lesson content (regression test for original bug)', async () => {
-    // Arrange: session was overwritten (the original bug) — no lastLessonContent
+    // Arrange: session was overwritten (the original bug)   no lastLessonContent
     mockGetSession.mockResolvedValueOnce({
       mode: 'lesson_followup',
       userId: 123456789,
       timestamp: Date.now(),
-      // No lastLessonContent — simulates the old bug where setSession overwrote the whole session
+      // No lastLessonContent   simulates the old bug where setSession overwrote the whole session
     } as any);
 
     // Act

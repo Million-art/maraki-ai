@@ -397,7 +397,7 @@ bot.on('message:text', async (ctx) => {
     }
     await ctx.reply(
       '🎙️ <b>Speaking Diagnostic in Progress:</b>\n\n' +
-      '💪 <i>አይጨነቁ — ፍጹም እንግሊዝኛ መናገር አይጠበቅብዎትም! ጥቂት አረፍተ-ነገሮች ብቻ በቂ ናቸው።</i>\n\n' +
+      '💪 <i>አይጨነቁ   ፍጹም እንግሊዝኛ መናገር አይጠበቅብዎትም! ጥቂት አረፍተ-ነገሮች ብቻ በቂ ናቸው።</i>\n\n' +
       'Please hold down your Telegram microphone button to send a short <b>15–30 second voice note</b> in English, or type /skip to complete without speaking.',
       {
         parse_mode: 'HTML',

@@ -230,7 +230,7 @@ export const LESSON_DATABASE = {
             title: "Vocabulary Mastery",
             topic: "False Friends & Literal Translations",
             duration: "5 mins",
-            strategy: "Beware of literal translation habits: In English, you don't 'shift' a meeting if you mean moving it to another day—you 'reschedule', 'postpone', or 'push back' the meeting.\n\n🇪🇹 <b>የአማርኛ ማስታወሻ:</b> ስብሰባን ወደ ሌላ ቀን ማዛወር 'reschedule' ወይም 'postpone' ይባላል እንጂ 'shift the meeting' አይባልም።",
+            strategy: "Beware of literal translation habits: In English, you don't 'shift' a meeting if you mean moving it to another day you 'reschedule', 'postpone', or 'push back' the meeting.\n\n🇪🇹 <b>የአማርኛ ማስታወሻ:</b> ስብሰባን ወደ ሌላ ቀን ማዛወር 'reschedule' ወይም 'postpone' ይባላል እንጂ 'shift the meeting' አይባልም።",
             question: "How should you naturally say you need to move a 2:00 PM appointment to 4:00 PM?",
             options: [
                 "A) Can we shift the meeting to 4:00 PM?",

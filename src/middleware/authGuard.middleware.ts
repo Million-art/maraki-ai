@@ -112,7 +112,7 @@ export async function checkCentralAuthAndAccess(
           `🚫 *Weekly Lesson Limit Reached!*\n\n` +
           `You have used all *${lessonLimit} free lessons* for your current 7-day window.\n\n` +
           `⏳ Your next free lesson unlocks ${resetText}.\n\n` +
-          `🔓 *Upgrade to VIP* for unlimited lessons, quizzes, and AI practice — 499 ETB/month!`,
+          `🔓 *Upgrade to VIP* for unlimited lessons, quizzes, and AI practice   499 ETB/month!`,
           { parse_mode: 'Markdown', reply_markup: keyboard }
         );
         return false;
@@ -148,7 +148,7 @@ export async function checkCentralAuthAndAccess(
           `🚫 *Weekly Quiz Limit Reached!*\n\n` +
           `You have used all *${quizLimit} free quizzes* for your current 7-day window.\n\n` +
           `⏳ Your next free quiz unlocks ${resetText}.\n\n` +
-          `🔓 *Upgrade to VIP* for unlimited quizzes, lessons, and AI practice — 499 ETB/month!`,
+          `🔓 *Upgrade to VIP* for unlimited quizzes, lessons, and AI practice   499 ETB/month!`,
           { parse_mode: 'Markdown', reply_markup: keyboard }
         );
         return false;

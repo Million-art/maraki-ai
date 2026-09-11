@@ -29,7 +29,7 @@ async function maybeAskForOptIn(ctx, userId) {
     const optInKeyboard = new InlineKeyboard()
         .text('✅ Yes, send me daily!', 'daily_notify_yes')
         .text('❌ No thanks', 'daily_notify_no');
-    await ctx.reply(`📬 <b>Liked today's challenge?</b> Get it delivered every morning — for free!`, { parse_mode: 'HTML', reply_markup: optInKeyboard });
+    await ctx.reply(`📬 <b>Liked today's challenge?</b> Get it delivered every morning   for free!`, { parse_mode: 'HTML', reply_markup: optInKeyboard });
 }
 async function getCachedChallenge(userId) {
     const key = `user:daily_challenge:${userId}`;

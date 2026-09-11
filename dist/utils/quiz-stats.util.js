@@ -39,7 +39,7 @@ export async function getLocalQuizStats(userId) {
         }
     }
     catch (e) { }
-    // Return zero stats — the backend API is the authoritative source for weekly counts.
+    // Return zero stats   the backend API is the authoritative source for weekly counts.
     // We must NOT hydrate from totalQuizzesCompleted (a lifetime counter) as it would
     // poison the cache and make the bot think the user has exhausted their weekly quota.
     return { totalQuizzesCompleted: 0, totalQuestions: 0, totalCorrect: 0 };

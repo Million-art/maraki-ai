@@ -109,7 +109,7 @@ function startWeeklyAdminDigestScheduler() {
 app.get('/', (req, res) => {
     res.send('Practice English is running');
 });
-// Secured daily challenge broadcast endpoint — triggered by GitHub Actions cron
+// Secured daily challenge broadcast endpoint   triggered by GitHub Actions cron
 app.post('/cron/daily-challenge', async (req, res) => {
     const secret = process.env.CRON_SECRET;
     const authHeader = req.headers['authorization'];
@@ -148,7 +148,7 @@ app.post('/cron/daily-challenge', async (req, res) => {
             }
             catch (e) {
                 console.error(`[Daily Broadcast] Error sending to user ${userId}:`, e.message || e);
-                // User blocked the bot or account deleted — silently skip
+                // User blocked the bot or account deleted   silently skip
                 failed++;
             }
         }
@@ -160,7 +160,7 @@ app.post('/cron/daily-challenge', async (req, res) => {
         res.status(500).json({ error: 'Broadcast failed' });
     }
 });
-// Secured 7-Day Plan Retention Reminder endpoint — triggered by cron
+// Secured 7-Day Plan Retention Reminder endpoint   triggered by cron
 app.post('/cron/plan-reminder', async (req, res) => {
     const secret = process.env.CRON_SECRET;
     const authHeader = req.headers['authorization'];
@@ -208,7 +208,7 @@ app.post('/cron/plan-reminder', async (req, res) => {
         res.status(500).json({ error: 'Plan reminder broadcast failed' });
     }
 });
-// Secured Weekly Assessment Intelligence Digest endpoint — triggered by cron or external caller
+// Secured Weekly Assessment Intelligence Digest endpoint   triggered by cron or external caller
 app.post('/cron/weekly-digest', async (req, res) => {
     const secret = process.env.CRON_SECRET;
     const authHeader = req.headers['authorization'];

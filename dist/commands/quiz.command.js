@@ -18,7 +18,7 @@ export const quizCommand = async (ctx) => {
         if (redis.isOpen) {
             const acquired = await redis.set(quizStartLockKey, '1', { NX: true, EX: 30 });
             if (!acquired) {
-                // Another call is already starting the quiz — silently ignore this one
+                // Another call is already starting the quiz   silently ignore this one
                 return;
             }
         }

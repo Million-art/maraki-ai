@@ -10,7 +10,7 @@ import { trackNewUser } from "../utils/analytics.util.js";
 export async function startCommand(ctx) {
     if (!ctx.from)
         return;
-    // Deep-link: /start pay or /start=pay — triggered from Mini App upgrade popup
+    // Deep-link: /start pay or /start=pay   triggered from Mini App upgrade popup
     const matchStr = String(ctx.match || '').trim().toLowerCase();
     if (matchStr === 'pay' || matchStr.includes('pay')) {
         await registerOrUpdate(ctx.from); // ensure user exists

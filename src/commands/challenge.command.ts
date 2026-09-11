@@ -35,7 +35,7 @@ async function maybeAskForOptIn(ctx: Context, userId: number): Promise<void> {
     .text('❌ No thanks', 'daily_notify_no');
 
   await ctx.reply(
-    `📬 <b>Liked today's challenge?</b> Get it delivered every morning — for free!`,
+    `📬 <b>Liked today's challenge?</b> Get it delivered every morning   for free!`,
     { parse_mode: 'HTML', reply_markup: optInKeyboard }
   );
 }

@@ -120,7 +120,7 @@ app.get('/', (req, res: Response) => {
     res.send('Practice English is running')
 })
 
-// Secured daily challenge broadcast endpoint — triggered by GitHub Actions cron
+// Secured daily challenge broadcast endpoint   triggered by GitHub Actions cron
 app.post('/cron/daily-challenge', async (req, res: Response) => {
     const secret = process.env.CRON_SECRET;
     const authHeader = req.headers['authorization'];
@@ -163,7 +163,7 @@ app.post('/cron/daily-challenge', async (req, res: Response) => {
                 sent++;
             } catch (e: any) {
                 console.error(`[Daily Broadcast] Error sending to user ${userId}:`, e.message || e);
-                // User blocked the bot or account deleted — silently skip
+                // User blocked the bot or account deleted   silently skip
                 failed++;
             }
         }
@@ -176,7 +176,7 @@ app.post('/cron/daily-challenge', async (req, res: Response) => {
     }
 })
 
-// Secured 7-Day Plan Retention Reminder endpoint — triggered by cron
+// Secured 7-Day Plan Retention Reminder endpoint   triggered by cron
 app.post('/cron/plan-reminder', async (req, res: Response) => {
     const secret = process.env.CRON_SECRET;
     const authHeader = req.headers['authorization'];
@@ -233,7 +233,7 @@ app.post('/cron/plan-reminder', async (req, res: Response) => {
     }
 })
 
-// Secured Weekly Assessment Intelligence Digest endpoint — triggered by cron or external caller
+// Secured Weekly Assessment Intelligence Digest endpoint   triggered by cron or external caller
 app.post('/cron/weekly-digest', async (req: express.Request, res: Response) => {
     const secret = process.env.CRON_SECRET;
     const authHeader = req.headers['authorization'];

@@ -44,7 +44,7 @@ export async function hasBeenAsked(userId) {
 export async function markAsAsked(userId) {
     try {
         if (redis.isOpen) {
-            // TTL of 400 days — effectively permanent but auto-cleans for long-inactive users
+            // TTL of 400 days   effectively permanent but auto-cleans for long-inactive users
             await redis.set(`user:daily_notify_asked:${userId}`, '1', { EX: 60 * 60 * 24 * 400 });
         }
     }
