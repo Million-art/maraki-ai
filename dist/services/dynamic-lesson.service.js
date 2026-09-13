@@ -78,6 +78,7 @@ Speaking Lesson Requirements:
    - Thought-chunk cadence: Grouping 3-4 words together naturally without pausing after every single word
    - STAR Method (Situation, Task, Action, Result) for job interviews and meetings
    - Diplomatic workplace disagreement & polite framing ("I appreciate that point, however...")
+   - Minimal pair pronunciation & rhythm (e.g. /p/ vs /b/, /v/ vs /f/, vowel length)
    - Minimal pair pronunciation & rhythm using plain descriptions (e.g. "short 'i' sound" vs "long 'ee' sound", "soft 'v'" vs "hard 'b'", natural vowel length)
    - Professional self-introductions, pitching ideas, or elevator summaries
 2. Spoken Passage ("passage"):
