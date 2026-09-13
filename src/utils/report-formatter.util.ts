@@ -226,7 +226,7 @@ export function getPhotoScorecard(report: any, fullName: string, credId: string)
     ? `🗣️ Speaking:     ${renderBar(speakingScoreNum)} <b>${speakingScoreNum}</b>/100\n`
     : `🗣️ Speaking:     ⏭️ <i>Skipped (Untested)</i>\n`;
 
-  const diagnosis = report.diagnosis || getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
+  const diagnosis = getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
   const cleanHeadline = sanitizeAmharicDiagnosis(diagnosis.headlineAmharic || diagnosis.tag);
   const cleanSummary = sanitizeAmharicDiagnosis(diagnosis.summary);
 
@@ -260,7 +260,7 @@ export function getDetailedDiagnosisMessage(report: any): string {
     !isNaN(speakingScoreNum)
   );
 
-  const diagnosis = report.diagnosis || getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
+  const diagnosis = getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
   const cleanHeadline = sanitizeAmharicDiagnosis(diagnosis.headlineAmharic || diagnosis.tag);
   const cleanSummary = sanitizeAmharicDiagnosis(diagnosis.summary);
   const career = report.careerTranslation || getCareerTranslationFallback(levelName);
