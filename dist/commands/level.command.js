@@ -99,10 +99,10 @@ export async function sendWeeklyPlan(ctx) {
         `• <i>Task:</i> ${plan.day7?.task}\n\n` +
         `🚀 <i>5 minutes every day creates measurable fluency. Tap below to begin Day 1!</i>`;
     const keyboard = new InlineKeyboard()
-        .text("🔥 Start Day 1 Lesson", "start_plan_lesson_1")
-        .text("📊 View Assessment Report", "view_certificate")
+        .text("🔥 Start Da Lesson", "start_plan_lesson_1")
+        .text("Assessment Report", "view_certificate")
         .row()
-        .text("⬅️ Back to Maraki Level", "level");
+        .text("Maraki Level", "level");
     if (ctx.callbackQuery) {
         try {
             await ctx.editMessageText(planText, { parse_mode: "HTML", reply_markup: keyboard });
@@ -164,10 +164,9 @@ export async function sendCertificate(ctx) {
         `✨ <i>Official English proficiency evaluation report from Maraki AI, evaluating real spoken fluency, grammatical accuracy, reading comprehension, and vocabulary mastery for Ethiopian learners.</i>\n\n`;
     const keyboard = new InlineKeyboard()
         .row()
-        .text("🚀 Start Day 1 Prescription", "start_plan_lesson_1")
         .text("📅 View 7-Day Plan", "view_weekly_plan")
         .row()
-        .text("⬅️ Back to Maraki Level", "level");
+        .text("Maraki Level", "level");
     try {
         const candidatePaths = [
             userCertPath,

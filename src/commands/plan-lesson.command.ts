@@ -333,7 +333,7 @@ export const LESSON_DATABASE: Record<string, Record<number, PlanLessonContent>> 
       title: "Connected Speech & Natural Reductions",
       topic: "Listening to Fast Native Audio Snippets",
       duration: "5 mins",
-      strategy: "Native speakers reduce function words: 'going to' becomes /gənə/, 'want to' becomes /wɑnə/. Listen closely to the voice note to catch these connected speech patterns.",
+      strategy: "Native speakers often connect and shorten everyday words: 'going to' is spoken as 'gonna', 'want to' as 'wanna', and 'could have' as 'could've'. Listen closely to the audio clip to catch these spoken patterns.\n\n🇪🇹 <b>የአማርኛ ማስታወሻ:</b> በፈጣን ንግግር ወቅት ቃላቶች ተያይዘው እና አጥረው ስለሚነገሩ (ለምሳሌ 'going to' ወደ 'gonna'፣ 'want to' ወደ 'wanna') ድምፁን በጥሞና ያዳምጡ።",
       passage: "I'm gonna go to the store because I wanna buy some coffee. I could've called ya earlier, but I forgot.",
       question: "Which of the following exact reduced phrases was spoken in the audio?",
       options: [
@@ -342,7 +342,7 @@ export const LESSON_DATABASE: Record<string, Record<number, PlanLessonContent>> 
         "C) I gonna go to the store because I want to buy",
       ],
       correctIndex: 1,
-      explanation: "The audio clearly uses the reductions 'gonna' (going to) and 'wanna' (want to), which is very common in fast native speech.",
+      explanation: "The audio clearly uses the natural spoken contractions 'gonna' (going to) and 'wanna' (want to), which are very common in fast everyday English.",
     },
     2: {
       title: "Conversational Pragmatics",
@@ -541,12 +541,12 @@ export const LESSON_DATABASE: Record<string, Record<number, PlanLessonContent>> 
 /**
  * Launch the personalized 7-Day Plan lesson (AI-generated with local Ethiopian fallback)
  */
-export async function startPlanLesson(ctx: Context, dayNumber: number = 1) {
+export async function startPlanLesson(ctx: Context, dayNumber: number = 1, forcedWeakness?: string) {
   if (!ctx.from) return;
   const userId = ctx.from.id;
 
   const report = await apiService.getStudentMarakiLevel(userId);
-  const weakness = (report?.primaryWeakness as string) || "Reading";
+  const weakness = forcedWeakness || (report?.primaryWeakness as string) || "Reading";
   const levelName = report?.cefrLevel && report.cefrLevel !== 'UNTESTED' ? report.cefrLevel : 'B1';
   
   const plan = report?.recommendedPlan;

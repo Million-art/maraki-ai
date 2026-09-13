@@ -140,6 +140,10 @@ bot.command('myplan', async (ctx) => {
   const progress = await getPlanProgress(ctx.from.id);
   await startPlanLesson(ctx, progress.currentDay || 1);
 });
+bot.command(['listen', 'listening'], async (ctx) => {
+  if (!ctx.from) return;
+  await startPlanLesson(ctx, 1, 'Listening');
+});
 bot.command('referral_link', referralCommand);
 bot.command('referral', referralCommand);
 bot.command('hack', referralCommand);

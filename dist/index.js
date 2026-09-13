@@ -186,9 +186,9 @@ app.post('/cron/plan-reminder', async (req, res) => {
                     `⏱️ Complete today's lesson to keep your <b>${streak}-day streak 🔥</b> alive!\n\n` +
                     `Tap below to start:`;
                 const keyboard = new InlineKeyboard()
-                    .text(`🔥 Start Day ${day} Lesson`, `start_plan_lesson_${day}`)
+                    .text(`Start Day ${day} Lesson`, `start_plan_lesson_${day}`)
                     .row()
-                    .text('📅 View 7-Day Plan', 'view_weekly_plan');
+                    .text('7-Day Plan', 'view_weekly_plan');
                 await bot.api.sendMessage(learner.telegramId, messageText, {
                     parse_mode: 'HTML',
                     reply_markup: keyboard,
