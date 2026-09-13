@@ -7,13 +7,30 @@ export function renderBar(score) {
 }
 export function sanitizeAmharicDiagnosis(text) {
     if (!text)
-        return 'ማንበብ እንጂ ማውራት አለመቻል';
-    return text
-        .replace(/የዝምታ እንግሊዝኛ ወጥመድ/g, 'ማንበብ እንጂ ማውራት አለመቻል')
-        .replace(/የዝምታ እንግሊዝኛ/g, 'ማንበብ እንጂ ማውራት አለመቻል')
-        .replace(/The Silent English Trap/gi, 'ማንበብ እንጂ ማውራት አለመቻል')
-        .replace(/Silent English/gi, 'ማንበብ እንጂ ማውራት አለመቻል')
+        return 'የንግግር ቅልጥፍና (Speaking Fluency)';
+    let cleaned = text
+        .replace(/የዝምታ እንግሊዝኛ ወጥመድ/g, 'የንግግር ቅልጥፍና (Speaking Fluency)')
+        .replace(/የዝምታ እንግሊዝኛ/g, 'የንግግር ቅልጥፍና (Speaking Fluency)')
+        .replace(/ማንበብ እንጂ ማውራት አለመቻል/g, 'የንግግር ቅልጥፍና (Speaking Fluency)')
+        .replace(/The Silent English Trap/gi, 'የንግግር ቅልጥፍና (Speaking Fluency)')
+        .replace(/Silent English/gi, 'የንግግር ቅልጥፍና (Speaking Fluency)')
+        .replace(/የንግግር መቆራረጥ እና ፍርሃት/g, 'የንግግር ቅልጥፍና (Speaking Fluency)')
+        .replace(/የሰዋሰው \(Grammar\) ስህተት/g, 'የሰዋሰው አጠቃቀም (Grammar)')
+        .replace(/የቃላት \(Vocabulary\) እጥረት/g, 'የቃላት አጠቃቀም (Vocabulary)')
+        .replace(/የማዳመጥ \(Listening\) ክፍተት/g, 'የማዳመጥ ችሎታ (Listening)')
         .replace(/ወጥመድ/g, 'ክፍተት');
+    const lower = cleaned.trim().toLowerCase();
+    if (lower === 'speaking')
+        return 'የንግግር ቅልጥፍና (Speaking Fluency)';
+    if (lower === 'listening')
+        return 'የማዳመጥ ችሎታ (Listening)';
+    if (lower === 'grammar')
+        return 'የሰዋሰው አጠቃቀም (Grammar)';
+    if (lower === 'vocabulary')
+        return 'የቃላት አጠቃቀም (Vocabulary)';
+    if (lower === 'reading')
+        return 'የንባብ ፍጥነት (Reading)';
+    return cleaned;
 }
 export function getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested) {
     const readingGrammarMax = Math.max(skills.reading || 0, skills.grammar || 0);
@@ -23,8 +40,8 @@ export function getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTeste
         if (gap >= 12 && readingGrammarMax >= 50) {
             return {
                 tag: 'The Silent English Trap',
-                headlineAmharic: 'ማንበብ እንጂ ማውራት አለመቻል',
-                summary: `ማንበብና ሰዋሰው ላይ በጣም ጎበዝ ኖት (${readingGrammarMax}/100)፤ ችግሩ ማውራት ላይ ነው። በጭንቅላትዎ የሚያውቁትን በአፍዎ ለማውጣት ቃላት ይጠፉብዎታል ወይም ፍርሃት ይሰማዎታል። በትምህርት ቤት አንብበን እንጂ አውርተን ስላልተማርን አብዛኛውን ሰው የሚያጋጥመው ይሄው ነው።`,
+                headlineAmharic: 'የንግግር ቅልጥፍና (Speaking Fluency)',
+                summary: `ማንበብና ሰዋሰው ላይ ውጤትዎ ጥሩ ነው (${readingGrammarMax}/100)፤ ዋናው መሻሻል ያለበት ማውራት ላይ ነው። በጭንቅላትዎ የሚያውቁትን በአፍዎ በልበ-ሙሉነት ለማውጣት የንግግር ልምምድ ያግዝዎታል።`,
                 isSilentTrap: true,
                 gapPoints: gap,
             };
@@ -42,28 +59,28 @@ export function getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTeste
         case 'Speaking':
             return {
                 tag: 'Conversational Friction',
-                headlineAmharic: 'የንግግር መቆራረጥ እና ፍርሃት',
-                summary: `ዋናው ችግር በጭንቅላትዎ ከአማርኛ ወደ እንግሊዝኛ እየተረጎሙ ማውራትዎ ነው። ቃላት እየጠፉብዎት እንዲቆሙ ያደርጋል። በየቀኑ አጭር ልምምድ ማድረግ አፍዎን ይፈታዋል!`,
+                headlineAmharic: 'የንግግር ቅልጥፍና (Speaking Fluency)',
+                summary: `ዋናው ትኩረት በእንግሊዝኛ አቀላጥፎ እና ያለፍርሃት መናገር ላይ ነው። በየቀኑ አጭር ልምምድ ማድረግ አፍዎን ይፈታዋል!`,
                 isSilentTrap: true,
             };
         case 'Grammar':
             return {
                 tag: 'Grammar Errors',
-                headlineAmharic: 'የሰዋሰው (Grammar) ስህተት',
+                headlineAmharic: 'የሰዋሰው አጠቃቀም (Grammar)',
                 summary: `ከአማርኛ በቀጥታ ስለሚተረጎም የተለመዱ የሰዋሰው ስህተቶች ይታያሉ (ለምሳሌ፦ 'I am having'፣ 'discuss about')። ሰዋሰውን በተግባር መለማመድ ያስፈልጋል።`,
                 isSilentTrap: false,
             };
         case 'Vocabulary':
             return {
                 tag: 'Vocabulary Gap',
-                headlineAmharic: 'የቃላት (Vocabulary) እጥረት',
+                headlineAmharic: 'የቃላት አጠቃቀም (Vocabulary)',
                 summary: `ነጠላ ቃላትን ያውቃሉ፤ ግን አብረው የሚሄዱ ቃላትን በስራዎና በንግግርዎ ላይ አቀላጥፈው ለመጠቀም ልምምድ ያንሳል።`,
                 isSilentTrap: false,
             };
         case 'Listening':
             return {
                 tag: 'Listening Barrier',
-                headlineAmharic: 'የማዳመጥ (Listening) ክፍተት',
+                headlineAmharic: 'የማዳመጥ ችሎታ (Listening)',
                 summary: `ጽሑፍ ሲሆን ይገባዎታል፤ ነገር ግን ፈጣን የውጭ አገር ሰዎች ንግግር ጆሮ ላይ ግራ ይጋባል። ጥቂት የድምፅ ልምምዶች ጆሮዎን ይከፍቱታል።`,
                 isSilentTrap: false,
             };
@@ -77,7 +94,7 @@ export function getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTeste
         default:
             return {
                 tag: `${weakness} Gap`,
-                headlineAmharic: `የ${weakness} ክፍተት`,
+                headlineAmharic: `የ${weakness} ችሎታ`,
                 summary: `ዋናው ማሻሻያዎ ${weakness} ነው። በየቀኑ ጥቂት ደቂቃ በመለማመድ ችሎታዎን ማሳደግ ይችላሉ።`,
                 isSilentTrap: false,
             };

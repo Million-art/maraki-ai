@@ -599,9 +599,8 @@ export async function startPlanLesson(ctx: Context, dayNumber: number = 1, force
     lesson = skillLessons[dayNumber] || skillLessons[1];
   }
 
-  const aiBadge = lesson.isAiGenerated ? " ✨ <i>AI-Adaptive</i>" : "";
   let message =
-    `🎯 <b>DAY ${dayNumber}: ${lesson.title.toUpperCase()}</b>${aiBadge} 📖\n` +
+    `🎯 <b>DAY ${dayNumber}: ${lesson.title.toUpperCase()}</b>\n` +
     `<i>Topic: ${lesson.topic} (${lesson.duration})</i>\n\n` +
     `💡 <b>Core Technique (የስልጠና ስልት):</b>\n` +
     `${lesson.strategy}\n\n`;

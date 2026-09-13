@@ -567,8 +567,7 @@ export async function startPlanLesson(ctx, dayNumber = 1, forcedWeakness) {
         const skillLessons = LESSON_DATABASE[weakness] || LESSON_DATABASE["Reading"];
         lesson = skillLessons[dayNumber] || skillLessons[1];
     }
-    const aiBadge = lesson.isAiGenerated ? " ✨ <i>AI-Adaptive</i>" : "";
-    let message = `🎯 <b>DAY ${dayNumber}: ${lesson.title.toUpperCase()}</b>${aiBadge} 📖\n` +
+    let message = `🎯 <b>DAY ${dayNumber}: ${lesson.title.toUpperCase()}</b>\n` +
         `<i>Topic: ${lesson.topic} (${lesson.duration})</i>\n\n` +
         `💡 <b>Core Technique (የስልጠና ስልት):</b>\n` +
         `${lesson.strategy}\n\n`;

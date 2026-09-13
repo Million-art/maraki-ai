@@ -134,7 +134,7 @@ bot.command('plan', async (ctx) => {
   if (!ctx.from) return;
   const progress = await getPlanProgress(ctx.from.id);
   await startPlanLesson(ctx, progress.currentDay || 1);
-});
+});                                         
 bot.command('myplan', async (ctx) => {
   if (!ctx.from) return;
   const progress = await getPlanProgress(ctx.from.id);

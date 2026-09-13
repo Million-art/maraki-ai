@@ -18,8 +18,7 @@ export const getAssessedStartMsg = (name, report, streak, challengeTitle) => {
     const cleanTitle = challengeTitle || 'ዕለታዊ የ5 ደቂቃ ልምምድ';
     return (`👋 <b>ሰላም ${name}! እንኳን ደህና መጡ 🇪🇹</b>\n\n` +
         `🏆 <b>የእንግሊዝኛ ችሎታዎ፦</b> Level ${levelName} (${score}/100)\n` +
-        `🔥 <b>ቀጣይነት (Streak)፦</b> ${streak} ${streak === 1 ? 'ቀን' : 'ቀናት'}\n` +
-        `🔍 <b>ያተኮሩበት ክፍተት፦</b> <b>${weaknessTag}</b>\n\n` +
+        `🎯 <b>ዋናው ክፍተትዎ፦</b> <b>${weaknessTag}</b>\n\n` +
         `━━━━━━━━━━━━━━━━━━━━━\n` +
         `🔥 <b>የዛሬው ቻሌንጅ (Daily Challenge)፦</b>\n` +
         `📌 ${cleanTitle}\n` +
