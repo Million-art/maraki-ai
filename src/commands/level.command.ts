@@ -130,7 +130,7 @@ export async function sendWeeklyPlan(ctx: Context) {
     .text("🔥 Start Day 1 Lesson", "start_plan_lesson_1")
     .text("📊 View Assessment Report", "view_certificate")
     .row()
-    .text("⬅️ Back to Maraki Level", "level");
+    .text("Maraki Level", "level");
 
   if (ctx.callbackQuery) {
     try {
@@ -199,7 +199,7 @@ export async function sendCertificate(ctx: Context) {
     .text("🚀 Start Day 1 Prescription", "start_plan_lesson_1")
     .text("📅 View 7-Day Plan", "view_weekly_plan")
     .row()
-    .text("⬅️ Back to Maraki Level", "level");
+    .text("Maraki Level", "level");
 
   try {
     const candidatePaths = [
