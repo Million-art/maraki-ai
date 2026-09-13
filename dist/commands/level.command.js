@@ -6,7 +6,7 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { getDailyStreak } from "../utils/streak.util.js";
 import { apiService } from "../services/api.service.js";
-import { renderBar, getLinguisticDiagnosisFallback, getCareerTranslationFallback, getReportKeyboard, } from "../utils/report-formatter.util.js";
+import { renderBar, getLinguisticDiagnosisFallback, getCareerTranslationFallback, getReportKeyboard, sanitizeAmharicDiagnosis, } from "../utils/report-formatter.util.js";
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,8 +57,8 @@ export const levelCommand = async (ctx) => {
         `🎧 ማዳመጥ (Listening):   ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
         speakingLine +
         `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-        `🔍 <b>ያለብዎት ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
-        `${diagnosis.summary}\n\n` +
+        `🔍 <b>ያለብዎት ክፍተት፦</b> <b>${sanitizeAmharicDiagnosis(diagnosis.headlineAmharic || diagnosis.tag)}</b>\n` +
+        `${sanitizeAmharicDiagnosis(diagnosis.summary)}\n\n` +
         `💼 <b>ይህ ችሎታ ለስራዎ ምን ይጠቅማል?</b>\n` +
         `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
         `• <b>ቀጣዩ ችሎታ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +

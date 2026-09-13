@@ -22,8 +22,26 @@ export const getAssessedStartMsg = (
 ) => {
   const levelName = report?.cefrLevel || 'B1';
   const score = report?.overallScore || 50;
-  const rawWeakness = report?.diagnosis?.headlineAmharic || report?.primaryWeakness || 'Speaking';
-  const weaknessTag = sanitizeAmharicDiagnosis(rawWeakness);
+  const skills = report?.skills;
+
+  // Always pick the skill with the actual lowest score for the gap label
+  // so it matches what the user sees in the progress bar
+  let weaknessTag: string;
+  if (skills) {
+    const skillMap: Record<string, number> = {
+      'speaking': typeof skills.speaking === 'number' ? skills.speaking : 999,
+      'listening': skills.listening ?? 999,
+      'grammar': skills.grammar ?? 999,
+      'vocabulary': skills.vocabulary ?? 999,
+      'reading': skills.reading ?? 999,
+    };
+    const lowestKey = Object.entries(skillMap).reduce((a, b) => a[1] <= b[1] ? a : b)[0];
+    weaknessTag = sanitizeAmharicDiagnosis(lowestKey);
+  } else {
+    const rawWeakness = report?.diagnosis?.headlineAmharic || report?.primaryWeakness || 'Speaking';
+    weaknessTag = sanitizeAmharicDiagnosis(rawWeakness);
+  }
+
   const cleanTitle = challengeTitle || 'ዕለታዊ የ5 ደቂቃ ልምምድ';
 
   return (

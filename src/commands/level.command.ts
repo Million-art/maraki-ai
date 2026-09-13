@@ -11,6 +11,7 @@ import {
   getLinguisticDiagnosisFallback,
   getCareerTranslationFallback,
   getReportKeyboard,
+  sanitizeAmharicDiagnosis,
 } from "../utils/report-formatter.util.js";
 
 const execFileAsync = promisify(execFile);
@@ -78,8 +79,8 @@ export const levelCommand = async (ctx: Context) => {
     `🎧 ማዳመጥ (Listening):   ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
     speakingLine +
     `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `🔍 <b>ያለብዎት ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
-    `${diagnosis.summary}\n\n` +
+    `🔍 <b>ያለብዎት ክፍተት፦</b> <b>${sanitizeAmharicDiagnosis(diagnosis.headlineAmharic || diagnosis.tag)}</b>\n` +
+    `${sanitizeAmharicDiagnosis(diagnosis.summary)}\n\n` +
     `💼 <b>ይህ ችሎታ ለስራዎ ምን ይጠቅማል?</b>\n` +
     `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
     `• <b>ቀጣዩ ችሎታ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +
