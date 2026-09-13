@@ -5,6 +5,16 @@ export function renderBar(score) {
     const empty = 5 - filled;
     return '🟩'.repeat(filled) + '⬜'.repeat(empty);
 }
+export function sanitizeAmharicDiagnosis(text) {
+    if (!text)
+        return 'ማንበብ እንጂ ማውራት አለመቻል';
+    return text
+        .replace(/የዝምታ እንግሊዝኛ ወጥመድ/g, 'ማንበብ እንጂ ማውራት አለመቻል')
+        .replace(/የዝምታ እንግሊዝኛ/g, 'ማንበብ እንጂ ማውራት አለመቻል')
+        .replace(/The Silent English Trap/gi, 'ማንበብ እንጂ ማውራት አለመቻል')
+        .replace(/Silent English/gi, 'ማንበብ እንጂ ማውራት አለመቻል')
+        .replace(/ወጥመድ/g, 'ክፍተት');
+}
 export function getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested) {
     const readingGrammarMax = Math.max(skills.reading || 0, skills.grammar || 0);
     const speakingScore = typeof skills.speaking === 'number' ? skills.speaking : null;
@@ -124,6 +134,8 @@ export function getPhotoScorecard(report, fullName, credId) {
         ? `🗣️ Speaking:     ${renderBar(speakingScoreNum)} <b>${speakingScoreNum}</b>/100\n`
         : `🗣️ Speaking:     ⏭️ <i>Skipped (Untested)</i>\n`;
     const diagnosis = report.diagnosis || getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
+    const cleanHeadline = sanitizeAmharicDiagnosis(diagnosis.headlineAmharic || diagnosis.tag);
+    const cleanSummary = sanitizeAmharicDiagnosis(diagnosis.summary);
     return (`🎯 <b>MARAKI ENGLISH ASSESSMENT REPORT</b> 🇪🇹\n\n` +
         `👤 <b>Student:</b> ${fullName}\n` +
         `🏆 <b>Verified Level:</b> Level ${levelName} (CEFR)\n` +
@@ -136,7 +148,7 @@ export function getPhotoScorecard(report, fullName, credId) {
         `🎧 Listening:    ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
         speakingLine +
         `━━━━━━━━━━━━━━━━━━━━━\n` +
-        `🔍 <b>Diagnosis:</b> ${diagnosis.headlineAmharic || diagnosis.tag}`);
+        `🔍 <b>Diagnosis:</b> ${cleanHeadline}`);
 }
 export function getDetailedDiagnosisMessage(report) {
     const levelName = report.cefrLevel || 'B1';
@@ -148,6 +160,8 @@ export function getDetailedDiagnosisMessage(report) {
         skills?.speaking !== undefined &&
         !isNaN(speakingScoreNum));
     const diagnosis = report.diagnosis || getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
+    const cleanHeadline = sanitizeAmharicDiagnosis(diagnosis.headlineAmharic || diagnosis.tag);
+    const cleanSummary = sanitizeAmharicDiagnosis(diagnosis.summary);
     const career = report.careerTranslation || getCareerTranslationFallback(levelName);
     const plan = report.recommendedPlan;
     const day1Title = plan?.day1?.title || 'የመጀመሪያ ቀን ልምምድ';
@@ -155,8 +169,8 @@ export function getDetailedDiagnosisMessage(report) {
         ? `\n🎙️ <i>ማስታወሻ፦ ድምፅዎን አልሞከሩም። አፍዎን ለመፍታት ከታች "🎙️ ድምፅዎን ይሞክሩ" የሚለውን ይጫኑ!</i>`
         : '';
     return (`🎯 <b>የእንግሊዝኛ ችሎታዎ እና መፍትሔው</b> 🇪🇹\n\n` +
-        `🔍 <b>ያለብዎት ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
-        `${diagnosis.summary}\n\n` +
+        `🔍 <b>ያለብዎት ክፍተት፦</b> <b>${cleanHeadline}</b>\n` +
+        `${cleanSummary}\n\n` +
         `💼 <b>ይህ ችሎታ ለስራዎ ምን ይጠቅማል?</b>\n` +
         `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
         `• <b>ቀጣዩ ችሎታ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +

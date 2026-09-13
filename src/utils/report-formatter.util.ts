@@ -15,6 +15,16 @@ export function renderBar(score: any): string {
   return '🟩'.repeat(filled) + '⬜'.repeat(empty);
 }
 
+export function sanitizeAmharicDiagnosis(text?: string): string {
+  if (!text) return 'ማንበብ እንጂ ማውራት አለመቻል';
+  return text
+    .replace(/የዝምታ እንግሊዝኛ ወጥመድ/g, 'ማንበብ እንጂ ማውራት አለመቻል')
+    .replace(/የዝምታ እንግሊዝኛ/g, 'ማንበብ እንጂ ማውራት አለመቻል')
+    .replace(/The Silent English Trap/gi, 'ማንበብ እንጂ ማውራት አለመቻል')
+    .replace(/Silent English/gi, 'ማንበብ እንጂ ማውራት አለመቻል')
+    .replace(/ወጥመድ/g, 'ክፍተት');
+}
+
 export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: string, isSpeakingTested: boolean) {
   const readingGrammarMax = Math.max(skills.reading || 0, skills.grammar || 0);
   const speakingScore = typeof skills.speaking === 'number' ? skills.speaking : null;
@@ -144,6 +154,8 @@ export function getPhotoScorecard(report: any, fullName: string, credId: string)
     : `🗣️ Speaking:     ⏭️ <i>Skipped (Untested)</i>\n`;
 
   const diagnosis = report.diagnosis || getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
+  const cleanHeadline = sanitizeAmharicDiagnosis(diagnosis.headlineAmharic || diagnosis.tag);
+  const cleanSummary = sanitizeAmharicDiagnosis(diagnosis.summary);
 
   return (
     `🎯 <b>MARAKI ENGLISH ASSESSMENT REPORT</b> 🇪🇹\n\n` +
@@ -158,7 +170,7 @@ export function getPhotoScorecard(report: any, fullName: string, credId: string)
     `🎧 Listening:    ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
     speakingLine +
     `━━━━━━━━━━━━━━━━━━━━━\n` +
-    `🔍 <b>Diagnosis:</b> ${diagnosis.headlineAmharic || diagnosis.tag}`
+    `🔍 <b>Diagnosis:</b> ${cleanHeadline}`
   );
 }
 
@@ -176,6 +188,8 @@ export function getDetailedDiagnosisMessage(report: any): string {
   );
 
   const diagnosis = report.diagnosis || getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
+  const cleanHeadline = sanitizeAmharicDiagnosis(diagnosis.headlineAmharic || diagnosis.tag);
+  const cleanSummary = sanitizeAmharicDiagnosis(diagnosis.summary);
   const career = report.careerTranslation || getCareerTranslationFallback(levelName);
   const plan = report.recommendedPlan;
   const day1Title = plan?.day1?.title || 'የመጀመሪያ ቀን ልምምድ';
@@ -186,8 +200,8 @@ export function getDetailedDiagnosisMessage(report: any): string {
 
   return (
     `🎯 <b>የእንግሊዝኛ ችሎታዎ እና መፍትሔው</b> 🇪🇹\n\n` +
-    `🔍 <b>ያለብዎት ክፍተት፦</b> <b>${diagnosis.headlineAmharic || diagnosis.tag}</b>\n` +
-    `${diagnosis.summary}\n\n` +
+    `🔍 <b>ያለብዎት ክፍተት፦</b> <b>${cleanHeadline}</b>\n` +
+    `${cleanSummary}\n\n` +
     `💼 <b>ይህ ችሎታ ለስራዎ ምን ይጠቅማል?</b>\n` +
     `• <b>አሁን (${levelName})፦</b> ${career.currentLevelReality}\n` +
     `• <b>ቀጣዩ ችሎታ (${career.targetLevel})፦</b> ${career.targetUnlock}\n\n` +

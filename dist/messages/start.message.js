@@ -9,10 +9,12 @@ export const getUnassessedStartMsg = (name) => {
         `• ለእርስዎ የተዘጋጀ ዕለታዊ የ5 ደቂቃ ልምምድ!\n\n` +
         `ከታች ያለውን ተጭነው ይጀምሩ! 👇`);
 };
+import { sanitizeAmharicDiagnosis } from '../utils/report-formatter.util.js';
 export const getAssessedStartMsg = (name, report, streak, challengeTitle) => {
     const levelName = report?.cefrLevel || 'B1';
     const score = report?.overallScore || 50;
-    const weaknessTag = report?.diagnosis?.headlineAmharic || report?.primaryWeakness || 'Speaking';
+    const rawWeakness = report?.diagnosis?.headlineAmharic || report?.primaryWeakness || 'Speaking';
+    const weaknessTag = sanitizeAmharicDiagnosis(rawWeakness);
     const cleanTitle = challengeTitle || 'ዕለታዊ የ5 ደቂቃ ልምምድ';
     return (`👋 <b>ሰላም ${name}! እንኳን ደህና መጡ 🇪🇹</b>\n\n` +
         `🏆 <b>የእንግሊዝኛ ችሎታዎ፦</b> Level ${levelName} (${score}/100)\n` +

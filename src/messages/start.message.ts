@@ -12,6 +12,8 @@ export const getUnassessedStartMsg = (name: string) => {
   );
 };
 
+import { sanitizeAmharicDiagnosis } from '../utils/report-formatter.util.js';
+
 export const getAssessedStartMsg = (
   name: string,
   report: any,
@@ -20,7 +22,8 @@ export const getAssessedStartMsg = (
 ) => {
   const levelName = report?.cefrLevel || 'B1';
   const score = report?.overallScore || 50;
-  const weaknessTag = report?.diagnosis?.headlineAmharic || report?.primaryWeakness || 'Speaking';
+  const rawWeakness = report?.diagnosis?.headlineAmharic || report?.primaryWeakness || 'Speaking';
+  const weaknessTag = sanitizeAmharicDiagnosis(rawWeakness);
   const cleanTitle = challengeTitle || 'ዕለታዊ የ5 ደቂቃ ልምምድ';
 
   return (
