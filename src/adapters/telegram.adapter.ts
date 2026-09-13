@@ -144,6 +144,22 @@ bot.command(['listen', 'listening'], async (ctx) => {
   if (!ctx.from) return;
   await startPlanLesson(ctx, 1, 'Listening');
 });
+bot.command(['speak', 'speaking'], async (ctx) => {
+  if (!ctx.from) return;
+  await startPlanLesson(ctx, 1, 'Speaking');
+});
+bot.command(['read', 'reading'], async (ctx) => {
+  if (!ctx.from) return;
+  await startPlanLesson(ctx, 1, 'Reading');
+});
+bot.command(['grammar_practice', 'grammar_lesson'], async (ctx) => {
+  if (!ctx.from) return;
+  await startPlanLesson(ctx, 1, 'Grammar');
+});
+bot.command(['vocab', 'vocabulary'], async (ctx) => {
+  if (!ctx.from) return;
+  await startPlanLesson(ctx, 1, 'Vocabulary');
+});
 bot.command('referral_link', referralCommand);
 bot.command('referral', referralCommand);
 bot.command('hack', referralCommand);

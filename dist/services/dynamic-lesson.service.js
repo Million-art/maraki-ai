@@ -5,9 +5,9 @@ export class DynamicLessonService {
      * Returns null if generation fails or times out, triggering immediate offline fallback.
      */
     static async generateLesson(weakness, cefrLevel = 'B1', dayNumber = 1, dayTitle, dayTask) {
-        const isListening = weakness.toLowerCase() === 'listening';
+        const normalizedSkill = weakness.trim().toLowerCase();
         let specializedPrompt = '';
-        if (isListening) {
+        if (normalizedSkill === 'listening') {
             specializedPrompt = `
 You are Maraki AI's expert spoken English audio trainer for Ethiopian learners.
 Generate an intelligent, highly immersive, real-world spoken English LISTENING lesson.
@@ -45,7 +45,7 @@ Listening Lesson Requirements:
 Return ONLY a valid JSON object matching this schema:
 {
   "title": "Listening Mastery",
-  "topic": "Concise Scenario Title (e.g. Voicemail Action Items, Fast Reductions)",
+  "topic": "Concise Scenario Title",
   "duration": "5 mins",
   "strategy": "Practical listening strategy...",
   "amharicTip": "በአማርኛ ጠቃሚ ምክር (የድምፅ ቅላጼውን ወይም ፈጣን አነጋገርን እንዴት እንደሚለዩ)",
@@ -61,46 +61,194 @@ Return ONLY a valid JSON object matching this schema:
 }
 `;
         }
-        else {
+        else if (normalizedSkill === 'speaking') {
             specializedPrompt = `
-You are Maraki AI's expert Ethiopian English curriculum designer.
-Generate a targeted, high-yield 5-minute micro-lesson for an Ethiopian professional or university student.
+You are Maraki AI's expert spoken English fluency and pronunciation coach for Ethiopian professionals and students.
+Generate a dynamic, interactive SPEAKING fluency micro-lesson.
 
 Learner Profile:
-- Diagnosed Skill Weakness: ${weakness}
+- Diagnosed Skill Weakness: Spoken Fluency, Hesitation, & Speech Cadence
 - Target CEFR Benchmark: ${cefrLevel}
 - 7-Day Plan Milestone: Day ${dayNumber} of 7
-${dayTitle ? `- Required Lesson Title: ${dayTitle}` : ''}
-${dayTask ? `- Required Lesson Task: ${dayTask}` : ''}
+${dayTitle ? `- Focus Theme: ${dayTitle}` : ''}
+${dayTask ? `- Target Skill: ${dayTask}` : ''}
 
-Requirements:
-1. Topic Alignment: You MUST make the lesson content exactly match the Required Lesson Title and Task above.
-2. Setting / Context: Real Ethiopian business, tech, education, or cultural settings (Addis Ababa, Telebirr, Bole, Ethiopian Airlines, regional trade, coffee cooperatives, Hawassa/Jimma universities, tech hubs, GERD).
-3. Pedagogy:
-   - strategy: Clear, punchy explanation of the rule and why Ethiopian learners make the mistake.
-   - amharicTip: 1-2 sentence advice in Amharic (ፊደላት).
-   - passage: (Required for Reading, optional for Grammar/Vocabulary/Speaking). A realistic 2-4 sentence paragraph.
-   - question: Multiple choice question testing the concept.
-   - options: Exactly 3 options (A, B, C). One clearly correct, two representing typical Ethiopian learner mistakes.
-   - correctIndex: 0, 1, or 2 indicating the correct option.
-   - explanation: Friendly, encouraging breakdown explaining why the answer is right and why the distractor was tempting.
+Speaking Lesson Requirements:
+1. Focus Topics:
+   - Thought-chunk cadence: Grouping 3-4 words together naturally without pausing after every single word
+   - STAR Method (Situation, Task, Action, Result) for job interviews and meetings
+   - Diplomatic workplace disagreement & polite framing ("I appreciate that point, however...")
+   - Minimal pair pronunciation & rhythm (e.g. /p/ vs /b/, /v/ vs /f/, vowel length)
+   - Professional self-introductions, pitching ideas, or elevator summaries
+2. Spoken Passage ("passage"):
+   - A model spoken answer or script (2 to 4 natural sentences) demonstrating clear rhythm and cadence.
+3. Multiple Choice Question ("question"):
+   - Ask about the most effective, diplomatic, or naturally chunked spoken response.
+4. Options ("options"):
+   - 3 choices (A, B, C). One clearly fluent/diplomatic, two representing common Ethiopian hesitation/literal phrasing habits.
+5. Pedagogy:
+   - "strategy": Concrete spoken technique on pacing, breath control, and thought chunks.
+   - "amharicTip": Practical advice in Amharic on building mouth muscle memory and speaking without fear.
+   - "explanation": Friendly breakdown of why the selected phrasing creates confidence and executive presence.
 
-Return ONLY a valid JSON object with this exact schema:
+Return ONLY a valid JSON object matching this schema:
 {
-  "title": "${weakness} Practice",
-  "topic": "Short Topic Title",
+  "title": "Spoken Fluency Mastery",
+  "topic": "Short Topic Title (e.g. Thought Chunks, STAR Interview Framework)",
   "duration": "5 mins",
-  "strategy": "English rule and error analysis",
-  "amharicTip": "በአማርኛ ጠቃሚ ምክር",
-  "passage": "Context paragraph",
-  "question": "The question text?",
+  "strategy": "Spoken fluency and pacing analysis...",
+  "amharicTip": "በአማርኛ የንግግር ቅልጥፍና ምክር",
+  "passage": "Model spoken phrasing or dialogue...",
+  "question": "Which spoken phrasing is most natural and effective?",
   "options": [
     "A) First option",
     "B) Second option",
     "C) Third option"
   ],
   "correctIndex": 0,
-  "explanation": "Detailed explanation"
+  "explanation": "Explanation of why this cadence sounds professional and natural."
+}
+`;
+        }
+        else if (normalizedSkill === 'reading') {
+            specializedPrompt = `
+You are Maraki AI's expert English reading comprehension and speed trainer for Ethiopian learners.
+Generate a dynamic, high-yield READING comprehension micro-lesson.
+
+Learner Profile:
+- Diagnosed Skill Weakness: Reading Speed, Thesis Skimming, & Context Clues
+- Target CEFR Benchmark: ${cefrLevel}
+- 7-Day Plan Milestone: Day ${dayNumber} of 7
+${dayTitle ? `- Focus Theme: ${dayTitle}` : ''}
+${dayTask ? `- Target Skill: ${dayTask}` : ''}
+
+Reading Lesson Requirements:
+1. Context / Passage ("passage"):
+   - A realistic, engaging 3 to 4 sentence paragraph grounded in Ethiopian business, technology, economy, universities, or culture (e.g. Telebirr, Ethiopian Airlines, regional logistics, tech startups, renewable energy, coffee cooperatives).
+2. Targeted Reading Skill:
+   - Skimming for core thesis under 45 seconds (avoiding word-by-word Amharic translation)
+   - Scanning for exact figures, percentages, dates, and names
+   - Contextual deduction of sophisticated vocabulary using contrast markers
+   - Deep inference and reading between the lines
+3. Multiple Choice Question ("question"):
+   - A sharp question testing comprehension, thesis extraction, or vocabulary inference.
+4. Options ("options"):
+   - Exactly 3 options (A, B, C). One correct, two plausible distractors.
+5. Pedagogy:
+   - "strategy": Specific speed-reading technique.
+   - "amharicTip": Practical advice in Amharic on boosting WPM reading speed.
+   - "explanation": Clear evidence from the passage confirming the answer.
+
+Return ONLY a valid JSON object matching this schema:
+{
+  "title": "Reading Comprehension",
+  "topic": "Topic Title (e.g. Core Thesis Skimming, Context Clues)",
+  "duration": "5 mins",
+  "strategy": "Speed-reading strategy...",
+  "amharicTip": "በአማርኛ የንባብ ፍጥነት ምክር",
+  "passage": "3-4 sentence realistic Ethiopian contextual paragraph...",
+  "question": "Comprehension question?",
+  "options": [
+    "A) First option",
+    "B) Second option",
+    "C) Third option"
+  ],
+  "correctIndex": 0,
+  "explanation": "Detailed explanation citing the passage."
+}
+`;
+        }
+        else if (normalizedSkill === 'grammar') {
+            specializedPrompt = `
+You are Maraki AI's expert English grammar diagnostician specializing in Ethiopian L1 transfer errors.
+Generate a dynamic, targeted GRAMMAR & SYNTAX micro-lesson.
+
+Learner Profile:
+- Diagnosed Skill Weakness: Grammar & Sentence Structure Habits
+- Target CEFR Benchmark: ${cefrLevel}
+- 7-Day Plan Milestone: Day ${dayNumber} of 7
+${dayTitle ? `- Focus Theme: ${dayTitle}` : ''}
+${dayTask ? `- Target Skill: ${dayTask}` : ''}
+
+Grammar Lesson Requirements:
+1. Target Verified Ethiopian L1 Habits:
+   - Stative verbs in continuous tense (saying "I am having" or "I am knowing" instead of "I have", "I know")
+   - Redundant prepositions (saying "discuss about", "order for", "accompany with")
+   - Uncountable workplace nouns (saying "advices", "softwares", "equipments", "informations")
+   - First and Second Conditionals (confusing "if I will see" with "if I see")
+   - Subject-verb agreement across parenthetical phrases ("The director, along with his assistants, is...")
+   - Gerunds after prepositional phrases ("look forward to meeting", "committed to finalizing")
+2. Multiple Choice Question ("question"):
+   - Select the grammatically standard sentence or correct missing verb/preposition.
+3. Options ("options"):
+   - Exactly 3 options (A, B, C). One standard, two representing common Ethiopian transfer errors.
+4. Pedagogy:
+   - "strategy": Precise grammatical rule explanation.
+   - "amharicTip": Amharic note directly comparing the Amharic thought process with standard English syntax.
+   - "explanation": Friendly breakdown of why the distractor fails and why the rule works.
+
+Return ONLY a valid JSON object matching this schema:
+{
+  "title": "Grammar & Syntax",
+  "topic": "Grammar Topic (e.g. Stative Verbs, Redundant Prepositions)",
+  "duration": "5 mins",
+  "strategy": "Rule explanation...",
+  "amharicTip": "በአማርኛ የሰዋሰው ማስታወሻ",
+  "question": "Which sentence is grammatically standard?",
+  "options": [
+    "A) First option",
+    "B) Second option",
+    "C) Third option"
+  ],
+  "correctIndex": 0,
+  "explanation": "Clear explanation of the rule."
+}
+`;
+        }
+        else {
+            // Vocabulary Mastery
+            specializedPrompt = `
+You are Maraki AI's expert English vocabulary and collocation trainer for Ethiopian professionals.
+Generate a dynamic, targeted VOCABULARY mastery micro-lesson.
+
+Learner Profile:
+- Diagnosed Skill Weakness: Workplace Vocabulary & Collocations
+- Target CEFR Benchmark: ${cefrLevel}
+- 7-Day Plan Milestone: Day ${dayNumber} of 7
+${dayTitle ? `- Focus Theme: ${dayTitle}` : ''}
+${dayTask ? `- Target Skill: ${dayTask}` : ''}
+
+Vocabulary Lesson Requirements:
+1. Target High-Yield Professional Themes:
+   - Natural business collocations (saying "conduct research" not "make research", "reach agreement" not "take agreement")
+   - False friends & literal translation habits (saying "postpone/reschedule the meeting" instead of "shift the meeting")
+   - International tech & workplace phrasal verbs ("follow up on", "iron out", "touch base", "run out of")
+   - High-precision analytical adjectives ("feasible", "robust", "imperative", "prevalent")
+   - Business idioms in executive meetings ("on the same page", "cut corners", "hit the ground running")
+2. Multiple Choice Question ("question"):
+   - Choose the natural collocation, phrasal verb, or idiomatic expression.
+3. Options ("options"):
+   - Exactly 3 options (A, B, C). One natural professional usage, two literal/non-standard phrasing.
+4. Pedagogy:
+   - "strategy": Collocation analysis and professional phrasing guidelines.
+   - "amharicTip": Amharic tip warning against direct word-for-word translation.
+   - "explanation": Explanation of why the collocation is standard in professional English.
+
+Return ONLY a valid JSON object matching this schema:
+{
+  "title": "Vocabulary Mastery",
+  "topic": "Vocabulary Topic (e.g. High-Yield Collocations, Workplace Phrasal Verbs)",
+  "duration": "5 mins",
+  "strategy": "Vocabulary and collocation strategy...",
+  "amharicTip": "በአማርኛ የቃላት አጠቃቀም ማስታወሻ",
+  "question": "Which phrase uses standard professional English?",
+  "options": [
+    "A) First option",
+    "B) Second option",
+    "C) Third option"
+  ],
+  "correctIndex": 0,
+  "explanation": "Detailed explanation of the collocation."
 }
 `;
         }
