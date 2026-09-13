@@ -434,17 +434,15 @@ async function renderSpeakingPrompt(ctx) {
         `2. <i>Why is mastering English important for your career or education?</i>\n` +
         `3. <i>What is one challenge you experience when speaking English?</i>\n\n` +
         `🇪🇹 <i>የ30-60 ሰከንድ ድምፅ በእንግሊዝኛ ይቅረጹ እና አሁን ይላኩ።</i>\n\n` +
-        `👇 <b>Hold down your Telegram microphone button to record & send!</b>`;
-    `💪 <b>አይጨነቁ   ፍጹም እንግሊዝኛ መናገር አይጠበቅብዎትም!</b>\n` +
-        `<i>AIው እርስዎን ለመመዘን ሳይሆን ትክክለኛ ደረጃዎን አውቆ ለማገዝ ነው የተሰራው። ስህተት ቢኖርም እንኳን በድፍረት ይናገሩ!</i>\n\n` +
-        `⏱️ <b>Just 15–30 seconds</b> (3 to 4 sentences is plenty!).\n\n` +
+        `💪 <b>አይጨነቁ — ፍጹም እንግሊዝኛ መናገር አይጠበቅብዎትም!</b>\n` +
+        `<i>AIው እርስዎን ለመመዘን ሳይሆን ትክክለኛ ችሎታዎን አውቆ ለማገዝ ነው የተሰራው። ስህተት ቢኖርም እንኳን በድፍረት ይናገሩ!</i>\n\n` +
+        `⏱️ <b>Just 15–30 seconds</b> (3 to 4 sentences is plenty!)\n\n` +
         `Choose <b>ONE</b> topic that feels easiest for you:\n` +
         `• ☕ <b>Option A (Daily Life):</b> <i>What is your favorite Ethiopian food, or what do you enjoy doing on weekends?</i>\n` +
         `• 💼 <b>Option B (Career/Study):</b> <i>What do you study or work on, and why do you want to master English?</i>\n\n` +
         `👇 <b>Hold down the Telegram microphone button below to record & send!</b>`;
     const keyboard = new InlineKeyboard()
         .text('⏭️ Skip Speaking (Written Score Only)', 'assess_skip_voice')
-        .text('⏭️ Skip Speaking (Untested)', 'assess_skip_voice')
         .row();
     if (ctx.callbackQuery) {
         try {

@@ -35,11 +35,65 @@ export function sanitizeAmharicDiagnosis(text) {
 export function getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested) {
     const readingGrammarMax = Math.max(skills.reading || 0, skills.grammar || 0);
     const speakingScore = typeof skills.speaking === 'number' ? skills.speaking : null;
+    // ─── STEP 1: Actual lowest-score check (HIGHEST PRIORITY) ─────────────────
+    // If ANY skill is critically weak (below 50), that skill is the real primary
+    // gap — regardless of the Silent Trap heuristic. Listening=25 beats Speaking=81.
+    const testedSkills = [
+        { key: 'Listening', score: skills.listening ?? 999 },
+        { key: 'Vocabulary', score: skills.vocabulary ?? 999 },
+        { key: 'Reading', score: skills.reading ?? 999 },
+        { key: 'Grammar', score: skills.grammar ?? 999 },
+        ...(isSpeakingTested && speakingScore !== null
+            ? [{ key: 'Speaking', score: speakingScore }]
+            : []),
+    ];
+    const lowestSkill = testedSkills.reduce((a, b) => a.score <= b.score ? a : b);
+    if (lowestSkill.score < 50) {
+        switch (lowestSkill.key) {
+            case 'Listening':
+                return {
+                    tag: 'Listening Barrier',
+                    headlineAmharic: 'የማዳመጥ ችሎታ (Listening)',
+                    summary: `የማዳመጥ ውጤትዎ ${lowestSkill.score}/100 ሲሆን ይህ ዋናው የማሻሻያ ቦታ ነው። ፈጣን ቃላትን እና ተፈጥሯዊ ንግግር ቅልጥፍና ስለሚቸግሩ፣ ተደጋጋሚ የማዳመጥ ልምምድ ጆሮዎን ይከፍቱታል።`,
+                    isSilentTrap: false,
+                };
+            case 'Vocabulary':
+                return {
+                    tag: 'Vocabulary Gap',
+                    headlineAmharic: 'የቃላት አጠቃቀም (Vocabulary)',
+                    summary: `የቃላት ውጤትዎ ${lowestSkill.score}/100 ነው። ቃላትን በተሻለ ሁኔታ ለመቆጣጠር አብረው የሚሄዱ ቃላትን (collocations) ልምምድ ማድረግ ያስፈልጋል።`,
+                    isSilentTrap: false,
+                };
+            case 'Reading':
+                return {
+                    tag: 'Reading Speed',
+                    headlineAmharic: 'የንባብ ፍጥነት (Reading)',
+                    summary: `የንባብ ውጤትዎ ${lowestSkill.score}/100 ነው። እያንዳንዱን ቃል በአማርኛ ለመተርጎም ስለሚሞከር ፍጥነት ይቀንሳል። ፈጣን ንባብ ልምምድ ያስፈልጋል።`,
+                    isSilentTrap: false,
+                };
+            case 'Grammar':
+                return {
+                    tag: 'Grammar Errors',
+                    headlineAmharic: 'የሰዋሰው አጠቃቀም (Grammar)',
+                    summary: `የሰዋሰው ውጤትዎ ${lowestSkill.score}/100 ሲሆን ዋናው ትኩረት ሰዋሰው ላይ ነው። ከአማርኛ በቀጥታ ስለሚተረጎም የተለመዱ ስህተቶች ይታያሉ። ሰዋሰውን በተግባር መለማመድ ያስፈልጋል።`,
+                    isSilentTrap: false,
+                };
+            case 'Speaking':
+                return {
+                    tag: 'Conversational Friction',
+                    headlineAmharic: 'የንግግር ቅልጥፍና (Speaking Fluency)',
+                    summary: `የንግግር ውጤትዎ ${lowestSkill.score}/100 ነው። ዋናው ትኩረት በእንግሊዝኛ አቀላጥፎ እና ያለፍርሃት መናገር ላይ ነው። በየቀኑ አጭር ልምምድ ማድረግ አፍዎን ይፈታዋል!`,
+                    isSilentTrap: true,
+                };
+        }
+    }
+    // ─── STEP 2: Silent Trap heuristic (no skill critically low) ─────────────
+    // Only fires when all skills ≥ 50 but speaking lags noticeably behind reading/grammar.
     if (isSpeakingTested && speakingScore !== null) {
         const gap = readingGrammarMax - speakingScore;
         if (gap >= 12 && readingGrammarMax >= 50) {
             return {
-                tag: 'The Silent English Trap',
+                tag: 'Speaking Fluency Gap',
                 headlineAmharic: 'የንግግር ቅልጥፍና (Speaking Fluency)',
                 summary: `ማንበብና ሰዋሰው ላይ ውጤትዎ ጥሩ ነው (${readingGrammarMax}/100)፤ ዋናው መሻሻል ያለበት ማውራት ላይ ነው። በጭንቅላትዎ የሚያውቁትን በአፍዎ በልበ-ሙሉነት ለማውጣት የንግግር ልምምድ ያግዝዎታል።`,
                 isSilentTrap: true,
@@ -47,6 +101,7 @@ export function getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTeste
             };
         }
     }
+    // ─── STEP 3: Speaking untested ────────────────────────────────────────────
     if (!isSpeakingTested) {
         return {
             tag: 'Speaking Untested',
@@ -55,6 +110,7 @@ export function getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTeste
             isSilentTrap: false,
         };
     }
+    // ─── STEP 4: Fallback by primaryWeakness from backend ───────────────────
     switch (weakness) {
         case 'Speaking':
             return {
@@ -106,34 +162,34 @@ export function getCareerTranslationFallback(cefrLevel) {
         case 'A1':
         case 'A2':
             return {
-                currentLevelReality: 'መሰረታዊ ሰላምታ ትችላለህ፤ ግን የስራ ቃለ-መጠይቅና የቢሮ ኢሜይል ላይ ትቸገራለህ።',
+                currentLevelReality: 'መሰረታዊ ሰላምታ ይችላሉ፤ ግን የስራ ቃለ-መጠይቅና የቢሮ ኢሜይል ላይ ይቸገራሉ።',
                 targetLevel: 'B1',
-                targetUnlock: 'የስራ ቃለ-መጠይቆችን ሳትደናገጥ ማለፍና የቢሮ ኢሜይሎችን በልበ-ሙሉነት መጻፍ ያስችልሃል።',
+                targetUnlock: 'የስራ ቃለ-መጠይቆችን ሳይደናበሩ ማለፍና የቢሮ ኢሜይሎችን በልበ-ሙሉነት መጻፍ ያስችልዎታል።',
             };
         case 'B1':
             return {
-                currentLevelReality: 'የቢሮ ኢሜይልና ጽሑፍ ይገባሃል፤ ግን ፈጣን ቃለ-መጠይቅና ንግግር ላይ ቃላት ይጠፉብሃል።',
+                currentLevelReality: 'የቢሮ ኢሜይልና ጽሑፍ ይገባዎታል፤ ግን ፈጣን ቃለ-መጠይቅና ንግግር ላይ ቃላት ይጠፉብዎታል።',
                 targetLevel: 'B2 (የስራ ፓስፖርት)',
-                targetUnlock: 'ለውጭ Remote ስራዎች (Upwork)፣ እንደ Safaricom እና አየር መንገድ ያሉ ተቋማት፣ እንዲሁም ለስኮላርሺፕ (Mastercard) በር ይከፍትልሃል!',
+                targetUnlock: 'ለውጭ Remote ስራዎች (Upwork)፣ እንደ Safaricom እና አየር መንገድ ያሉ ተቋማት፣ እንዲሁም ለስኮላርሺፕ (Mastercard) በር ይከፍትልዎታል!',
             };
         case 'B2':
             return {
-                currentLevelReality: 'በማንኛውም የስራ ቦታ እና ቃለ-መጠይቅ ላይ አሪፍ ነህ፤ ከፍተኛ ጫና ሲኖር ብቻ ትንሽ ትቆማለህ።',
+                currentLevelReality: 'በማንኛውም የስራ ቦታ እና ቃለ-መጠይቅ ላይ ጠንካራ ናቸው፤ ከፍተኛ ጫና ሲኖር ብቻ ትንሽ ይቆማሉ።',
                 targetLevel: 'C1 (ከፍተኛ አመራር)',
-                targetUnlock: 'ከአለም አቀፍ ድርጅቶች ጋር ኮንትራት መደራደር፣ ትልልቅ ስብሰባዎችን መምራትና በልበ-ሙሉነት መናገር ያስችልሃል።',
+                targetUnlock: 'ከአለም አቀፍ ድርጅቶች ጋር ኮንትራት መደራደር፣ ትልልቅ ስብሰባዎችን መምራትና በልበ-ሙሉነት መናገር ያስችልዎታል።',
             };
         case 'C1':
         case 'C2':
             return {
-                currentLevelReality: 'እንግሊዝኛህ ፈሳሽና የተዋጣለት ነው፤ በማንኛውም መድረክ በልበ-ሙሉነት ትናገራለህ።',
+                currentLevelReality: 'እንግሊዝኛዎ ፈሳሽና የተዋጣለት ነው፤ በማንኛውም መድረክ በልበ-ሙሉነት ይናገራሉ።',
                 targetLevel: 'C2',
                 targetUnlock: 'ከፍተኛ የአለም አቀፍ አመራር እና ዲፕሎማሲያዊ ንግግር።',
             };
         default:
             return {
-                currentLevelReality: 'መሰረታዊ ተግባቦት ትችላለህ፤ ግን ቀጣዩን ደረጃ መያዝ ያስፈልግሃል።',
+                currentLevelReality: 'መሰረታዊ ተግባቦት ይችላሉ፤ ግን ቀጣዩን ችሎታ መያዝ ያስፈልጋል።',
                 targetLevel: 'B2',
-                targetUnlock: 'ለአለም አቀፍ እና ለሀገር ውስጥ ምርጥ የስራ ዕድሎች ዝግጁ ያደርግሃል።',
+                targetUnlock: 'ለአለም አቀፍ እና ለሀገር ውስጥ ምርጥ የስራ ዕድሎች ዝግጁ ያደርጋሉ።',
             };
     }
 }

@@ -100,6 +100,7 @@ Speaking Lesson Requirements:
    - STAR Method (Situation, Task, Action, Result) for job interviews and meetings
    - Diplomatic workplace disagreement & polite framing ("I appreciate that point, however...")
    - Minimal pair pronunciation & rhythm (e.g. /p/ vs /b/, /v/ vs /f/, vowel length)
+   - Minimal pair pronunciation & rhythm using plain descriptions (e.g. "short 'i' sound" vs "long 'ee' sound", "soft 'v'" vs "hard 'b'", natural vowel length)
    - Professional self-introductions, pitching ideas, or elevator summaries
 2. Spoken Passage ("passage"):
    - A model spoken answer or script (2 to 4 natural sentences) demonstrating clear rhythm and cadence.
@@ -111,6 +112,8 @@ Speaking Lesson Requirements:
    - "strategy": Concrete spoken technique on pacing, breath control, and thought chunks.
    - "amharicTip": Practical advice in Amharic on building mouth muscle memory and speaking without fear.
    - "explanation": Friendly breakdown of why the selected phrasing creates confidence and executive presence.
+
+CRITICAL RULE: NEVER use IPA phonetic symbols or slashes in any output field (no /p/, /b/, /v/, /ɪ/, /i:/, /æ/, etc.). Always describe sounds using plain English in quotes — e.g. "short 'i' sound", "long 'ee' sound", "soft 'v'". This is non-negotiable.
 
 Return ONLY a valid JSON object matching this schema:
 {
