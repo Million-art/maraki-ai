@@ -22,8 +22,8 @@ Requirements:
 3. Pedagogy:
    - strategy: Clear, punchy explanation of the rule and why Ethiopian learners make the mistake.
    - amharicTip: 1-2 sentence advice in Amharic (ፊደላት).
-   - passage: (Required for Reading & Listening, optional for Grammar/Vocabulary/Speaking). A realistic 2-4 sentence passage.
-   - question: Multiple choice question testing the concept.
+   - passage: (Required for Reading & Listening, optional for Grammar/Vocabulary/Speaking). For Listening, this MUST be a single cohesive 1-3 sentence spoken dialog or announcement (maximum 180 characters, NO 'Dialog 1/2/3' labels) designed specifically for clear audio listening. For Reading, a realistic 2-4 sentence paragraph.
+   - question: Multiple choice question testing the concept. For Listening, ask about what was said in the audio.
    - options: Exactly 3 options (A, B, C). One clearly correct, two representing typical Ethiopian learner mistakes.
    - correctIndex: 0, 1, or 2 indicating the correct option.
    - explanation: Friendly, encouraging breakdown explaining why the answer is right and why the distractor was tempting.
@@ -35,7 +35,7 @@ Return ONLY a valid JSON object with this exact schema:
   "duration": "5 mins",
   "strategy": "English rule and error analysis",
   "amharicTip": "በአማርኛ ጠቃሚ ምክር",
-  "passage": "Optional or required context passage",
+  "passage": "Spoken dialogue or reading passage",
   "question": "The question text?",
   "options": [
     "A) First option",

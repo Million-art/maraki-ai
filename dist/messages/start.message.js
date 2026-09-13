@@ -7,7 +7,7 @@ export const getUnassessedStartMsg = (name) => {
         `• የእንግሊዝኛ ችሎታዎን (A1 – C1)\n` +
         `• ያለብዎትን ክፍተት (Speaking, Grammar ወዘተ)\n` +
         `• ለእርስዎ የተዘጋጀ ዕለታዊ የ5 ደቂቃ ልምምድ!\n\n` +
-        `ከታች ያለውን አዝራር ተጭነው ይጀምሩ! 👇`);
+        `ከታች ያለውን ተጭነው ይጀምሩ! 👇`);
 };
 export const getAssessedStartMsg = (name, report, streak, challengeTitle) => {
     const levelName = report?.cefrLevel || 'B1';

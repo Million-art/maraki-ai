@@ -24,8 +24,8 @@ export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: st
     if (gap >= 12 && readingGrammarMax >= 50) {
       return {
         tag: 'The Silent English Trap',
-        headlineAmharic: 'የዝምታ እንግሊዝኛ ወጥመድ (Silent English)',
-        summary: `ንባብና ሰዋሰውህ ምርጥ ነው (${readingGrammarMax}/100)፤ ነገር ግን ማውራት ላይ የ${gap} ነጥብ ልዩነት አለ። በጭንቅላትህ የምታውቀውን በአፍህ ለማውጣት ትፈራለህ። በት/ቤት 12 ዓመት ሙሉ አንብበን እንጂ አውርተን ስላላደግን አብዛኛውን ኢትዮጵያዊ የሚያጋጥመው ይሄው ነው።`,
+        headlineAmharic: 'ማንበብ እንጂ ማውራት አለመቻል',
+        summary: `ማንበብና ሰዋሰው ላይ በጣም ጎበዝ ኖት (${readingGrammarMax}/100)፤ ችግሩ ማውራት ላይ ነው። በጭንቅላትዎ የሚያውቁትን በአፍዎ ለማውጣት ቃላት ይጠፉብዎታል ወይም ፍርሃት ይሰማዎታል። በትምህርት ቤት አንብበን እንጂ አውርተን ስላልተማርን አብዛኛውን ሰው የሚያጋጥመው ይሄው ነው።`,
         isSilentTrap: true,
         gapPoints: gap,
       };
@@ -34,9 +34,9 @@ export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: st
 
   if (!isSpeakingTested) {
     return {
-      tag: 'Receptive Knowledge Calibrated (Speaking Untested)',
-      headlineAmharic: 'የጽሑፍ እውቀትህ አሪፍ ነው (ድምፅ አልተፈተነም)',
-      summary: `የንባብና ሰዋሰው መሠረትህ በጣም ጥሩ ነው (${readingGrammarMax}/100)። ነገር ግን 78% የሚሆኑ ተማሪዎች ጽሑፍ ላይ ጎበዝ ሆነው ሲያወሩ ይቸገራሉ። ድምፅህን ሞክረህ ትክክለኛውን ደረጃህን ማወቅ ይመረጣል።`,
+      tag: 'Speaking Untested',
+      headlineAmharic: 'ድምፅዎን አልሞከሩም',
+      summary: `የጽሑፍ ውጤትዎ በጣም ጥሩ ነው (${readingGrammarMax}/100)። ነገር ግን አብዛኛው ሰው በጽሑፍ ጎበዝ ሆኖ ማውራት ላይ ስለሚቸገር፣ ትክክለኛ ችሎታዎን ለማወቅ ድምፅዎን መፈተን ይመረጣል።`,
       isSilentTrap: false,
     };
   }
@@ -45,43 +45,43 @@ export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: st
     case 'Speaking':
       return {
         tag: 'Conversational Friction',
-        headlineAmharic: 'የንግግር መገታት እና የፍጥነት ውስንነት',
-        summary: `ዋናው ፈተናህ በጭንቅላትህ ከአማርኛ ወደ እንግሊዝኛ እየተረጎምክ ማውራትህ ነው። ቃላቶች እየጠፉብህ እንድትቆም ያደርግሃል። በየቀኑ አጭር ልምምድ ማድረግ አፍህን ይፈታዋል!`,
+        headlineAmharic: 'የንግግር መቆራረጥ እና ፍርሃት',
+        summary: `ዋናው ችግር በጭንቅላትዎ ከአማርኛ ወደ እንግሊዝኛ እየተረጎሙ ማውራትዎ ነው። ቃላት እየጠፉብዎት እንዲቆሙ ያደርጋል። በየቀኑ አጭር ልምምድ ማድረግ አፍዎን ይፈታዋል!`,
         isSilentTrap: true,
       };
     case 'Grammar':
       return {
-        tag: 'L1 Translation Interference',
-        headlineAmharic: 'የቀጥታ ትርጉም ተጽዕኖ (Grammar)',
-        summary: `ጥያቄዎችን ስትመልስ ከአማርኛ በቀጥታ ስለምትተረጉም ስህተቶች ይመጣሉ (ለምሳሌ፡ 'I am having'፣ 'discuss about')። ሰዋሰውን በደንብ መለማመድ ያስፈልግሃል።`,
+        tag: 'Grammar Errors',
+        headlineAmharic: 'የሰዋሰው (Grammar) ስህተት',
+        summary: `ከአማርኛ በቀጥታ ስለሚተረጎም የተለመዱ የሰዋሰው ስህተቶች ይታያሉ (ለምሳሌ፦ 'I am having'፣ 'discuss about')። ሰዋሰውን በተግባር መለማመድ ያስፈልጋል።`,
         isSilentTrap: false,
       };
     case 'Vocabulary':
       return {
-        tag: 'Lexicon & Collocation Gap',
-        headlineAmharic: 'የተግባር ቃላት እጥረት (Vocabulary)',
-        summary: `ነጠላ ቃላትን ታውቃለህ፤ ግን አብረው የሚሄዱ ቃላትን (Collocations) በንግግርህና በስራህ ላይ አቀላጥፈህ ለመጠቀም ልምምድ ያንሰሃል።`,
+        tag: 'Vocabulary Gap',
+        headlineAmharic: 'የቃላት (Vocabulary) እጥረት',
+        summary: `ነጠላ ቃላትን ያውቃሉ፤ ግን አብረው የሚሄዱ ቃላትን በስራዎና በንግግርዎ ላይ አቀላጥፈው ለመጠቀም ልምምድ ያንሳል።`,
         isSilentTrap: false,
       };
     case 'Listening':
       return {
-        tag: 'Fast Speech Barrier',
-        headlineAmharic: 'የፈጣን ንግግር ማዳመጥ ፈተና (Listening)',
-        summary: `የተጻፈ ጽሑፍ ይገባሃል፤ ነገር ግን የውጭ አገር ሰዎች ፈጣን ንግግር (Connected Speech) ጆሮህ ላይ ግራ ይጋባል። ጥቂት የድምፅ ልምምዶች ጆሮህን ይከፍቱታል።`,
+        tag: 'Listening Barrier',
+        headlineAmharic: 'የማዳመጥ (Listening) ክፍተት',
+        summary: `ጽሑፍ ሲሆን ይገባዎታል፤ ነገር ግን ፈጣን የውጭ አገር ሰዎች ንግግር ጆሮ ላይ ግራ ይጋባል። ጥቂት የድምፅ ልምምዶች ጆሮዎን ይከፍቱታል።`,
         isSilentTrap: false,
       };
     case 'Reading':
       return {
-        tag: 'Reading Speed Bottleneck',
-        headlineAmharic: 'የንባብ ፍጥነት እና መረዳት (Reading)',
-        summary: `እያንዳንዱን ቃል በአማርኛ ለመተርጎም ስለምትሞክር ረጅም ጽሑፎችን በፍጥነት አንብቦ ለመረዳት ጊዜ ይወስድብሃል።`,
+        tag: 'Reading Speed',
+        headlineAmharic: 'የንባብ ፍጥነት (Reading)',
+        summary: `እያንዳንዱን ቃል በአማርኛ ለመተርጎም ስለሚሞከር ረጅም ጽሑፎችን በፍጥነት አንብቦ ለመረዳት ጊዜ ይወስዳል።`,
         isSilentTrap: false,
       };
     default:
       return {
-        tag: `${weakness} Growth Area`,
-        headlineAmharic: `የ${weakness} ማሻሻያ መስክ`,
-        summary: `ዋናው ማሻሻያህ ${weakness} ነው። በቀን ጥቂት ደቂቃ በመለማመድ ደረጃህን ማሳደግ ትችላለህ።`,
+        tag: `${weakness} Gap`,
+        headlineAmharic: `የ${weakness} ክፍተት`,
+        summary: `ዋናው ማሻሻያዎ ${weakness} ነው። በየቀኑ ጥቂት ደቂቃ በመለማመድ ችሎታዎን ማሳደግ ይችላሉ።`,
         isSilentTrap: false,
       };
   }

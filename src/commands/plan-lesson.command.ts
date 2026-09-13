@@ -606,10 +606,14 @@ export async function startPlanLesson(ctx: Context, dayNumber: number = 1) {
     `💡 <b>Core Technique (የስልጠና ስልት):</b>\n` +
     `${lesson.strategy}\n\n`;
 
-  if (lesson.passage) {
+  if (lesson.passage && weakness !== "Listening") {
     message +=
       `📑 <b>Practice Context / Passage:</b>\n` +
       `<i>"${lesson.passage}"</i>\n\n`;
+  } else if (weakness === "Listening") {
+    message +=
+      `🎧 <b>የድምፅ ልምምድ (Listening Practice):</b>\n` +
+      `<i>🔊 ከታች የተላከውን የድምፅ ፋይል በጥሞና ያዳምጡ፤ ከዚያም ለቀረበው ጥያቄ ትክክለኛውን መልስ ይምረጡ።</i>\n\n`;
   }
 
   message += `❓ <b>Practice Question:</b>\n<b>${lesson.question}</b>\n\n`;
@@ -632,25 +636,36 @@ export async function startPlanLesson(ctx: Context, dayNumber: number = 1) {
     keyboard.text(letter, `plan_ans_${weakness}_${dayNumber}_${idx}`);
   });
   keyboard.row();
-  keyboard.text("📅 Back to 7-Day Plan", "view_weekly_plan").text("⬅️ Maraki Level", "level");
+  keyboard.text("📅 የልምምድ እቅድ", "view_weekly_plan").text("⬅️ ውጤቴን እይ", "level");
 
   // Send TTS Voice Note for Listening lessons
   if (weakness === "Listening") {
     try {
-      let textToSpeak = lesson.passage || lesson.question;
-      // Extract quoted text if it's asking to interpret a specific phrase
-      const quoteMatch = textToSpeak.match(/'([^']+)'/);
-      if (quoteMatch && quoteMatch[1] && quoteMatch[1].length > 5) {
-        textToSpeak = quoteMatch[1];
-      }
-      if (textToSpeak.length > 200) textToSpeak = textToSpeak.substring(0, 190);
+      let rawText = lesson.passage || lesson.question;
+      let textToSpeak = rawText
+        .replace(/Dialog \d+.*?:/gi, '')
+        .replace(/Speaker \w+:?/gi, '')
+        .replace(/["'""'']/g, '')
+        .replace(/[•\t\n]+/g, ' ')
+        .trim();
 
-      const url = googleTTS.getAudioUrl(textToSpeak, {
-        lang: 'en-US',
-        slow: false,
-        host: 'https://translate.google.com',
-      });
-      await ctx.replyWithVoice(url);
+      if (textToSpeak.length > 200) {
+        const truncated = textToSpeak.substring(0, 190);
+        const lastPeriod = truncated.lastIndexOf('.');
+        textToSpeak = lastPeriod > 50 ? truncated.substring(0, lastPeriod + 1) : truncated;
+      }
+
+      if (textToSpeak.length > 0) {
+        const url = googleTTS.getAudioUrl(textToSpeak, {
+          lang: 'en-US',
+          slow: false,
+          host: 'https://translate.google.com',
+        });
+        await ctx.replyWithVoice(url, {
+          caption: "🎧 <b>የድምፅ ፋይል (Audio Clip)</b>\n<i>ይህን ድምፅ በጥሞና ያዳምጡና ጥያቄውን ይመልሱ</i>",
+          parse_mode: "HTML",
+        });
+      }
     } catch (e) {
       console.error('Failed to send TTS Voice Note', e);
     }
@@ -706,41 +721,47 @@ export async function handlePlanLessonAnswer(
   // Clear active lesson for this day since it is completed
   await apiService.saveStudentPlanProgress(userId, { activeLesson: null });
 
+  const transcriptSection = (weakness === "Listening" && lesson.passage)
+    ? `📜 <b>የድምፁ ጽሑፍ (Audio Transcript):</b>\n<i>"${lesson.passage}"</i>\n\n`
+    : '';
+
   let responseText = "";
   if (isCorrect) {
     responseText =
-      `✅ <b>CORRECT! (ትክክል ነው!)</b> 🎉\n\n` +
-      `💡 <b>Explanation:</b> ${lesson.explanation}\n\n` +
+      `✅ <b>ትክክል ነው! (CORRECT!)</b> 🎉\n\n` +
+      transcriptSection +
+      `💡 <b>ማብራሪያ፦</b> ${lesson.explanation}\n\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n` +
-      `🔥 <b>Daily Streak:</b> <b>${streak} ${streak === 1 ? 'Day' : 'Days'} Active!</b>\n` +
-      `🏆 <b>Completed:</b> Day ${dayNumber} of 7 (${lesson.topic}) ✅\n` +
+      `🔥 <b>ቀጣይነት (Streak)፦</b> <b>${streak} ${streak === 1 ? 'ቀን' : 'ቀናት'}</b>\n` +
+      `🏆 <b>የተጠናቀቀው፦</b> የቀን ${dayNumber} ቻሌንጅ (${lesson.topic}) ✅\n` +
       (nextDay > dayNumber && nextDay <= 7
-        ? `⏭️ <b>Unlocked:</b> Day ${nextDay} is now ready for practice!\n`
-        : `🎉 <b>All 7 Days Completed! Take your Retest to update your Maraki Level!</b>\n`) +
+        ? `⏭️ <b>ቀጣይ፦</b> የቀን ${nextDay} ቻሌንጅ አሁን ክፍት ሆኗል!\n`
+        : `🎉 <b>የዚህ ዙር ልምምዶች ተጠናቀዋል! አዲስ የችሎታ መለያ ፈተና መውሰድ ይችላሉ!</b>\n`) +
       `━━━━━━━━━━━━━━━━━━━━━`;
   } else {
     const correctLetter = ['A', 'B', 'C'][lesson.correctIndex];
     responseText =
-      `❌ <b>Not quite!</b>\n\n` +
-      `The correct answer was <b>Option ${correctLetter}</b>.\n` +
-      `💡 <b>Explanation:</b> ${lesson.explanation}\n\n` +
+      `❌ <b>በትክክል አልተመለሰም!</b>\n\n` +
+      `ትክክለኛው መልስ <b>ምርጫ ${correctLetter}</b> ነበር።\n\n` +
+      transcriptSection +
+      `💡 <b>ማብራሪያ፦</b> ${lesson.explanation}\n\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n` +
-      `🔥 <b>Daily Streak:</b> <b>${streak} ${streak === 1 ? 'Day' : 'Days'} Active!</b>\n` +
-      `🏆 <b>Recorded:</b> Day ${dayNumber} completed with practice review ✅\n` +
-      `⏭️ <b>Progress:</b> Day ${nextDay} unlocked!\n` +
+      `🔥 <b>ቀጣይነት (Streak)፦</b> <b>${streak} ${streak === 1 ? 'ቀን' : 'ቀናት'}</b>\n` +
+      `🏆 <b>የተመዘገበው፦</b> የቀን ${dayNumber} ልምምድ ✅\n` +
+      `⏭️ <b>ቀጣይ፦</b> የቀን ${nextDay} ቻሌንጅ ክፍት ሆኗል!\n` +
       `━━━━━━━━━━━━━━━━━━━━━`;
   }
 
   const keyboard = new InlineKeyboard();
   if (nextDay > dayNumber && nextDay <= 7) {
-    keyboard.text(`🔥 Start Day ${nextDay} Lesson`, `start_plan_lesson_${nextDay}`).row();
+    keyboard.text(`🔥 የቀን ${nextDay} ቻሌንጅ ጀምር`, `start_plan_lesson_${nextDay}`).row();
   } else if (nextDay > 7 || dayNumber === 7) {
-    keyboard.text(`🎯 Take Weekly Retest`, `start_assessment`).row();
+    keyboard.text(`🎯 አዲስ የችሎታ መለያ ፈተና ውሰድ`, `start_assessment`).row();
   }
-  keyboard.text("📅 View 7-Day Plan", "view_weekly_plan")
-    .text("📊 View Assessment Report", "view_certificate")
+  keyboard.text("📅 የልምምድ እቅድ", "view_weekly_plan")
+    .text("📊 የፈተና ውጤት", "view_certificate")
     .row()
-    .text("⬅️ Back to Maraki Level", "level");
+    .text("⬅️ ወደ ዋናው ገጽ", "level");
 
   if (ctx.callbackQuery) {
     try {
