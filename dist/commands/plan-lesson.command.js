@@ -1,4 +1,4 @@
-import { InlineKeyboard } from "grammy";
+import { InlineKeyboard, InputFile } from "grammy";
 import { apiService } from "../services/api.service.js";
 import { updateDailyStreak } from "../utils/streak.util.js";
 import { completePlanDay } from "../utils/plan-progress.util.js";
@@ -600,31 +600,30 @@ export async function startPlanLesson(ctx, dayNumber = 1) {
     });
     keyboard.row();
     keyboard.text("📅 የልምምድ እቅድ", "view_weekly_plan").text("⬅️ ውጤቴን እይ", "level");
-    // Send TTS Voice Note for Listening lessons
+    // Send complete TTS Voice Note for Listening lessons (without character truncation)
     if (weakness === "Listening") {
         try {
-            let rawText = lesson.passage || lesson.question;
-            let textToSpeak = rawText
+            const rawText = lesson.passage || lesson.question;
+            const cleanText = rawText
                 .replace(/Dialog \d+.*?:/gi, '')
                 .replace(/Speaker \w+:?/gi, '')
                 .replace(/["'""'']/g, '')
                 .replace(/[•\t\n]+/g, ' ')
                 .trim();
-            if (textToSpeak.length > 200) {
-                const truncated = textToSpeak.substring(0, 190);
-                const lastPeriod = truncated.lastIndexOf('.');
-                textToSpeak = lastPeriod > 50 ? truncated.substring(0, lastPeriod + 1) : truncated;
-            }
-            if (textToSpeak.length > 0) {
-                const url = googleTTS.getAudioUrl(textToSpeak, {
-                    lang: 'en-US',
+            if (cleanText) {
+                const base64List = await googleTTS.getAllAudioBase64(cleanText, {
+                    lang: 'en',
                     slow: false,
-                    host: 'https://translate.google.com',
+                    timeout: 12000,
                 });
-                await ctx.replyWithVoice(url, {
-                    caption: "🎧 <b>የድምፅ ፋይል (Audio Clip)</b>\n<i>ይህን ድምፅ በጥሞና ያዳምጡና ጥያቄውን ይመልሱ</i>",
-                    parse_mode: "HTML",
-                });
+                if (base64List && base64List.length > 0) {
+                    const buffers = base64List.map((item) => Buffer.from(item.base64, 'base64'));
+                    const fullAudioBuffer = Buffer.concat(buffers);
+                    await ctx.replyWithVoice(new InputFile(fullAudioBuffer, 'listening_audio.mp3'), {
+                        caption: "🎧 <b>የድምፅ ፋይል (Audio Clip)</b>\n<i>ይህን ድምፅ በጥሞና ያዳምጡና ጥያቄውን ይመልሱ</i>",
+                        parse_mode: "HTML",
+                    });
+                }
             }
         }
         catch (e) {
