@@ -127,8 +127,8 @@ export async function sendWeeklyPlan(ctx: Context) {
     `🚀 <i>5 minutes every day creates measurable fluency. Tap below to begin Day 1!</i>`;
 
   const keyboard = new InlineKeyboard()
-    .text("🔥 Start Day 1 Lesson", "start_plan_lesson_1")
-    .text("📊 View Assessment Report", "view_certificate")
+    .text("🔥 Start Da Lesson", "start_plan_lesson_1")
+    .text("Assessment Report", "view_certificate")
     .row()
     .text("Maraki Level", "level");
 
@@ -196,7 +196,6 @@ export async function sendCertificate(ctx: Context) {
 
   const keyboard = new InlineKeyboard()
     .row()
-    .text("🚀 Start Day 1 Prescription", "start_plan_lesson_1")
     .text("📅 View 7-Day Plan", "view_weekly_plan")
     .row()
     .text("Maraki Level", "level");

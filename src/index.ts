@@ -210,7 +210,7 @@ app.post('/cron/plan-reminder', async (req, res: Response) => {
                     `Tap below to start:`;
 
                 const keyboard = new InlineKeyboard()
-                    .text(`🔥 Start Day ${day} Lesson`, `start_plan_lesson_${day}`)
+                    .text(`Start Day ${day} Lesson`, `start_plan_lesson_${day}`)
                     .row()
                     .text('7-Day Plan', 'view_weekly_plan');
 
