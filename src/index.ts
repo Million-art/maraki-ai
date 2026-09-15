@@ -296,10 +296,21 @@ app.post('/internal/broadcast-message', async (req: express.Request, res: expres
     const broadcastId = customId || `bcast_${Date.now()}`;
     console.log(`[Broadcast Webhook] Queuing background broadcast (${broadcastId}) for ${targetTelegramIds.length} users...`);
 
-    // Auto-sanitize HTML for Telegram (convert <br>, <br/>, </br> to real newlines)
-    const sanitizedText = text
+    // Auto-sanitize and convert Markdown formatting to valid Telegram HTML
+    let sanitizedText = text
         .replace(/<br\s*\/?>/gi, '\n')
         .replace(/<\/br>/gi, '\n');
+
+    if (parseMode === 'HTML') {
+        // Convert Markdown **bold** to <b>bold</b>
+        sanitizedText = sanitizedText.replace(/\*\*(.*?)\*\*/gs, '<b>$1</b>');
+        // Convert Markdown __underline__ to <u>underline</u>
+        sanitizedText = sanitizedText.replace(/__(.*?)__/gs, '<u>$1</u>');
+        // Convert `code` to <code>code</code>
+        sanitizedText = sanitizedText.replace(/`([^`]+)`/g, '<code>$1</code>');
+        // Convert *italic* (avoiding bullet points) to <i>italic</i>
+        sanitizedText = sanitizedText.replace(/(^|[^\*])\*([^\*\s][^\*]*?)\*(?!\*)/g, '$1<i>$2</i>');
+    }
 
     let reply_markup: any = undefined;
     if (buttonText && buttonUrl) {
