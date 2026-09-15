@@ -1,7 +1,6 @@
 export const getUnassessedStartMsg = (name: string) => {
   return (
     `👋 <b>ሰላም ${name}! እንኳን ወደ Maraki AI በደህና መጡ 🇪🇹</b>\n\n` +
-    `<b>ኢትዮጵያ ውስጥ የእንግሊዝኛ ቋንቋ ችሎታን ለማሳደግ የተዘጋጀ የAI መድረክ።</b>\n\n` +
     `የእርስዎን የእንግሊዝኛ ችሎታ የሚመጥን <b>ዕለታዊ ቻሌንጅ (Daily Challenge)</b> ለማግኘት፣ በመጀመሪያ አጭር የችሎታ መለያ ፈተና ይውሰዱ።\n\n` +
     `⏱️ <b>የሚፈጀው ጊዜ፦</b> 3 ደቂቃ ብቻ\n` +
     `🎯 <b>ምን ያገኛሉ?</b>\n` +
