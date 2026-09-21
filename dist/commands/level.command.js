@@ -22,10 +22,10 @@ export const levelCommand = async (ctx) => {
         const unassessedCard = `🎯 <b>የእንግሊዝኛ ችሎታዎ</b> 🇪🇹\n\n` +
             `እስካሁን የችሎታ መለያ ፈተና አልወሰዱም!\n\n` +
             `የእንግሊዝኛ ችሎታዎን (A1 – C1) ለማወቅ እና ድክመትዎን የሚቀርፍ ዕለታዊ ልምምድ ለመጀመር አሁኑኑ ፈተናውን ይውሰዱ።\n\n` +
-            `⏱️ <b>የሚፈጀው ጊዜ፦</b> 3 ደቂቃ ብቻ\n` +
+            `⏱️ <b>የሚፈጀው ጊዜ፦</b> 1 ደቂቃ ብቻ (በድምፅ)\n` +
             `🎯 <b>ምን ያገኛሉ?</b> የችሎታ ውጤት፣ ያለብዎት ክፍተት እና ዕለታዊ ቻሌንጅ!`;
         const keyboard = new InlineKeyboard()
-            .text("🎯 የችሎታ መለያ ፈተና ጀምር (3 ደቂቃ)", "start_assessment")
+            .text("🎙️ የንግግር ችሎታ መለያ ጀምር (1 ደቂቃ)", "start_assessment")
             .row()
             .text("🔥 የዛሬውን ነፃ ቻሌንጅ ሞክር", "daily_challenge");
         return await ctx.reply(unassessedCard, { parse_mode: "HTML", reply_markup: keyboard });

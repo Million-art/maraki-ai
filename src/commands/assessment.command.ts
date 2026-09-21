@@ -2,16 +2,12 @@ import { Context, InlineKeyboard, Keyboard, InputFile } from 'grammy';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
-import axios from 'axios';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { VoiceValidationService, type VoiceValidationResult } from '../services/voice-validation.service.js';
-import { DynamicAssessmentService } from '../services/dynamic-assessment.service.js';
 import { apiService } from '../services/api.service.js';
 import { getSession, setSession } from '../utils/redis.js';
-import * as googleTTS from 'google-tts-api';
 import {
-  renderBar,
   getPhotoScorecard,
   getDetailedDiagnosisMessage,
   getFullTextMessage,
@@ -22,25 +18,10 @@ const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-let cachedListeningAudioFileId: string | null = null;
-
-// Fallback questions if backend is temporarily unreachable
+// 2 High-Signal Diagnostic Error Trap Questions for Fast 60s Assessment
 const FALLBACK_QUESTIONS = [
   {
-    id: 'q1_stative_tense',
-    skill: 'grammar',
-    prompt: 'Select the grammatically correct sentence:',
-    options: [
-      'I am having two brothers living in Hawassa.',
-      'I have two brothers living in Hawassa.',
-      'I having two brothers living in Hawassa.',
-      'I was having two brothers yesterday in Hawassa.',
-    ],
-    correctIndex: 1,
-    ethiopianL1Note: 'በአማርኛ "አለኝ" ስንል አሁን ያለን ሁኔታ ስለሆነ "I am having" የሚል ስህተት ይለመዳል። ትክክለኛው ግን "I have" ነው።',
-  },
-  {
-    id: 'q2_preposition_discuss',
+    id: 'q1_preposition_discuss',
     skill: 'grammar',
     prompt: 'Choose the correct option: "Before the meeting ends, we should ______ the project timeline."',
     options: [
@@ -53,33 +34,7 @@ const FALLBACK_QUESTIONS = [
     ethiopianL1Note: 'በአማርኛ "ስለ ጉዳዩ እንወያይ" ስለምንል "discuss about" ማለት የተለመደ ስህተት ነው። በእንግሊዝኛ "discuss" ራሱ "about"ን ስለሚይዝ preposition አያስፈልገውም።',
   },
   {
-    id: 'q3_uncountable_noun',
-    skill: 'grammar',
-    prompt: 'Select the correct sentence:',
-    options: [
-      'The senior manager gave me valuable advices.',
-      'The senior manager gave me a valuable advice.',
-      'The senior manager gave me valuable advice.',
-      'The senior manager gave me many advices.',
-    ],
-    correctIndex: 2,
-    ethiopianL1Note: '"Advice" የሚለው ቃል uncountable (የማይቆጠር) ስለሆነ -s አይጨመርበትም፤ "an advice" ወይም "advices" አይባልም። "some advice" ወይም "a piece of advice" ይባላል።',
-  },
-  {
-    id: 'q4_conditional_habit',
-    skill: 'grammar',
-    prompt: 'Complete the sentence: "If Dawit ______ earlier tomorrow morning, he will catch the express bus to Bole."',
-    options: [
-      'wakes up',
-      'will wake up',
-      'woke up',
-      'would wake up',
-    ],
-    correctIndex: 0,
-    ethiopianL1Note: 'በ First Conditional ዓረፍተ ነገር ውስጥ በ "if" ክፍል ውስጥ Present Simple (wakes up) እንጂ "will" አይገባም።',
-  },
-  {
-    id: 'q5_collocation_research',
+    id: 'q2_collocation_research',
     skill: 'vocabulary',
     prompt: 'Which verb naturally collocates: "Our engineering team needs to ______ a comprehensive market survey."',
     options: [
@@ -90,75 +45,6 @@ const FALLBACK_QUESTIONS = [
     ],
     correctIndex: 1,
     ethiopianL1Note: 'ከ "survey" ወይም "research" ጋር የሚሄደው ተፈጥሯዊ ቃል "conduct" ወይም "carry out" ነው፤ "make research" ወይም "take survey" ማለት የተለመደ ቀጥተኛ የቋንቋ ቅጂ ስህተት ነው።',
-  },
-  {
-    id: 'q6_phrasal_postpone',
-    skill: 'vocabulary',
-    prompt: 'Choose the best phrase: "Because of heavy rain in Addis Ababa, the outdoor exhibition was ______ until next Saturday."',
-    options: [
-      'put off',
-      'put out',
-      'called out',
-      'turned off',
-    ],
-    correctIndex: 0,
-    ethiopianL1Note: '"Put off" ማለት አንድን ፕሮግራም ወደፊት ማስተላለፍ (postpone) ማለት ነው። "Put out" እሳት ማጥፋት ሲሆን "Turn off" መሳሪያ ማጥፋት ነው።',
-  },
-  {
-    id: 'q7_reading_comprehension',
-    skill: 'reading',
-    prompt: 'Based on the passage, why was Dawit delayed in reaching his office yesterday?',
-    readingPassage: 'Dawit lives in CMC and commutes to his job near Bole Medhanialem. Every morning, he boards the light rail at 7:15 AM to arrive comfortably by 8:00 AM. Yesterday morning, a sudden power interruption suspended the train service, compelling commuters to scramble for city buses and minibuses during peak morning traffic. Consequently, Dawit arrived forty-five minutes past his scheduled meeting.',
-    options: [
-      'He missed his alarm and woke up too late.',
-      'The train service stopped due to an electrical power outage.',
-      'He chose to take a minibus instead of the light rail.',
-      'His morning meeting was unexpectedly cancelled.',
-    ],
-    correctIndex: 1,
-    ethiopianL1Note: 'ጽሁፉ "a sudden power interruption suspended the train service" ይላል፤ ይህም የመብራት መቆራረጥ ባቡሩን እንዳቆመው ያሳያል።',
-  },
-  {
-    id: 'q8_reading_inference',
-    skill: 'reading',
-    prompt: 'In the passage about Dawit, what does the word "compelling" most nearly mean?',
-    readingPassage: '...compelling commuters to scramble for city buses and minibuses during peak morning traffic...',
-    options: [
-      'Preventing',
-      'Encouraging calmly',
-      'Forcing or leaving no other choice',
-      'Inviting politely',
-    ],
-    correctIndex: 2,
-    ethiopianL1Note: '"Compel" ማለት አስገዳጅ ሁኔታ ውስጥ መክተት (force) ማለት ነው።',
-  },
-  {
-    id: 'q9_listening_pragmatics',
-    skill: 'listening',
-    audioUrl: '/api/assessment/audio/q9_listening.mp3',
-    prompt: 'Listen to the audio conversation above:\n\n<i>What does the woman mean when she responds "No, not at all, please go ahead"?</i>',
-    options: [
-      'She is using the seat and does not want him to sit.',
-      'She has no objection and the seat is free for him to take.',
-      'She wants him to ask someone else first.',
-      'She is annoyed by his question.',
-    ],
-    correctIndex: 1,
-    ethiopianL1Note: 'በአማርኛ "ይከብድዎታል?" (Do you mind?) ሲባል ወንበሩ ክፍት ከሆነ "አይ ምንም አይከብደኝም/ተቀመጡ" (No, not at all) ይባላል። "Yes" ከተባለ ግን "አዎ ይከብደኛል/አልፈቅድም" ማለት ስለሆነ ብዙ ተማሪዎች ይሳሳቱታል።',
-  },
-  {
-    id: 'q10_listening_detail',
-    skill: 'listening',
-    audioUrl: '/api/assessment/audio/q9_listening.mp3',
-    prompt: 'Based on the spoken conversation in the audio clip:\n\n<i>What was the man asking permission to do?</i>',
-    options: [
-      'To order coffee at her table',
-      'To sit down in the vacant seat next to her',
-      'To borrow her phone charger',
-      'To open the cafe window',
-    ],
-    correctIndex: 1,
-    ethiopianL1Note: 'ሰውየው "Excuse me, do you mind if I sit here?" (ይቅርታ እዚህ ብቀመጥ ይከብድዎታል?) በማለት ባዶ ወንበር ላይ ለመቀመጥ ፈቃድ እየጠየቀ ነበር።',
   },
 ];
 
@@ -171,284 +57,60 @@ export async function assessmentCommand(ctx: Context) {
   const userId = ctx.from.id;
 
   // Check if student already has an assessment
-  const existingLevel = await apiService.getStudentMarakiLevel(userId);
-  const hasExisting = existingLevel && !existingLevel.needsAssessment && existingLevel.assessmentId !== 'unassessed';
+  let existingLevel: any = null;
+  try {
+    existingLevel = await apiService.getStudentMarakiLevel(userId);
+  } catch (e) {}
+
+  const hasExisting = Boolean(
+    existingLevel &&
+    !existingLevel.needsAssessment &&
+    existingLevel.assessmentId !== 'unassessed' &&
+    existingLevel.overallScore > 0
+  );
 
   const introText =
-    `🎯 <b>MARAKI ENGLISH ASSESSMENT</b> 🇪🇹\n\n` +
-    `Discover your official <b>Maraki Level</b> (A1 – C1), skill breakdown, and your biggest learning growth area.\n\n` +
+    `🎙️ <b>MARAKI ENGLISH DIAGNOSTIC</b> 🇪🇹\n\n` +
+    `Discover your official <b>Maraki Level</b> (A1 – C1), speaking fluency, and your biggest learning growth area in under 1 minute.\n\n` +
     `⏱️ <b>Format:</b>\n` +
-    `• 10 Diagnostic questions (Grammar, Vocabulary, Reading, Listening)\n` +
-    `• 1 Short Voice speaking prompt (45s)\n` +
-    `• Identifies common Ethiopian English transfer habits & provides Amharic explanations.\n\n` +
+    `• 🎙️ <b>Step 1:</b> Express yourself freely in 15–30s of spoken English\n` +
+    `• 📝 <b>Step 2:</b> 2 Quick Ethiopian Error Trap checks\n` +
+    `• 🏆 Instant AI diagnostic scorecard & customized daily practice!\n\n` +
     (hasExisting
-      ? `⭐ <i>Your current level is <b>${existingLevel.cefrLevel} (${existingLevel.overallScore}/100)</b>. Taking this retest will update your level!</i>\n\n`
+      ? `⭐ <i>Your current level is <b>${existingLevel.cefrLevel} (${existingLevel.overallScore}/100)</b>. Taking this will update your level!</i>\n\n`
       : '') +
-    `Ready to start? Tap below! 👇`;
+    `Ready? Tap below to start! 👇`;
 
   const keyboard = new InlineKeyboard()
-    .text('🚀 Start Diagnostic Test', 'start_assessment');
+    .text('🚀 Start Diagnostic Test (1 Min)', 'start_assessment');
 
   await ctx.reply(introText, { parse_mode: 'HTML', reply_markup: keyboard });
 }
 
 /**
- * Begin assessment questions
+ * Begin assessment session — launches Step 1 (Voice) immediately!
  */
 export async function startAssessmentSession(ctx: Context) {
   if (!ctx.from) return;
   const userId = ctx.from.id;
 
-  let loadingMsg: any = null;
-  try {
-    loadingMsg = await ctx.reply('⏳ <i>Preparing your personalized diagnostic assessment with AI...</i>', {
-      parse_mode: 'HTML',
-    });
-  } catch (e) {}
-
-  let questions: any[] = FALLBACK_QUESTIONS;
-  try {
-    const dynamicQuestions = await DynamicAssessmentService.generateWrittenQuestions();
-    if (dynamicQuestions && dynamicQuestions.length >= 8) {
-      if (dynamicQuestions.length === 10) {
-        questions = dynamicQuestions;
-      } else {
-        const listeningQuestions = FALLBACK_QUESTIONS.filter((q) => q.skill === 'listening');
-        questions = [...dynamicQuestions.slice(0, 8), ...listeningQuestions];
-      }
-      console.log(`[Assessment] Generated ${questions.length} questions dynamically using Gemini`);
-    } else {
-      const apiQuestions = await apiService.getAssessmentQuestions();
-      if (apiQuestions && Array.isArray(apiQuestions.questions) && apiQuestions.questions.length > 0) {
-        questions = apiQuestions.questions;
-      }
-    }
-  } catch (e: any) {
-    console.warn('[Assessment] Dynamic generation failed, using standard questions:', e?.message || e);
-  }
-
-  // Delete loading message
-  if (loadingMsg && ctx.chat) {
-    try {
-      await ctx.api.deleteMessage(ctx.chat.id, loadingMsg.message_id);
-    } catch (e) {}
-  }
-
   await setSession(userId, {
-    mode: 'in_assessment',
+    mode: 'assessment_awaiting_voice',
     questionIndex: 0,
-    totalQuestions: questions.length,
-    questions,
+    totalQuestions: FALLBACK_QUESTIONS.length,
+    questions: FALLBACK_QUESTIONS,
     answers: {},
+    speaking: null,
     startTime: Date.now(),
   });
 
-  await renderQuestion(ctx, 0, questions);
+  await renderSpeakingPrompt(ctx);
 }
 
 /**
- * Render an assessment question with option buttons
+ * Render Step 1: Spoken English Prompt ("Express Yourself Freely")
  */
-async function renderQuestion(ctx: Context, index: number, questions: any[]) {
-  if (index >= questions.length) {
-    // All written questions finished; move to Speaking section
-    await renderSpeakingPrompt(ctx);
-    return;
-  }
-
-  const q = questions[index];
-  const questionNumber = index + 1;
-  const total = questions.length;
-
-  const categoryEmoji = q.skill === 'grammar' ? '📝' : q.skill === 'vocabulary' ? '📚' : q.skill === 'reading' ? '📖' : '🎧';
-
-  let messageText =
-    `${categoryEmoji} <b>Question ${questionNumber} of ${total}</b> [${(q.skill || 'English').toUpperCase()}]\n\n`;
-
-  if (q.readingPassage) {
-    messageText += `📖 <b>Reading Passage:</b>\n<i>"${q.readingPassage}"</i>\n\n`;
-  }
-
-  messageText += `${q.prompt}\n\n`;
-
-  const optionLetters = ['A', 'B', 'C', 'D'];
-
-  q.options.forEach((opt: string, optIdx: number) => {
-    messageText += `<b>${optionLetters[optIdx]}.</b> ${opt}\n`;
-  });
-
-  messageText += `\n━━━━━━━━━━━━━━━━━━━━━\n` +
-    `💬 <b>Reply with:</b> Send <b>A</b>, <b>B</b>, <b>C</b>, or <b>D</b>`;
-
-  // Provide Reply Keyboard so buttons are big, permanently visible above the phone chat bar
-  const replyKeyboard = new Keyboard()
-    .text('A').text('B').text('C').text('D')
-    .row()
-    .text('❌ Cancel Assessment')
-    .resized();
-
-  const isListeningQuestion = q.skill === 'listening' || Boolean(q.audioUrl) || Boolean(q.listeningScript);
-
-  if (isListeningQuestion) {
-    // 1. Clean up previous message keyboard so user doesn't double-tap old options
-    if (ctx.callbackQuery) {
-      try {
-        await ctx.editMessageReplyMarkup({ reply_markup: new InlineKeyboard() });
-      } catch (e) {}
-    }
-
-    // Record when the audio prompt is sent for playback verification
-    if (ctx.from) {
-      const currentSession = await getSession(ctx.from.id);
-      if (currentSession) {
-        currentSession.listeningSentAt = Date.now();
-        await setSession(ctx.from.id, currentSession);
-      }
-    }
-
-    // 2. Send genuine audio clip to Telegram chat
-    try {
-      let audioSent = false;
-
-      // Tier 1: Fresh dynamic TTS audio synthesized from AI-generated listeningScript
-      if (q.listeningScript) {
-        try {
-          const cleanScript = q.listeningScript
-            .replace(/["'""'']/g, '')
-            .replace(/[•\t\n]+/g, ' ')
-            .trim();
-          const base64List = await googleTTS.getAllAudioBase64(cleanScript, {
-            lang: 'en',
-            slow: false,
-            timeout: 12000,
-          });
-          if (base64List && base64List.length > 0) {
-            const buffers = base64List.map((item) => Buffer.from(item.base64, 'base64'));
-            const fullAudioBuffer = Buffer.concat(buffers);
-            await ctx.replyWithVoice(new InputFile(fullAudioBuffer, `listening_q${questionNumber}.mp3`), {
-              caption: `🎧 <b>Question ${questionNumber} Audio:</b> Listen to this spoken English audio clip before answering below.`,
-              parse_mode: 'HTML',
-            });
-            audioSent = true;
-          }
-        } catch (synthErr) {
-          console.warn('[Assessment] Dynamic TTS synthesis failed, falling back to static audio:', synthErr);
-        }
-      }
-
-      // Tier 2: Fast-path via cached Telegram file_id
-      if (!audioSent && cachedListeningAudioFileId) {
-        try {
-          await ctx.replyWithAudio(cachedListeningAudioFileId, {
-            title: 'Listening Dialogue (Cafe Conversation)',
-            performer: 'Maraki AI Diagnostic',
-            caption: `🎧 <b>Question ${questionNumber} Audio:</b> Listen to this spoken English dialogue before selecting your answer below.`,
-            parse_mode: 'HTML',
-          });
-          audioSent = true;
-        } catch (cacheErr) {
-          cachedListeningAudioFileId = null; // Stale or invalid file_id, fallback to upload
-        }
-      }
-
-      if (!audioSent) {
-        const candidatePaths = [
-          path.resolve(process.cwd(), 'assets/audio/q9_listening.mp3'),
-          path.resolve(process.cwd(), '../assets/audio/q9_listening.mp3'),
-          path.resolve(__dirname, '../../assets/audio/q9_listening.mp3'),
-          path.resolve(__dirname, '../assets/audio/q9_listening.mp3'),
-          path.resolve(__dirname, '../../../assets/audio/q9_listening.mp3'),
-          '/app/assets/audio/q9_listening.mp3',
-          '/home/million/Documents/maraki/bot/assets/audio/q9_listening.mp3',
-        ];
-        const audioPath = candidatePaths.find((p) => fs.existsSync(p));
-
-        let audioInput: InputFile | null = null;
-        if (audioPath) {
-          audioInput = new InputFile(audioPath);
-        } else {
-          // Tier 3: Remote HTTP streaming fallback from backend API
-          const backendUrl = process.env.BACKEND_API_URL || 'http://localhost:3000';
-          const remoteAudioUrl = `${backendUrl.replace(/\/$/, '')}/api/assessment/audio/q9_listening.mp3`;
-          try {
-            console.log(`[Assessment] Local audio not found, streaming from backend: ${remoteAudioUrl}`);
-            const resp = await axios.get(remoteAudioUrl, { responseType: 'arraybuffer', timeout: 10000 });
-            if (resp.data && resp.data.byteLength > 0) {
-              audioInput = new InputFile(Buffer.from(resp.data), 'q9_listening.mp3');
-            }
-          } catch (fetchErr: any) {
-            console.error('[Assessment] Failed to fetch remote audio clip from backend:', fetchErr?.message);
-          }
-        }
-
-        if (audioInput) {
-          const sentMsg = await ctx.replyWithAudio(audioInput, {
-            title: 'Listening Dialogue (Cafe Conversation)',
-            performer: 'Maraki AI Diagnostic',
-            caption: `🎧 <b>Question ${questionNumber} Audio:</b> Listen to this spoken English dialogue before selecting your answer below.`,
-            parse_mode: 'HTML',
-          });
-          if (sentMsg?.audio?.file_id) {
-            cachedListeningAudioFileId = sentMsg.audio.file_id;
-          }
-        } else {
-          console.error('[Assessment] CRITICAL: No audio file found locally or remotely for listening question!');
-        }
-      }
-    } catch (err) {
-      console.error('Failed to send audio clip:', err);
-    }
-
-    // 3. Send question prompt with options directly below the audio
-    await ctx.reply(messageText, { parse_mode: 'HTML', reply_markup: replyKeyboard });
-    return;
-  }
-
-  // Send question prompt with options and Reply Keyboard
-  await ctx.reply(messageText, { parse_mode: 'HTML', reply_markup: replyKeyboard });
-}
-
-/**
- * Handle user choosing an option
- */
-export async function handleAssessmentAnswer(ctx: Context, qIndex: number, optIndex: number) {
-  if (!ctx.from) return;
-  const userId = ctx.from.id;
-
-  const session = await getSession(userId);
-  if (!session || session.mode !== 'in_assessment') {
-    return ctx.reply('⚠️ Assessment session timed out. Tap /assessment to restart.', {
-      reply_markup: { remove_keyboard: true },
-    });
-  }
-
-  let questions: any[] = session.questions && session.questions.length > 0 ? session.questions : FALLBACK_QUESTIONS;
-  if (!session.questions) {
-    try {
-      const apiQuestions = await apiService.getAssessmentQuestions();
-      if (apiQuestions && Array.isArray(apiQuestions.questions) && apiQuestions.questions.length > 0) {
-        questions = apiQuestions.questions;
-      }
-    } catch (e) { }
-  }
-
-  const currentQ = questions[qIndex];
-  if (currentQ) {
-    session.answers = session.answers || {};
-    session.answers[currentQ.id] = optIndex;
-  }
-
-  const nextIndex = qIndex + 1;
-  session.questionIndex = nextIndex;
-  await setSession(userId, session);
-
-  await renderQuestion(ctx, nextIndex, questions);
-}
-
-/**
- * Prompt for final speaking audio
- */
-async function renderSpeakingPrompt(ctx: Context) {
+export async function renderSpeakingPrompt(ctx: Context) {
   if (!ctx.from) return;
   const userId = ctx.from.id;
 
@@ -458,46 +120,26 @@ async function renderSpeakingPrompt(ctx: Context) {
     await setSession(userId, session);
   }
 
-  // Clean up Reply Keyboard so mobile microphone button is completely unobstructed
-  await ctx.reply('✅ <b>Written diagnostic complete!</b> Moving to speaking evaluation...', {
-    parse_mode: 'HTML',
-    reply_markup: { remove_keyboard: true },
-  });
-
   const speakingText =
-    `🎙️ <b>FINAL STEP: Spoken English Diagnostic</b>\n\n` +
-    `Now let's evaluate your <b>Speaking & Pronunciation</b>!\n\n` +
-    `Record a <b>30–60 second voice note</b> in English answering:\n` +
-    `1. <i>What is your name and what do you do or study in Ethiopia?</i>\n` +
-    `2. <i>Why is mastering English important for your career or education?</i>\n` +
-    `3. <i>What is one challenge you experience when speaking English?</i>\n\n` +
-    `🇪🇹 <i>የ30-60 ሰከንድ ድምፅ በእንግሊዝኛ ይቅረጹ እና አሁን ይላኩ።</i>\n\n` +
-    `👇 <b>Hold down your Telegram microphone button to record & send!</b>`;
-    `💪 <b>አይጨነቁ   ፍጹም እንግሊዝኛ መናገር አይጠበቅብዎትም!</b>\n` +
-    `<i>AIው እርስዎን ለመመዘን ሳይሆን ትክክለኛ ደረጃዎን አውቆ ለማገዝ ነው የተሰራው። ስህተት ቢኖርም እንኳን በድፍረት ይናገሩ!</i>\n\n` +
-    `⏱️ <b>Just 15–30 seconds</b> (3 to 4 sentences is plenty!).\n\n` +
+    `🎙️ <b>የእንግሊዝኛ ችሎታ መለያ (Speaking Diagnostic) 🇪🇹</b>\n\n` +
+    `<b>Express yourself freely!</b>\n\n` +
+    `<i>"Hi! I'm Maraki. Go ahead and express yourself freely — tell me a little about who you are, what you love doing, or what your goals are. Speak naturally, there are no wrong answers!"</i>\n\n` +
     `💪 <b>አይጨነቁ — ፍጹም እንግሊዝኛ መናገር አይጠበቅብዎትም!</b>\n` +
-    `<i>AIው እርስዎን ለመመዘን ሳይሆን ትክክለኛ ችሎታዎን አውቆ ለማገዝ ነው የተሰራው። ስህተት ቢኖርም እንኳን በድፍረት ይናገሩ!</i>\n\n` +
-    `⏱️ <b>Just 15–30 seconds</b> (3 to 4 sentences is plenty!)\n\n` +
-    `Choose <b>ONE</b> topic that feels easiest for you:\n` +
-    `• ☕ <b>Option A (Daily Life):</b> <i>What is your favorite Ethiopian food, or what do you enjoy doing on weekends?</i>\n` +
-    `• 💼 <b>Option B (Career/Study):</b> <i>What do you study or work on, and why do you want to master English?</i>\n\n` +
-    `👇 <b>Hold down the Telegram microphone button below to record & send!</b>`;
+    `<i>ራስዎን በነፃነት ይግለጹ (ስለራስዎ፣ ስለሚወዱት ነገር ወይም ስለ ህልምዎ በጥቂቱ ይንገሩኝ። ስህተት ቢኖርም እንኳን በድፍረት ይናገሩ!)</i>\n\n` +
+    `⏱️ <b>15–30 ሰከንድ ድምፅ በእንግሊዝኛ ይቅረጹ</b>\n\n` +
+    `👇 <b>የቴሌግራም ማይክራፎን ምልክቱን ተጭነው ድምፅዎን ይላኩ!</b>`;
 
   const keyboard = new InlineKeyboard()
-    .text('⏭️ Skip Speaking (Written Score Only)', 'assess_skip_voice')
-    .text('⏭️ Skip Speaking (Untested)', 'assess_skip_voice')
-    .row();
+    .text('⏭️ ድምፅ ዝለል (Skip Voice)', 'assess_skip_voice');
 
   if (ctx.callbackQuery) {
     try {
       await ctx.editMessageText(speakingText, { parse_mode: 'HTML', reply_markup: keyboard });
-    } catch (e) {
-      await ctx.reply(speakingText, { parse_mode: 'HTML', reply_markup: keyboard });
-    }
-  } else {
-    await ctx.reply(speakingText, { parse_mode: 'HTML', reply_markup: keyboard });
+      return;
+    } catch (e) {}
   }
+
+  await ctx.reply(speakingText, { parse_mode: 'HTML', reply_markup: keyboard });
 }
 
 /**
@@ -510,12 +152,15 @@ export async function handleAssessmentVoiceSubmission(ctx: Context) {
 
   const session = await getSession(userId);
   if (!session || session.mode !== 'assessment_awaiting_voice') {
-    return; // Not in assessment voice mode
+    return;
   }
 
   const durationSeconds = voiceOrAudio.duration || 20;
 
-  const statusMsg = await ctx.reply('⏳ <i>Great job speaking up! Analyzing your speech with Maraki AI (clarity, vocabulary & fluency)...</i>', { parse_mode: 'HTML' });
+  const statusMsg = await ctx.reply(
+    '⏳ <i>Great job speaking up! Analyzing your speech with Maraki AI (clarity, vocabulary & fluency)...</i>',
+    { parse_mode: 'HTML' }
+  );
 
   // Download Telegram voice note
   let audioBuffer: Buffer | null = null;
@@ -538,7 +183,6 @@ export async function handleAssessmentVoiceSubmission(ctx: Context) {
   if (audioBuffer) {
     validation = await VoiceValidationService.validateSpeakingAudio(audioBuffer, 'audio/ogg', durationSeconds);
   } else {
-    // If download failed or duration is too short
     if (durationSeconds < 5) {
       validation = {
         isValid: false,
@@ -557,7 +201,7 @@ export async function handleAssessmentVoiceSubmission(ctx: Context) {
     }
   }
 
-  // If rejected: mute, Amharic/non-English, or too short
+  // If rejected: mute, non-English, or too short
   if (!validation.isValid) {
     try {
       await ctx.api.deleteMessage(ctx.chat!.id, statusMsg.message_id);
@@ -571,23 +215,150 @@ export async function handleAssessmentVoiceSubmission(ctx: Context) {
       : '<b>No Speech Detected / ምንም ድምፅ አልተሰማም</b>';
 
     const retryKeyboard = new InlineKeyboard()
-      .text('⏭️ Skip Speaking (Written Score Only)', 'assess_skip_voice')
-      .text('⏭️ Skip Speaking (Untested)', 'assess_skip_voice')
-      .row();
+      .text('⏭️ ድምፅ ዝለል (Skip Voice)', 'assess_skip_voice');
 
     await ctx.reply(
       `${errorIcon} ${errorTitle}\n\n` +
       `${validation.userMessageEn}\n\n` +
       `🇪🇹 <i>${validation.userMessageAm}</i>\n\n` +
-      `👇 <b>Hold down your Telegram microphone button to record again in English!</b>`,
+      `👇 <b>የቴሌግራም ማይክራፎን ምልክቱን ተጭነው በድጋሚ በእንግሊዝኛ ይናገሩ!</b>`,
       { parse_mode: 'HTML', reply_markup: retryKeyboard }
     );
-
-    // Keep session mode in 'assessment_awaiting_voice' so the learner can retry
     return;
   }
 
-  // Clear assessment session mode upon valid submission
+  // Voice accepted! Delete status message
+  try {
+    await ctx.api.deleteMessage(ctx.chat!.id, statusMsg.message_id);
+  } catch (e) {}
+
+  session.speaking = {
+    durationSeconds,
+    transcript: validation.transcript || `Spoken English response (${durationSeconds}s)`,
+    scores: validation.scores,
+    feedback: validation.feedback,
+    amharicTip: validation.amharicTip,
+    ethiopianL1Patterns: validation.ethiopianL1Patterns,
+  };
+  session.mode = 'in_assessment';
+  session.questionIndex = 0;
+  await setSession(userId, session);
+
+  await ctx.reply(
+    `✅ <b>ድንቅ ንግግር! የድምፅ ምዘናዎ ተመዝግቧል።</b>\n\n` +
+    `አሁን የመጨረሻዎቹን <b>2 አጫጭር የቋንቋ ጥያቄዎች</b> እንጨርስ 👇`,
+    { parse_mode: 'HTML' }
+  );
+
+  const questions = session.questions && session.questions.length > 0 ? session.questions : FALLBACK_QUESTIONS;
+  await renderQuestion(ctx, 0, questions);
+}
+
+/**
+ * Render a written assessment question with option buttons
+ */
+async function renderQuestion(ctx: Context, index: number, questions: any[]) {
+  if (index >= questions.length) {
+    // All questions finished; finalize
+    const userId = ctx.from?.id;
+    if (userId) {
+      const session = await getSession(userId);
+      await finalizeAssessmentSession(ctx, session);
+    }
+    return;
+  }
+
+  const q = questions[index];
+  const questionNumber = index + 1;
+  const total = questions.length;
+
+  const categoryEmoji = q.skill === 'grammar' ? '📝' : '📚';
+
+  let messageText =
+    `${categoryEmoji} <b>Question ${questionNumber} of ${total}</b> [${(q.skill || 'English').toUpperCase()}]\n\n`;
+
+  messageText += `${q.prompt}\n\n`;
+
+  const optionLetters = ['A', 'B', 'C', 'D'];
+  q.options.forEach((opt: string, optIdx: number) => {
+    messageText += `<b>${optionLetters[optIdx]}.</b> ${opt}\n`;
+  });
+
+  messageText += `\n━━━━━━━━━━━━━━━━━━━━━\n` +
+    `💬 <b>ምርጫዎን ይንኩ፦</b>`;
+
+  const replyKeyboard = new Keyboard()
+    .text('A').text('B').text('C').text('D')
+    .row()
+    .text('❌ Cancel Assessment')
+    .resized();
+
+  await ctx.reply(messageText, { parse_mode: 'HTML', reply_markup: replyKeyboard });
+}
+
+/**
+ * Handle user choosing an option (A, B, C, D)
+ */
+export async function handleAssessmentAnswer(ctx: Context, qIndex: number, optIndex: number) {
+  if (!ctx.from) return;
+  const userId = ctx.from.id;
+
+  const session = await getSession(userId);
+  if (!session || session.mode !== 'in_assessment') {
+    return ctx.reply('⚠️ Assessment session timed out. Tap /assessment to restart.', {
+      reply_markup: { remove_keyboard: true },
+    });
+  }
+
+  const questions: any[] = session.questions && session.questions.length > 0 ? session.questions : FALLBACK_QUESTIONS;
+  const currentQ = questions[qIndex];
+  if (currentQ) {
+    session.answers = session.answers || {};
+    session.answers[currentQ.id] = optIndex;
+  }
+
+  const nextIndex = qIndex + 1;
+  session.questionIndex = nextIndex;
+  await setSession(userId, session);
+
+  await renderQuestion(ctx, nextIndex, questions);
+}
+
+/**
+ * Handle skipping speaking test
+ */
+export async function skipAssessmentVoice(ctx: Context) {
+  if (!ctx.from) return;
+  const userId = ctx.from.id;
+
+  const session = await getSession(userId);
+  if (session) {
+    session.speaking = null;
+    session.mode = 'in_assessment';
+    session.questionIndex = 0;
+    await setSession(userId, session);
+  }
+
+  await ctx.reply('⏭️ <b>ድምፅ አልፈዋል (Voice Skipped).</b>\n\nየመጨረሻዎቹን 2 ጥያቄዎች ይመልሱ 👇', {
+    parse_mode: 'HTML',
+  });
+
+  const questions = session?.questions && session.questions.length > 0 ? session.questions : FALLBACK_QUESTIONS;
+  await renderQuestion(ctx, 0, questions);
+}
+
+/**
+ * Finalize assessment and submit to backend API
+ */
+async function finalizeAssessmentSession(ctx: Context, session: any) {
+  if (!ctx.from) return;
+  const userId = ctx.from.id;
+
+  const statusMsg = await ctx.reply('⏳ <i>Calculating your official Maraki Level & creating study plan...</i>', {
+    parse_mode: 'HTML',
+    reply_markup: { remove_keyboard: true },
+  });
+
   await setSession(userId, { mode: null, timestamp: Date.now() });
 
   const payload = {
@@ -595,17 +366,10 @@ export async function handleAssessmentVoiceSubmission(ctx: Context) {
     firstName: ctx.from.first_name,
     lastName: ctx.from.last_name,
     username: ctx.from.username,
-    answers: session.answers || {},
-    questions: session.questions || undefined,
-    speaking: {
-      durationSeconds,
-      transcript: validation.transcript || `Spoken English response (${durationSeconds}s)`,
-      scores: validation.scores,
-      feedback: validation.feedback,
-      amharicTip: validation.amharicTip,
-      ethiopianL1Patterns: validation.ethiopianL1Patterns,
-    },
-    durationSeconds: Math.round((Date.now() - (session.startTime || Date.now())) / 1000),
+    answers: session?.answers || {},
+    questions: session?.questions || FALLBACK_QUESTIONS,
+    speaking: session?.speaking || null,
+    durationSeconds: Math.round((Date.now() - (session?.startTime || Date.now())) / 1000),
   };
 
   try {
@@ -617,49 +381,13 @@ export async function handleAssessmentVoiceSubmission(ctx: Context) {
     await sendMarakiLevelReport(ctx, report);
   } catch (error: any) {
     console.error('Failed to submit assessment:', error?.message);
-    await ctx.reply('⚠️ Error finalizing assessment. Please try /assessment again.');
-  }
-}
-
-/**
- * Handle skipping speaking test
- */
-export async function skipAssessmentVoice(ctx: Context) {
-  if (!ctx.from) return;
-  const userId = ctx.from.id;
-
-  const session = await getSession(userId);
-  const statusMsg = await ctx.reply('⏳ <i>Calculating your Maraki Level...</i>', { parse_mode: 'HTML' });
-
-  await setSession(userId, { mode: null, timestamp: Date.now() });
-
-  const payload = {
-    telegramId: userId,
-    firstName: ctx.from.first_name,
-    lastName: ctx.from.last_name,
-    username: ctx.from.username,
-    answers: session?.answers || {},
-    questions: session?.questions || undefined,
-    speaking: null,
-    durationSeconds: Math.round((Date.now() - (session?.startTime || Date.now())) / 1000),
-  };
-
-  try {
-    const report = await apiService.submitAssessment(payload);
     try {
       await ctx.api.deleteMessage(ctx.chat!.id, statusMsg.message_id);
-    } catch (e) { }
-
-    await sendMarakiLevelReport(ctx, report);
-  } catch (error: any) {
-    console.error('Failed to submit assessment:', error?.message);
+    } catch (e) {}
     await ctx.reply('⚠️ Error finalizing assessment. Please try /assessment again.');
   }
 }
 
-/**
- * Format and send the killer feature: "🎯 YOUR MARAKI LEVEL" Card
- */
 /**
  * Format and send the "🎯 MARAKI LEVEL REPORT" Card with English Skill Feedback & 7-Day Plan
  */
@@ -743,4 +471,3 @@ export async function sendMarakiLevelReport(ctx: Context, report: any) {
   const fullText = getFullTextMessage(report, fullName, credId);
   await ctx.reply(fullText, { parse_mode: 'HTML', reply_markup: keyboard });
 }
-

@@ -79,7 +79,7 @@ export async function startCommand(ctx: Context) {
     if (!isAssessed) {
       // ─── STATE 1: UNASSESSED USER (Laser-focused diagnostic onboarding) ──
       const keyboard = new InlineKeyboard()
-        .text("🎯 የችሎታ መለያ ፈተና ጀምር (3 ደቂቃ)", "start_assessment")
+        .text("🎙️ የንግግር ችሎታ መለያ ጀምር (1 ደቂቃ)", "start_assessment")
         .row()
         .text("🔥 የዛሬውን ነፃ ቻሌንጅ ሞክር", "daily_challenge");
 
