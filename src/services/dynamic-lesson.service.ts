@@ -133,51 +133,51 @@ Return ONLY a valid JSON object matching this schema:
   "explanation": "Explanation of why this cadence sounds professional and natural."
 }
 `;
-    } else if (normalizedSkill === 'reading') {
+    } else if (normalizedSkill === 'reading' || normalizedSkill === 'listening') {
       specializedPrompt = `
-You are Maraki AI's expert English reading comprehension and speed trainer for Ethiopian learners.
-Generate a dynamic, high-yield READING comprehension micro-lesson.
+You are Maraki AI's expert English listening and spoken dialogue coach for Ethiopian learners.
+Generate a dynamic, high-yield LISTENING & CONVERSATIONAL COMPREHENSION micro-lesson.
 
 Learner Profile:
-- Diagnosed Skill Weakness: Reading Speed, Thesis Skimming, & Context Clues
+- Diagnosed Skill: Spoken English Listening Comprehension & Accent Adaptation
 - Target CEFR Benchmark: ${cefrLevel}
 - 7-Day Plan Milestone: Day ${dayNumber} of 7
 ${dayTitle ? `- Focus Theme: ${dayTitle}` : ''}
 ${dayTask ? `- Target Skill: ${dayTask}` : ''}
 
-Reading Lesson Requirements:
-1. Context / Passage ("passage"):
-   - A realistic, engaging 3 to 4 sentence paragraph grounded in Ethiopian business, technology, economy, universities, or culture (e.g. Telebirr, Ethiopian Airlines, regional logistics, tech startups, renewable energy, coffee cooperatives).
-2. Targeted Reading Skill:
-   - Skimming for core thesis under 45 seconds (avoiding word-by-word Amharic translation)
-   - Scanning for exact figures, percentages, dates, and names
-   - Contextual deduction of sophisticated vocabulary using contrast markers
-   - Deep inference and reading between the lines
+Listening Lesson Requirements:
+1. Spoken Audio Dialogue Script ("listeningScript"):
+   - A realistic 2 to 3 turn spoken dialogue between two people in a realistic context (job interview, cafe, business meeting, airport, university).
+   - Natural spoken speech with connected speech, contractions, or pragmatic nuances.
+2. Targeted Listening Skill:
+   - Understanding implied meaning / pragmatics (e.g. "Do you mind... - No, not at all")
+   - Catching key numbers, directions, or decisions from spoken dialogue
+   - Eliminating the habit of translating word-by-word into Amharic
 3. Multiple Choice Question ("question"):
-   - A sharp question testing comprehension, thesis extraction, or vocabulary inference.
+   - A sharp comprehension question based directly on the spoken dialogue.
 4. Options ("options"):
    - Exactly 3 options (A, B, C). One correct, two plausible distractors.
 5. Pedagogy:
-   - "strategy": Specific speed-reading technique.
-   - "amharicTip": Practical advice in Amharic on boosting WPM reading speed.
-   - "explanation": Clear evidence from the passage confirming the answer.
+   - "strategy": Ear-training listening strategy.
+   - "amharicTip": Practical advice in Amharic on catching fast spoken English.
+   - "explanation": Clear breakdown of why the answer is correct.
 
 Return ONLY a valid JSON object matching this schema:
 {
-  "title": "Reading Comprehension",
-  "topic": "Topic Title (e.g. Core Thesis Skimming, Context Clues)",
+  "title": "Listening Comprehension",
+  "topic": "Topic Title (e.g. Implied Meaning, Catching Details in Spoken English)",
   "duration": "5 mins",
-  "strategy": "Speed-reading strategy...",
-  "amharicTip": "በአማርኛ የንባብ ፍጥነት ምክር",
-  "passage": "3-4 sentence realistic Ethiopian contextual paragraph...",
-  "question": "Comprehension question?",
+  "strategy": "Ear-training strategy...",
+  "amharicTip": "በአማርኛ የማዳመጥ ችሎታ ማሳደጊያ ምክር",
+  "listeningScript": "Speaker A: ... Speaker B: ...",
+  "question": "Comprehension question based on the audio clip?",
   "options": [
     "A) First option",
     "B) Second option",
     "C) Third option"
   ],
   "correctIndex": 0,
-  "explanation": "Detailed explanation citing the passage."
+  "explanation": "Detailed explanation of the spoken dialogue."
 }
 `;
     } else if (normalizedSkill === 'grammar') {

@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { fileURLToPath } from 'url';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import * as googleTTS from 'google-tts-api';
 import { VoiceValidationService } from '../services/voice-validation.service.js';
 import { apiService } from '../services/api.service.js';
 import { getSession, setSession } from '../utils/redis.js';
@@ -11,10 +12,24 @@ import { getPhotoScorecard, getDetailedDiagnosisMessage, getFullTextMessage, get
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// 2 High-Signal Diagnostic Error Trap Questions for Fast 60s Assessment
+// 3 High-Signal Audio-First & Error Trap Questions (No Boring Reading!)
 const FALLBACK_QUESTIONS = [
     {
-        id: 'q1_preposition_discuss',
+        id: 'q1_listening_pragmatics',
+        skill: 'listening',
+        listeningScript: 'Excuse me, do you mind if I sit here? No, not at all, please go ahead.',
+        prompt: 'Listen to the audio dialogue above:\n\n<i>What does the speaker mean when she responds "No, not at all, please go ahead"?</i>',
+        options: [
+            'She is using the seat and does not want him to sit.',
+            'She has no objection and the seat is free for him to take.',
+            'She wants him to ask someone else first.',
+            'She is annoyed by his question.',
+        ],
+        correctIndex: 1,
+        ethiopianL1Note: 'በአማርኛ "ይከብድዎታል?" (Do you mind?) ሲባል "No, not at all" ማለት "አይ ምንም አይከብደኝም/ተቀመጡ" ማለት ነው፤ "Yes" ከተባለ ግን "አልፈቅድም" ማለት ነው።',
+    },
+    {
+        id: 'q2_preposition_discuss',
         skill: 'grammar',
         prompt: 'Choose the correct option: "Before the meeting ends, we should ______ the project timeline."',
         options: [
@@ -27,7 +42,7 @@ const FALLBACK_QUESTIONS = [
         ethiopianL1Note: 'በአማርኛ "ስለ ጉዳዩ እንወያይ" ስለምንል "discuss about" ማለት የተለመደ ስህተት ነው። በእንግሊዝኛ "discuss" ራሱ "about"ን ስለሚይዝ preposition አያስፈልገውም።',
     },
     {
-        id: 'q2_collocation_research',
+        id: 'q3_collocation_research',
         skill: 'vocabulary',
         prompt: 'Which verb naturally collocates: "Our engineering team needs to ______ a comprehensive market survey."',
         options: [
@@ -61,7 +76,8 @@ export async function assessmentCommand(ctx) {
         `Discover your official <b>Maraki Level</b> (A1 – C1), speaking fluency, and your biggest learning growth area in under 1 minute.\n\n` +
         `⏱️ <b>Format:</b>\n` +
         `• 🎙️ <b>Step 1:</b> Express yourself freely in 15–30s of spoken English\n` +
-        `• 📝 <b>Step 2:</b> 2 Quick Ethiopian Error Trap checks\n` +
+        `• 🎧 <b>Step 2:</b> 1 Spoken Listening Dialogue check\n` +
+        `• 📝 <b>Step 3:</b> 2 Quick Ethiopian Error Trap checks\n` +
         `• 🏆 Instant AI diagnostic scorecard & customized daily practice!\n\n` +
         (hasExisting
             ? `⭐ <i>Your current level is <b>${existingLevel.cefrLevel} (${existingLevel.overallScore}/100)</b>. Taking this will update your level!</i>\n\n`
@@ -210,12 +226,12 @@ export async function handleAssessmentVoiceSubmission(ctx) {
     session.questionIndex = 0;
     await setSession(userId, session);
     await ctx.reply(`✅ <b>ድንቅ ንግግር! የድምፅ ምዘናዎ ተመዝግቧል።</b>\n\n` +
-        `አሁን የመጨረሻዎቹን <b>2 አጫጭር የቋንቋ ጥያቄዎች</b> እንጨርስ 👇`, { parse_mode: 'HTML' });
+        `አሁን የመጨረሻዎቹን <b>3 አጫጭር ጥያቄዎች (Listening + Grammar + Vocabulary)</b> እንጨርስ 👇`, { parse_mode: 'HTML' });
     const questions = session.questions && session.questions.length > 0 ? session.questions : FALLBACK_QUESTIONS;
     await renderQuestion(ctx, 0, questions);
 }
 /**
- * Render a written assessment question with option buttons
+ * Render a written/audio assessment question with option buttons
  */
 async function renderQuestion(ctx, index, questions) {
     if (index >= questions.length) {
@@ -230,7 +246,7 @@ async function renderQuestion(ctx, index, questions) {
     const q = questions[index];
     const questionNumber = index + 1;
     const total = questions.length;
-    const categoryEmoji = q.skill === 'grammar' ? '📝' : '📚';
+    const categoryEmoji = q.skill === 'listening' ? '🎧' : q.skill === 'grammar' ? '📝' : '📚';
     let messageText = `${categoryEmoji} <b>Question ${questionNumber} of ${total}</b> [${(q.skill || 'English').toUpperCase()}]\n\n`;
     messageText += `${q.prompt}\n\n`;
     const optionLetters = ['A', 'B', 'C', 'D'];
@@ -244,6 +260,28 @@ async function renderQuestion(ctx, index, questions) {
         .row()
         .text('❌ Cancel Assessment')
         .resized();
+    // If Listening question, synthesize and send voice note first
+    if (q.skill === 'listening' && q.listeningScript) {
+        try {
+            const cleanScript = q.listeningScript.replace(/["'""'']/g, '').replace(/[•\t\n]+/g, ' ').trim();
+            const base64List = await googleTTS.getAllAudioBase64(cleanScript, {
+                lang: 'en',
+                slow: false,
+                timeout: 12000,
+            });
+            if (base64List && base64List.length > 0) {
+                const buffers = base64List.map((item) => Buffer.from(item.base64, 'base64'));
+                const fullAudioBuffer = Buffer.concat(buffers);
+                await ctx.replyWithVoice(new InputFile(fullAudioBuffer, `listening_q${questionNumber}.mp3`), {
+                    caption: `🎧 <b>Question ${questionNumber} Spoken Dialogue:</b> Listen to this audio before answering below.`,
+                    parse_mode: 'HTML',
+                });
+            }
+        }
+        catch (synthErr) {
+            console.warn('[Assessment] TTS synthesis failed:', synthErr);
+        }
+    }
     await ctx.reply(messageText, { parse_mode: 'HTML', reply_markup: replyKeyboard });
 }
 /**
@@ -284,7 +322,7 @@ export async function skipAssessmentVoice(ctx) {
         session.questionIndex = 0;
         await setSession(userId, session);
     }
-    await ctx.reply('⏭️ <b>ድምፅ አልፈዋል (Voice Skipped).</b>\n\nየመጨረሻዎቹን 2 ጥያቄዎች ይመልሱ 👇', {
+    await ctx.reply('⏭️ <b>ድምፅ አልፈዋል (Voice Skipped).</b>\n\nየመጨረሻዎቹን 3 ጥያቄዎች ይመልሱ 👇', {
         parse_mode: 'HTML',
     });
     const questions = session?.questions && session.questions.length > 0 ? session.questions : FALLBACK_QUESTIONS;
