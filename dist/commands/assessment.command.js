@@ -12,24 +12,38 @@ import { getPhotoScorecard, getDetailedDiagnosisMessage, getFullTextMessage, get
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// 3 High-Signal Audio-First & Error Trap Questions (No Boring Reading!)
+// 4 High-Signal Audio-First & Error Trap Questions (2 Listening + 2 Traps)
 const FALLBACK_QUESTIONS = [
     {
-        id: 'q1_listening_pragmatics',
+        id: 'q1_listening_schedule',
         skill: 'listening',
-        listeningScript: 'Hi Dawit, just letting you know that our project meeting with the client has been moved from Thursday morning to Friday at 3:00 PM. Thanks for your flexibility!',
-        prompt: 'Based on the spoken audio clip above:\n\n<b>When is the rescheduled client meeting taking place?</b>',
+        listeningScript: "Hello Sara, I am calling from the headquarters regarding tomorrow's regional operations meeting. The department director asked us to move the session from 10:00 AM to 2:30 PM in Conference Room B so the regional team arriving from Hawassa can participate. Please let me know if this updated schedule works for you.",
+        prompt: 'Based on the spoken voicemail above:\n\n<b>Why was the operations meeting moved to 2:30 PM?</b>',
         options: [
-            'Thursday morning at 10:00 AM',
-            'Thursday afternoon at 3:00 PM',
-            'Friday afternoon at 3:00 PM',
-            'Friday morning at 10:00 AM',
+            'The conference room was being renovated',
+            'To allow the regional team from Hawassa to participate',
+            'The department director cancelled the project',
+            'The headquarters was closed in the morning',
         ],
-        correctIndex: 2,
-        ethiopianL1Note: 'በድምፅ መልእክቱ ውስጥ ስብሰባው ከሀሙስ (Thursday) ወደ አርብ ከሰአት 3:00 PM (Friday at 3:00 PM) እንደተዛወረ በግልጽ ተነግሯል።',
+        correctIndex: 1,
+        ethiopianL1Note: 'በድምፅ መልእክቱ ውስጥ "so the regional team arriving from Hawassa can participate" (ከሀዋሳ የሚመጣው የክልል ቡድን እንዲሳተፍ) በሚል በግልጽ ተብራርቷል።',
     },
     {
-        id: 'q2_preposition_discuss',
+        id: 'q2_listening_support',
+        skill: 'listening',
+        listeningScript: "Good afternoon, thank you for contacting customer support. I understand you completed payment for the premium plan yesterday, but your account is still displaying basic access. Don't worry, our technical support engineers are updating your system permissions right now, and everything will be completely active within twenty minutes.",
+        prompt: 'Based on the spoken customer service dialogue above:\n\n<b>What did the support representative promise the customer?</b>',
+        options: [
+            'To issue a full payment refund immediately',
+            'To schedule an in-person technician visit',
+            'To activate full premium access within twenty minutes',
+            'To reset the customer login password',
+        ],
+        correctIndex: 2,
+        ethiopianL1Note: 'በድምፅ መልእክቱ ውስጥ "everything will be completely active within twenty minutes" (በ20 ደቂቃ ውስጥ ሙሉ በሙሉ ይሰራል) በማለት ቴክኒካል ቡድኑ መፍትሔ እንደሚሰጥ ተናግሯል።',
+    },
+    {
+        id: 'q3_preposition_discuss',
         skill: 'grammar',
         prompt: 'Choose the correct option: "Before the meeting ends, we should ______ the project timeline."',
         options: [
@@ -42,7 +56,7 @@ const FALLBACK_QUESTIONS = [
         ethiopianL1Note: 'በአማርኛ "ስለ ጉዳዩ እንወያይ" ስለምንል "discuss about" ማለት የተለመደ ስህተት ነው። በእንግሊዝኛ "discuss" ራሱ "about"ን ስለሚይዝ preposition አያስፈልገውም።',
     },
     {
-        id: 'q3_collocation_research',
+        id: 'q4_collocation_research',
         skill: 'vocabulary',
         prompt: 'Which verb naturally collocates: "Our engineering team needs to ______ a comprehensive market survey."',
         options: [
