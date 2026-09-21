@@ -49,7 +49,6 @@ export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: st
   const testedSkills: { key: string; score: number }[] = [
     { key: 'Listening',  score: skills.listening  ?? 999 },
     { key: 'Vocabulary', score: skills.vocabulary ?? 999 },
-    { key: 'Reading',    score: skills.reading    ?? 999 },
     { key: 'Grammar',    score: skills.grammar    ?? 999 },
     ...(isSpeakingTested && speakingScore !== null
       ? [{ key: 'Speaking', score: speakingScore }]
@@ -239,7 +238,6 @@ export function getPhotoScorecard(report: any, fullName: string, credId: string)
     `━━━━━━━━━━━━━━━━━━━━━\n` +
     `📚 Vocabulary:   ${renderBar(skills.vocabulary)} <b>${skills.vocabulary}</b>/100\n` +
     `📝 Grammar:      ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
-    `📖 Reading:      ${renderBar(skills.reading)} <b>${skills.reading}</b>/100\n` +
     `🎧 Listening:    ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
     speakingLine +
     `━━━━━━━━━━━━━━━━━━━━━\n` +

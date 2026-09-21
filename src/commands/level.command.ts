@@ -79,7 +79,6 @@ export const levelCommand = async (ctx: Context) => {
     `━━━━━━━━━━━━━━━━━━━━━\n` +
     `📚 ቃላት (Vocabulary):   ${renderBar(skills.vocabulary)} <b>${skills.vocabulary}</b>/100\n` +
     `📝 ሰዋሰው (Grammar):     ${renderBar(skills.grammar)} <b>${skills.grammar}</b>/100\n` +
-    `📖 ንባብ (Reading):      ${renderBar(skills.reading)} <b>${skills.reading}</b>/100\n` +
     `🎧 ማዳመጥ (Listening):   ${renderBar(skills.listening)} <b>${skills.listening}</b>/100\n` +
     speakingLine +
     `━━━━━━━━━━━━━━━━━━━━━\n\n` +
