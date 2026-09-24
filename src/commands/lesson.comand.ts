@@ -410,9 +410,37 @@ export const handleLessonResponse = async (ctx: Context) => {
   await generateAndSendLesson(ctx, topicToUse);
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Follow-up Q&A about the Lesson
-// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Sanitizes lesson and follow-up text:
+ * 1. Strips foreign scripts (e.g. Arabic, Persian, Asian, Cyrillic)
+ * 2. Converts markdown **bold** to <b>bold</b> and *italic* to <i>italic</i>
+ * 3. Removes stray asterisks, hashes, and formatting artifacts
+ */
+export function sanitizeAndFormatLessonText(raw: string): string {
+  if (!raw) return '';
+
+  let text = raw;
+
+  // Remove non-English / non-Ethiopic script (e.g. Arabic \u0600-\u06FF, etc.)
+  text = text.replace(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g, '');
+
+  // Convert markdown bold **text** to <b>text</b>
+  text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+  // Convert list markers * or - at start of line to bullet •
+  text = text.replace(/^[ \t]*[\*\-][ \t]+/gm, '• ');
+
+  // Convert remaining single *text* to <i>text</i>
+  text = text.replace(/\*([^\*\n]+)\*/g, '<i>$1</i>');
+
+  // Strip any stray lone asterisks
+  text = text.replace(/\*/g, '');
+
+  // Clean up excess whitespace/newlines
+  text = text.replace(/\n{3,}/g, '\n\n').trim();
+
+  return text;
+}
 
 export const handleLessonFollowup = async (ctx: Context) => {
   if (!ctx.from || !ctx.message?.text) return;
@@ -433,7 +461,8 @@ export const handleLessonFollowup = async (ctx: Context) => {
       .replace('{lesson_content}', lastLessonContent)
       .replace('{user_question}', userQuestion);
 
-    const answer = await callGeminiGenerateContent(prompt, 'complex');
+    const rawAnswer = await callGeminiGenerateContent(prompt, 'complex');
+    const answer = sanitizeAndFormatLessonText(rawAnswer);
 
     const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
     const keyboard = new InlineKeyboard();

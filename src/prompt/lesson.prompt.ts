@@ -25,10 +25,10 @@ Learner Profile:
 - Target Topic / Focus: {topic}
 - Past Learner Weaknesses & Mistakes: {conversation_context}
 
-Pedagogy & Design Rules:
+Pedagogy & Formatting Rules:
 1. FOCUS ON SPOKEN & FUNCTIONAL ENGLISH: Teach practical conversational phrasing, collocations, natural rhythms, or high-yield spoken structures — NOT dry syntactic jargon (never use abstract terms like "stative verbs", "present perfect continuous" or IPA phonetic slashes).
 2. CONCISE & BITE-SIZED: Keep the English concept to 1-2 natural, memorable sentences.
-3. CLEAR AMHARIC EXPLANATION: Provide clear, friendly Amharic (ፊደላት) explaining the practical rule and why Ethiopians commonly make this mistake.
+3. LANGUAGE RESTRICTION: Use ONLY English alphabet and Ethiopic Ge'ez script (ፊደላት). NEVER output Arabic, Persian, Hindi, Cyrillic, or any non-Ethiopian foreign characters.
 4. AUDIO TEXT ("audioText"): A clean, natural model sentence (15-25 words) that will be synthesized into a TTS Voice Note for the student to hear. No stage directions or brackets.
 5. NO SPOILERS: The "question" and "options" must be multiple choice. The answer must ONLY be in "correctIndex" and "explanationAm".
 6. SPEAKING CHALLENGE: Provide 1 full, practical sentence the user should speak out loud to build mouth muscle memory.
@@ -65,13 +65,14 @@ Lesson Context: {lesson_content}
 
 Student's Question: {user_question}
 
-Please provide a clear, helpful, encouraging answer that:
-1. Directly addresses their question in simple English with friendly Amharic translation for key points
-2. Uses simple language appropriate for their level
-3. Includes 1 relevant real-life example
-4. Keeps the response concise (under 100 words)
+STRICT LANGUAGE & FORMATTING RULES:
+1. ONLY USE ENGLISH AND AMHARIC (ፊደላት). NEVER output Arabic, Persian, Cyrillic, or any foreign scripts.
+2. DO NOT use markdown asterisks (no **, no *). Use clean line breaks, standard bullet points (•), and simple quotes ("...").
+3. Use respectful, formal, and natural Amharic.
+4. Keep the explanation crystal-clear and concise (under 90 words).
+5. Give 1 practical, real-life example showing how to use the phrase properly.
 
-If the question is not related to the lesson, politely redirect them back to the lesson topic.
+If the question is not related to English learning, politely redirect them back to the lesson.
 `;
 
 export { interactiveLessonPrompt, lessonFollowupPrompt };
