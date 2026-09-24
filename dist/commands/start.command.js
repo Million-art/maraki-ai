@@ -54,13 +54,11 @@ export async function startCommand(ctx) {
             keyboard.webApp("🎙️ ከማራኪ ጋር አውራ (Voice App)", miniAppUrl);
         }
         keyboard.row()
-            .text("🔥 ዕለታዊ ልምምድ (Challenge)", "daily_challenge")
-            .text("📚 ትምህርቶች (Lessons)", "lesson")
+            .text("🔥 ዕለታዊ ልምምድ", "daily_challenge")
+            .text("📚 ትምህርቶች", "lesson")
             .row()
-            .text("🧠 ጥያቄዎች (Quiz)", "quiz")
-            .text("🌐 ትርጉም (Translation)", "translation")
-            .row()
-            .text("🎁 ጓደኛ ጋብዝ", "referral_link");
+            .text("🧠 ጥያቄዎች", "quiz")
+            .text("🌐 ትርጉም", "translation");
         const welcomeMsg = getStartMenuMsg(ctx.from.first_name || "ተማሪ");
         await ctx.reply(welcomeMsg, { parse_mode: 'HTML', reply_markup: keyboard });
     }
