@@ -1,12 +1,8 @@
-import { Context, InlineKeyboard } from "grammy";
 import { Context, InlineKeyboard, InputFile } from "grammy";
 import { getSession, setSession } from "../utils/redis.js";
-import lessonPrompt from "../prompt/lesson.prompt.js";
 import { interactiveLessonPrompt, lessonFollowupPrompt, InteractiveLessonJSON } from "../prompt/lesson.prompt.js";
 import { apiService } from "../services/api.service.js";
 import { callGeminiGenerateContent } from "../api/gemini/callGeminiGenerateContents.js";
-import { FALLBACK_LESSON } from "../config/fallbacks.config.js";
-import { lessonFollowupPrompt } from "../prompt/lesson.prompt.js";
 import { checkCentralAuthAndAccess } from "../middleware/authGuard.middleware.js";
 import * as googleTTS from "google-tts-api";
 
@@ -127,7 +123,6 @@ export const lessonCommand = async (ctx: Context) => {
 export interface AIWeaknessAnalysis {
   identifiedWeakness: string;
   recommendedTopic: string;
-  alternativeTopics: string[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -135,10 +130,6 @@ export interface AIWeaknessAnalysis {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const startLessonRecommendation = async (ctx: Context) => {
-  if (!ctx.from) {
-    return ctx.reply("⚠️ Could not get your Telegram ID.");
-  }
-
   if (!ctx.from) return;
   const userId = ctx.from.id;
 
@@ -146,15 +137,11 @@ export const startLessonRecommendation = async (ctx: Context) => {
     try { await ctx.api.sendChatAction(ctx.chat.id, 'typing'); } catch (e) {}
   }
 
-  // Get user level from API
-  let userLevel = 'intermediate';
   // Get user profile / diagnostic assessment from API
   let userLevel = 'B1';
   let primaryWeakness = 'Spoken Fluency & Grammar';
 
   try {
-    const user = await apiService.getUserByTelegramId(userId);
-    if (user?.level) userLevel = user.level;
     const report = await apiService.getStudentMarakiLevel(userId);
     if (report?.cefrLevel && report.cefrLevel !== 'UNTESTED') {
       userLevel = report.cefrLevel;
@@ -163,15 +150,9 @@ export const startLessonRecommendation = async (ctx: Context) => {
       primaryWeakness = report.primaryWeakness;
     }
   } catch (apiError) {
-    console.warn('API not available, using default level:', (apiError as Error).message);
     console.warn('API not available, using default profile:', (apiError as Error).message);
   }
 
-  let conversationContext = '';
-  let analysis: AIWeaknessAnalysis = {
-    identifiedWeakness: 'Building strong fundamental sentence structures and active vocabulary.',
-    recommendedTopic: 'Essential Verb Tenses & Usage',
-    alternativeTopics: ['Prepositions & Sentence Structure', 'Common Conversational Idioms'],
   const defaultTopicsByLevel: Record<string, { weakness: string; topic: string }> = {
     A1: { weakness: "መሰረታዊ የእለት ተእለት የውይይት አነጋገሮች", topic: "Ordering at a Cafe & Coffee" },
     A2: { weakness: "የድሮ ልምዶችን ያለምንም ስህተት መግለጽ", topic: "Natural Past Habits ('used to')" },
@@ -179,88 +160,33 @@ export const startLessonRecommendation = async (ctx: Context) => {
     B2: { weakness: "ፈጣን እና የተሳለጠ የንግግር ምት (Thought-Chunking)", topic: "Thought-Chunking & Spoken Cadence" },
   };
 
-  try {
-    const conversation = await apiService.getConversation(userId);
-    if (conversation) {
-      const contextParts: string[] = [];
   const defaultRec = defaultTopicsByLevel[userLevel] || defaultTopicsByLevel['B1'];
 
-      if (conversation?.grammarMistakes && conversation.grammarMistakes.length > 0) {
-        const recentMistakes = conversation.grammarMistakes.slice(-5);
-        contextParts.push(...recentMistakes.map((m: any) => `Mistake: "${m.mistake}" -> Correction: "${m.correction}" (${m.grammarType || 'Grammar'})`));
-      }
   let analysis: AIWeaknessAnalysis = {
     identifiedWeakness: defaultRec.weakness,
     recommendedTopic: defaultRec.topic,
   };
 
-      if (conversation?.lessons && conversation.lessons.length > 0) {
-        const recentLessons = conversation.lessons.slice(-3);
-        contextParts.push(...recentLessons.map((l: any) => `Previous Lesson: ${l.topic}`));
-      }
-
-      conversationContext = contextParts.join(' | ');
-
-      if (conversationContext.trim()) {
-        const analysisPrompt = `Analyze this English learner's recent mistakes and learning history to identify their primary weakness and recommend a single targeted lesson topic.
-
-User Level: ${userLevel}
-User Learning History & Mistakes:
-${conversationContext}
-
-Return JSON strictly in this exact format:
-{
-  "identifiedWeakness": "1 short encouraging sentence describing the specific weakness identified from their mistakes",
-  "recommendedTopic": "Specific topic (2-4 words) that directly fixes this weakness"
-}`;
-
-        try {
-          const aiRaw = await callGeminiGenerateContent(analysisPrompt, 'complex');
-          const parsed = JSON.parse(aiRaw.replace(/```json\s*|\s*```/g, '').trim());
-          if (parsed.identifiedWeakness && parsed.recommendedTopic) {
-            analysis.identifiedWeakness = parsed.identifiedWeakness;
-            analysis.recommendedTopic = parsed.recommendedTopic;
-          }
-        } catch (aiError) {
-          console.warn('AI weakness analysis parsing failed, using fallback:', (aiError as Error).message);
-        }
-      }
-    }
-  } catch (dbError) {
-    console.warn('Database not available for context, using default recommendations:', (dbError as Error).message);
-  }
-
-  // Save recommendation in user session so callback or text reply can use it
   // Save recommendation in user session
   await setSession(userId, {
     mode: 'lesson_awaiting_topic',
     timestamp: Date.now(),
     userLevel,
-    conversationContext,
     recommendedTopic: analysis.recommendedTopic,
   });
 
   const keyboard = new InlineKeyboard()
-    .text(`🎯 Start: ${analysis.recommendedTopic}`, `lesson_start_rec`)
     .text(`🎯 ጀምር፦ ${analysis.recommendedTopic}`, `lesson_start_rec`)
     .row()
-    .text(`✏️ Choose My Own Topic`, `lesson_custom_input`);
     .text(`✏️ የራሴን ርዕስ መርጬ ልማር`, `lesson_custom_input`);
 
   const messageText =
-    `🧠 <b>MARAKI AI WEAKNESS ANALYSIS</b> 🎯\n\n` +
-    `📊 <b>Identified Focus Area:</b>\n` +
-    `<i>"${analysis.identifiedWeakness}"</i>\n\n` +
-    `🎯 <b>Recommended Lesson:</b> <b>${analysis.recommendedTopic}</b>\n` +
-    `📈 <b>Your Level:</b> <code>${userLevel.toUpperCase()}</code>\n\n` +
-    `Select how you'd like to start today:`;
     `🎯 <b>የዛሬው የ5 ደቂቃ ማይክሮ-ትምህርት</b>\n\n` +
     `📈 <b>የእርስዎ ደረጃ፦</b> <code>${userLevel.toUpperCase()}</code>\n` +
     `🎯 <b>የትኩረት መስክ፦</b> <i>${analysis.identifiedWeakness}</i>\n` +
     `📚 <b>የተመረጠ ርዕስ፦</b> <b>${analysis.recommendedTopic}</b>\n\n` +
     `ለመጀመር ከታች ያለውን ይጫኑ 👇`;
 
-  await ctx.reply(messageText, { parse_mode: 'HTML', reply_markup: keyboard });
   if (ctx.callbackQuery) {
     try {
       await ctx.editMessageText(messageText, { parse_mode: 'HTML', reply_markup: keyboard });
@@ -281,8 +207,6 @@ export const generateAndSendLesson = async (ctx: Context, topic: string) => {
 
   const userId = ctx.from.id;
   const session = await getSession(userId) || {};
-  const userLevel = session.userLevel || 'intermediate';
-  const conversationContext = session.conversationContext || '';
   const userLevel = session.userLevel || 'B1';
 
   if (ctx.chat?.id) {
@@ -292,24 +216,15 @@ export const generateAndSendLesson = async (ctx: Context, topic: string) => {
   let lessonData: InteractiveLessonJSON | null = null;
 
   try {
-    const lessonRequest = `${lessonPrompt}
     const prompt = interactiveLessonPrompt
       .replace('{user_level}', userLevel)
       .replace('{topic}', topic)
       .replace('{conversation_context}', session.conversationContext || 'Focus on Ethiopian conversational context');
 
-User Level: ${userLevel}
-Selected Topic: ${topic}
-User's Past Mistakes & Weak Areas: ${conversationContext || 'No recorded mistakes yet.'}
     const rawResponse = await callGeminiGenerateContent(prompt, 'complex');
     const cleanJson = rawResponse.replace(/```json\s*|\s*```/g, '').trim();
     const parsed = JSON.parse(cleanJson);
 
-IMPORTANT INSTRUCTIONS:
-1. DO NOT include any greetings or intro chitchat. Start directly with 🎯 Goal.
-2. Provide a clear, thorough explanation section (2-3 sentences + Amharic translation).
-3. Include 2 comparison examples labeled with bold **Incorrect:** and **Correct:** (do NOT use ❌ or ✅ icons).
-4. Keep line spacing clean with bullet points (NO TABLES).`;
     if (parsed.title && parsed.question && Array.isArray(parsed.options) && parsed.options.length >= 3) {
       lessonData = parsed;
     }
@@ -317,7 +232,6 @@ IMPORTANT INSTRUCTIONS:
     console.warn('[Lesson] Dynamic generation failed or returned invalid format, using curated fallback:', error);
   }
 
-    const lessonContent = await callGeminiGenerateContent(lessonRequest, 'complex');
   if (!lessonData) {
     lessonData = FALLBACK_MICRO_LESSONS[userLevel] || FALLBACK_MICRO_LESSONS['B1'];
     if (topic && topic !== lessonData.title) {
@@ -325,22 +239,6 @@ IMPORTANT INSTRUCTIONS:
     }
   }
 
-    let formattedLesson = lessonContent
-      .replace(/```[a-z]*/gi, '')
-      .replace(/\|:?---*:?\|?/g, '')
-      .replace(/\|/g, '\n• ')
-      .replace(/\*/g, '')
-      .replace(/Daily Example:/gi, 'Example:')
-      .replace(/(?<!<b>)(Goal:)/gi, '<b>Goal:</b>')
-      .replace(/(?<!<b>)(Explanation & Rule:)/gi, '<b>Explanation & Rule:</b>')
-      .replace(/(?<!<b>)(Common Mistakes vs Correct Usage:)/gi, '<b>Common Mistakes vs Correct Usage:</b>')
-      .replace(/(?<!<b>)(Incorrect:)/gi, '<b>Incorrect:</b>')
-      .replace(/(?<!<b>)(Correct:)/gi, '<b>Correct:</b>')
-      .replace(/(?<!<b>)(Example:)/gi, '<b>Example:</b>')
-      .replace(/(?<!<b>)(Practice:)/gi, '<b>Practice:</b>')
-      .replace(/(?<!<b>)(Answer Key:)/gi, '<b>Answer Key:</b>')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
   // 1. Synthesize Audio Voice Note (TTS) for the model sentence
   if (lessonData.audioText) {
     try {
@@ -351,10 +249,6 @@ IMPORTANT INSTRUCTIONS:
         timeout: 12000,
       });
 
-    const keyboard = new InlineKeyboard()
-      .text("❓ Ask Question", "lesson_followup_ask")
-      .text("📚 New Lesson", "lesson_back_to_parts")
-      .text("❌ Exit", "close");
       if (base64List && base64List.length > 0) {
         const buffers = base64List.map((item) => Buffer.from(item.base64, 'base64'));
         const fullAudioBuffer = Buffer.concat(buffers);
@@ -368,7 +262,6 @@ IMPORTANT INSTRUCTIONS:
     }
   }
 
-    await ctx.reply(`📖 <b>LESSON: ${topic.toUpperCase()}</b>\n\n${formattedLesson}`, { reply_markup: keyboard, parse_mode: 'HTML' });
   // 2. Build Beat 1 (Concept Card) + Beat 2 (Interactive Quiz) Message
   const trapBlock = lessonData.commonTrap
     ? `\n⚠️ <b>የተለመደ ስህተት (Common Mistake Trap)፦</b>\n` +
@@ -377,12 +270,6 @@ IMPORTANT INSTRUCTIONS:
       `<i>💡 ${lessonData.commonTrap.whyAm}</i>\n`
     : '';
 
-    // Save lesson content to session for follow-up questions
-    await setSession(userId, { 
-      mode: 'lesson_followup', 
-      timestamp: Date.now(), 
-      lastLessonContent: formattedLesson, 
-      lastLessonTopic: topic 
   let messageText =
     `📖 <b>ትምህርት፦ ${lessonData.title.toUpperCase()}</b>\n\n` +
     `💡 <b>ዋናው ሀሳብ (Core Concept)፦</b>\n` +
@@ -481,7 +368,6 @@ export const handleLessonAnswer = async (ctx: Context, selectedOptionIndex: numb
     console.warn('Could not save lesson progress to backend:', (apiError as Error).message);
   }
 
-    // Save lesson to database via API
   // Update session to followup mode
   await setSession(userId, {
     mode: 'lesson_followup',
@@ -492,30 +378,10 @@ export const handleLessonAnswer = async (ctx: Context, selectedOptionIndex: numb
 
   if (ctx.callbackQuery) {
     try {
-      await apiService.addLesson(userId, {
-        topic,
-        details: formattedLesson,
-        content: formattedLesson,
-        createdAt: new Date(),
-      });
-    } catch (apiError) {
-      console.warn('API not available, skipping context update:', (apiError as Error).message);
       await ctx.editMessageText(feedbackText, { parse_mode: 'HTML', reply_markup: keyboard });
     } catch {
       await ctx.reply(feedbackText, { parse_mode: 'HTML', reply_markup: keyboard });
     }
-
-  } catch (error) {
-    console.error('Generate lesson error:', error);
-    const keyboard = new InlineKeyboard()
-      .text("❓ Ask Question", "lesson_followup_ask")
-      .text("📚 New Lesson", "lesson_back_to_parts")
-      .text("❌ Exit", "close");
-
-    await ctx.reply(
-      `📖 <b>LESSON: ${FALLBACK_LESSON.topic.toUpperCase()}</b>\n\n${FALLBACK_LESSON.content}`,
-      { parse_mode: 'HTML', reply_markup: keyboard }
-    );
   } else {
     await ctx.reply(feedbackText, { parse_mode: 'HTML', reply_markup: keyboard });
   }
@@ -532,7 +398,6 @@ export const handleLessonResponse = async (ctx: Context) => {
   const userResponse = ctx.message.text.trim();
   const session = await getSession(userId) || {};
 
-  let topicToUse = session.recommendedTopic || 'General English Grammar';
   let topicToUse = session.recommendedTopic || 'General English';
 
   if (
@@ -541,11 +406,8 @@ export const handleLessonResponse = async (ctx: Context) => {
     userResponse.toLowerCase().includes('ok') ||
     userResponse.toLowerCase().includes('start')
   ) {
-    // Student agreed to recommended topic
-    topicToUse = session.recommendedTopic || 'General English Grammar';
     topicToUse = session.recommendedTopic || 'General English';
   } else {
-    // Student typed their own custom topic
     topicToUse = userResponse;
   }
 
@@ -567,7 +429,6 @@ export const handleLessonFollowup = async (ctx: Context) => {
     const lastLessonContent = session?.lastLessonContent || '';
 
     if (!lastLessonContent) {
-      await ctx.reply("❌ Sorry, I don't have the lesson context to answer your question. Please start a new lesson.");
       await ctx.reply("❌ የትምህርቱ መረጃ አልተገኘም። እባክዎ አዲስ ትምህርት ለመጀመር /lesson ይጫኑ።");
       return;
     }
@@ -578,10 +439,6 @@ export const handleLessonFollowup = async (ctx: Context) => {
 
     const answer = await callGeminiGenerateContent(prompt, 'complex');
 
-    const keyboard = new InlineKeyboard()
-      .text("❓ Ask Question", "lesson_followup_ask")
-      .text("📚 New Lesson", "lesson_back_to_parts")
-      .text("❌ Exit", "close");
     const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
     const keyboard = new InlineKeyboard();
 
@@ -599,16 +456,12 @@ export const handleLessonFollowup = async (ctx: Context) => {
 
     try {
       await ctx.reply(answer, { reply_markup: keyboard, parse_mode: 'HTML' });
-    } catch (e) {
     } catch {
       await ctx.reply(answer.replace(/<[^>]*>/g, ''), { reply_markup: keyboard });
     }
 
   } catch (error) {
     console.error('Lesson follow-up error:', error);
-    const { notifyAdminOnError } = await import('../utils/admin-notify.util.js');
-    await notifyAdminOnError(ctx, error, 'Lesson Follow-up');
-    await ctx.reply("❌ An error occurred while answering your question. Please try again later.");
     await ctx.reply("❌ ይቅርታ፣ ጥያቄዎን መመለስ አልተቻለም። እባክዎ እንደገና ይሞክሩ።");
   }
 };
