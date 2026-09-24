@@ -11,15 +11,13 @@ export async function callGeminiGenerateContent(
     throw new Error("GEMINI_API_KEY is not set in environment");
   }
 
-  const primaryModel = GEMINI_CONFIG.models[taskType] || 'gemini-2.5-flash-lite';
-  const fallbackModel = GEMINI_CONFIG.models.fallback || 'gemini-2.5-flash';
+  const primaryModel = GEMINI_CONFIG.models[taskType] || 'gemini-3.5-flash-lite';
+  const fallbackModel = GEMINI_CONFIG.models.fallback || 'gemini-3.6-flash';
   const modelsToTry = Array.from(new Set([
     primaryModel,
-    'gemini-2.5-flash-lite',
-    'gemini-2.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.6-flash',
     fallbackModel,
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
   ]));
 
   for (const apiKey of apiKeys) {

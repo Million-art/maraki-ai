@@ -27,9 +27,8 @@ export class VoiceValidationService {
       process.env.GEMINI_API_KEY,
       process.env.GEMINI_API_KEY_2,
       process.env.GEMINI_API_KEY_3,
+      process.env.GEMINI_API_KEY_4,
       process.env.GOOGLE_API_KEY,
-      // Fallback key from dashboard-backend
-      'AQ.Ab8RN6IQGH8-7glXAbVZjOXXJKZZgR5lmYS0p3bCtSsqh84Kmg',
     ]
       .filter((k): k is string => Boolean(k && typeof k === 'string' && k.trim().length > 10))
       .map(k => k.trim().replace(/^["']|["']$/g, ''));
@@ -38,9 +37,8 @@ export class VoiceValidationService {
   }
 
   private static readonly CANDIDATE_MODELS = [
-    'gemini-2.5-flash-lite',
-    'gemini-2.5-flash',
-    'gemini-2.0-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.6-flash',
   ];
 
   /**
