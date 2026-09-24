@@ -1,61 +1,19 @@
-export const getUnassessedStartMsg = (name: string) => {
+export const getStartMenuMsg = (name: string) => {
   return (
     `👋 <b>ሰላም ${name}! እንኳን ወደ Maraki AI በደህና መጡ 🇪🇹</b>\n\n` +
-    `የእርስዎን የእንግሊዝኛ ችሎታ የሚመጥን <b>ዕለታዊ ቻሌንጅ (Daily Challenge)</b> ለማግኘት፣ በመጀመሪያ አጭር የንግግር ችሎታ መለያ ይውሰዱ።\n\n` +
-    `⏱️ <b>የሚፈጀው ጊዜ፦</b> 1 ደቂቃ ብቻ (በድምፅ)\n` +
-    `🎯 <b>ምን ያገኛሉ?</b>\n` +
-    `• የእንግሊዝኛ ንግግር ችሎታዎን (A1 – C1)\n` +
-    `• ያለብዎትን ክፍተት (Speaking, Pronunciation, Grammar)\n` +
-    `• ለእርስዎ የተዘጋጀ ዕለታዊ የ5 ደቂቃ ልምምድ!\n\n` +
-    `ከታች ያለውን ተጭነው ይጀምሩ! 👇`
+    `የእንግሊዝኛ ቋንቋ ችሎታዎን በAI የቀጥታ ድምፅ፣ ዕለታዊ ልምምዶች እና አዝናኝ ጥያቄዎች ያሳድጉ!\n\n` +
+    `✨ <b>ዋና ዋና አገልግሎቶች፦</b>\n` +
+    `• 🎙️ <b>ከማራኪ ጋር አውራ፦</b> በቀጥታ በድምፅ ከAI ጋር በእንግሊዝኛ ማውራት\n` +
+    `• 🔥 <b>ዕለታዊ ልምምድ፦</b> የ5 ደቂቃ ፈጣን የቋንቋ ማሻሻያ\n` +
+    `• 📚 <b>ትምህርቶች (Lessons)፦</b> ደረጃ በደረጃ የሚሰጡ የቋንቋ ትምህርቶች\n` +
+    `• 🧠 <b>ጥያቄዎች (Quiz)፦</b> አዝናኝ የእንግሊዝኛ ፈተናዎችን መሞከር\n` +
+    `• 🌐 <b>ትርጉም፦</b> እንግሊዝኛ ↔ አማርኛ ፈጣን ትርጉም\n\n` +
+    `ለመጀመር ከታች ካሉት አማራጮች አንዱን ይጫኑ 👇`
   );
 };
 
-import { sanitizeAmharicDiagnosis } from '../utils/report-formatter.util.js';
-
-export const getAssessedStartMsg = (
-  name: string,
-  report: any,
-  streak: number,
-  challengeTitle?: string
-) => {
-  const levelName = report?.cefrLevel || 'B1';
-  const score = report?.overallScore || 50;
-  const skills = report?.skills;
-
-  // Always pick the skill with the actual lowest score for the gap label
-  // so it matches what the user sees in the progress bar
-  let weaknessTag: string;
-  if (skills) {
-    const skillMap: Record<string, number> = {
-      'speaking': typeof skills.speaking === 'number' ? skills.speaking : 999,
-      'listening': skills.listening ?? 999,
-      'grammar': skills.grammar ?? 999,
-      'vocabulary': skills.vocabulary ?? 999,
-      'reading': skills.reading ?? 999,
-    };
-    const lowestKey = Object.entries(skillMap).reduce((a, b) => a[1] <= b[1] ? a : b)[0];
-    weaknessTag = sanitizeAmharicDiagnosis(lowestKey);
-  } else {
-    const rawWeakness = report?.diagnosis?.headlineAmharic || report?.primaryWeakness || 'Speaking';
-    weaknessTag = sanitizeAmharicDiagnosis(rawWeakness);
-  }
-
-  const cleanTitle = challengeTitle || 'ዕለታዊ የ5 ደቂቃ ልምምድ';
-
-  return (
-    `👋 <b>ሰላም ${name}! እንኳን ደህና መጡ 🇪🇹</b>\n\n` +
-    `🏆 <b>የእንግሊዝኛ ችሎታዎ፦</b> Level ${levelName} (${score}/100)\n` +
-    `🎯 <b>ዋናው ክፍተትዎ፦</b> <b>${weaknessTag}</b>\n\n` +
-    `━━━━━━━━━━━━━━━━━━━━━\n` +
-    `🔥 <b>የዛሬው ቻሌንጅ (Daily Challenge)፦</b>\n` +
-    `📌 ${cleanTitle}\n` +
-    `⏱️ <i>በቀን 5 ደቂቃ ብቻ</i>\n` +
-    `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `ልምምዱን ለመጀመር ከታች ያለውን አዝራር ይጫኑ! 👇`
-  );
-};
-
-// Backwards compatibility alias
-export const getPersonalizedStartMsg = getUnassessedStartMsg;
+// Aliases for backwards compatibility
+export const getUnassessedStartMsg = getStartMenuMsg;
+export const getAssessedStartMsg = (name: string) => getStartMenuMsg(name);
+export const getPersonalizedStartMsg = getStartMenuMsg;
 
