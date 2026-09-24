@@ -550,7 +550,6 @@ bot.on('callback_query:data', async (ctx) => {
       }
       case 'lesson_start_rec': {
         const session = await getSession(ctx.from.id);
-        const topic = session?.recommendedTopic || 'General English Grammar';
         const topic = session?.recommendedTopic || 'General English';
         await generateAndSendLesson(ctx, topic);
         break;
@@ -558,7 +557,6 @@ bot.on('callback_query:data', async (ctx) => {
       case 'lesson_custom_input': {
         const existingSession = await getSession(ctx.from.id) || {};
         await setSession(ctx.from.id, { ...existingSession, mode: 'lesson_awaiting_topic', timestamp: Date.now(), userId: ctx.from.id });
-        await ctx.reply('✏️ *Type Your Preferred Lesson Topic*\n\nPlease type any topic you would like to learn about today (e.g., *"Past Continuous Tense"*, *"Business Emails"*, *"Phrasal Verbs"*):', { parse_mode: 'Markdown' });
         await ctx.reply('✏️ *Type Your Preferred Lesson Topic*\n\nPlease type any topic you would like to learn about today (e.g., *"Past Habits"*, *"Job Interview Intro"*, *"Phrasal Verbs"*):', { parse_mode: 'Markdown' });
         break;
       }
