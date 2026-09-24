@@ -70,8 +70,6 @@ export async function startCommand(ctx: Context) {
       .row()
       .text("🧠 ጥያቄዎች", "quiz")
       .text("🌐 ትርጉም", "translation")
-      .row()
-      .text("🎁 ጓደኛ ጋብዝ", "referral_link");
 
     const welcomeMsg = getStartMenuMsg(ctx.from.first_name || "ተማሪ");
     await ctx.reply(welcomeMsg, { parse_mode: 'HTML', reply_markup: keyboard });
