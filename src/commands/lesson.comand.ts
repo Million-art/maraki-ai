@@ -176,9 +176,9 @@ export const startLessonRecommendation = async (ctx: Context) => {
   });
 
   const keyboard = new InlineKeyboard()
-    .text(`🎯 ጀምር፦ ${analysis.recommendedTopic}`, `lesson_start_rec`)
+    .text(`${analysis.recommendedTopic}`, `lesson_start_rec`)
     .row()
-    .text(`✏️ የራሴን ርዕስ መርጬ ልማር`, `lesson_custom_input`);
+    .text(`የራሴን ርዕስ መርጬ ልማር`, `lesson_custom_input`);
 
   const messageText =
     `🎯 <b>የዛሬው የ5 ደቂቃ ማይክሮ-ትምህርት</b>\n\n` +
