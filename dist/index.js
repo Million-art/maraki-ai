@@ -28,7 +28,20 @@ const initialize = async () => {
             await connectRedis();
             await bot.init();
             console.log('Bot initialized');
-            // Determine polling vs webhook mode
+            // Set Telegram persistent Menu Commands
+            try {
+                await bot.api.setMyCommands([
+                    { command: 'start', description: 'ዋና ማውጫ (Main Menu)' },
+                    { command: 'challenge', description: '🔥 ዕለታዊ ልምምድ (Daily Challenge)' },
+                    { command: 'lesson', description: '📚 ትምህርቶች (Lessons)' },
+                    { command: 'quiz', description: '🧠 አዝናኝ ጥያቄዎች (Quiz)' },
+                    { command: 'translation', description: '🌐 እንግሊዝኛ ↔ አማርኛ ትርጉም' },
+                    { command: 'help', description: '💡 መመሪያ (Help & Info)' },
+                ]);
+            }
+            catch (cmdErr) {
+                console.warn('Could not set bot commands menu:', cmdErr);
+            }
             const isProduction = process.env.NODE_ENV === 'production';
             const isDevBot = !isProduction && !!process.env.DEV_BOT_TOKEN;
             const usePolling = isProduction
