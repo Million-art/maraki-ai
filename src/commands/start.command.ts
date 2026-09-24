@@ -65,11 +65,11 @@ export async function startCommand(ctx: Context) {
     }
 
     keyboard.row()
-      .text("🔥 ዕለታዊ ልምምድ (Challenge)", "daily_challenge")
-      .text("📚 ትምህርቶች (Lessons)", "lesson")
+      .text("🔥 ዕለታዊ ልምምድ", "daily_challenge")
+      .text("📚 ትምህርቶች", "lesson")
       .row()
-      .text("🧠 ጥያቄዎች (Quiz)", "quiz")
-      .text("🌐 ትርጉም (Translation)", "translation")
+      .text("🧠 ጥያቄዎች", "quiz")
+      .text("🌐 ትርጉም", "translation")
       .row()
       .text("🎁 ጓደኛ ጋብዝ", "referral_link");
 

@@ -41,10 +41,10 @@ const initialize = async () => {
             // Set Telegram persistent Menu Commands
             try {
                 await bot.api.setMyCommands([
-                    { command: 'start', description: 'ዋና ማውጫ (Main Menu)' },
-                    { command: 'challenge', description: '🔥 ዕለታዊ ልምምድ (Daily Challenge)' },
-                    { command: 'lesson', description: '📚 ትምህርቶች (Lessons)' },
-                    { command: 'quiz', description: '🧠 አዝናኝ ጥያቄዎች (Quiz)' },
+                    { command: 'start', description: 'ዋና ማውጫ' },
+                    { command: 'challenge', description: '🔥 ዕለታዊ ልምምድ' },
+                    { command: 'lesson', description: '📚 ትምህርቶች' },
+                    { command: 'quiz', description: '🧠 አዝናኝ ጥያቄዎች' },
                     { command: 'translation', description: '🌐 እንግሊዝኛ ↔ አማርኛ ትርጉም' },
                     { command: 'help', description: '💡 መመሪያ (Help & Info)' },
                 ]);
