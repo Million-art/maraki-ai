@@ -506,19 +506,25 @@ bot.on('callback_query:data', async (ctx) => {
                 break;
             case 'lesson':
             case 'lesson_back_to_parts':
+            case 'lesson_next':
                 await setSession(ctx.from.id, { mode: 'lesson', timestamp: Date.now(), userId: ctx.from.id });
                 await lessonCommand(ctx);
                 break;
+            case 'back_to_main': {
+                const { startCommand } = await import('../commands/start.command.js');
+                await startCommand(ctx);
+                break;
+            }
             case 'lesson_start_rec': {
                 const session = await getSession(ctx.from.id);
-                const topic = session?.recommendedTopic || 'General English Grammar';
+                const topic = session?.recommendedTopic || 'General English';
                 await generateAndSendLesson(ctx, topic);
                 break;
             }
             case 'lesson_custom_input': {
                 const existingSession = await getSession(ctx.from.id) || {};
                 await setSession(ctx.from.id, { ...existingSession, mode: 'lesson_awaiting_topic', timestamp: Date.now(), userId: ctx.from.id });
-                await ctx.reply('✏️ *Type Your Preferred Lesson Topic*\n\nPlease type any topic you would like to learn about today (e.g., *"Past Continuous Tense"*, *"Business Emails"*, *"Phrasal Verbs"*):', { parse_mode: 'Markdown' });
+                await ctx.reply('✏️ *Type Your Preferred Lesson Topic*\n\nPlease type any topic you would like to learn about today (e.g., *"Past Habits"*, *"Job Interview Intro"*, *"Phrasal Verbs"*):', { parse_mode: 'Markdown' });
                 break;
             }
             case 'lesson_followup_ask': {
@@ -595,6 +601,14 @@ bot.on('callback_query:data', async (ctx) => {
                     const opt = parseInt(parts[2], 10);
                     if (!isNaN(day) && !isNaN(opt)) {
                         await handlePlanLessonAnswer(ctx, weakness, day, opt);
+                        return;
+                    }
+                }
+                if (data.startsWith('lesson_ans_')) {
+                    const optIdx = parseInt(data.replace('lesson_ans_', ''), 10);
+                    if (!isNaN(optIdx)) {
+                        const { handleLessonAnswer } = await import('../commands/lesson.comand.js');
+                        await handleLessonAnswer(ctx, optIdx);
                         return;
                     }
                 }
