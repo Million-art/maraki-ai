@@ -1,9 +1,9 @@
 export const GEMINI_CONFIG = {
     models: {
-        basic: 'gemini-2.5-flash-lite',
-        complex: 'gemini-2.5-flash-lite',
-        fallback: 'gemini-2.5-flash',
-        live: 'gemini-2.5-flash-lite',
+        basic: 'gemini-3.5-flash-lite',
+        complex: 'gemini-3.5-flash-lite',
+        fallback: 'gemini-3.6-flash',
+        live: 'gemini-3.5-flash-lite',
     },
     getApiKeys: () => {
         const rawKeys = [
