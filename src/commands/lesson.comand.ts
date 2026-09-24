@@ -176,9 +176,9 @@ export const startLessonRecommendation = async (ctx: Context) => {
   });
 
   const keyboard = new InlineKeyboard()
-    .text(`🎯 ጀምር፦ ${analysis.recommendedTopic}`, `lesson_start_rec`)
+    .text(`${analysis.recommendedTopic}`, `lesson_start_rec`)
     .row()
-    .text(`✏️ የራሴን ርዕስ መርጬ ልማር`, `lesson_custom_input`);
+    .text(`የራሴን ርዕስ መርጬ ልማር`, `lesson_custom_input`);
 
   const messageText =
     `🎯 <b>የዛሬው የ5 ደቂቃ ማይክሮ-ትምህርት</b>\n\n` +
@@ -252,10 +252,7 @@ export const generateAndSendLesson = async (ctx: Context, topic: string) => {
       if (base64List && base64List.length > 0) {
         const buffers = base64List.map((item) => Buffer.from(item.base64, 'base64'));
         const fullAudioBuffer = Buffer.concat(buffers);
-        await ctx.replyWithVoice(new InputFile(fullAudioBuffer, 'model_speech.mp3'), {
-          caption: `🎙️ <b>የድምፅ ምሳሌ (Model Audio)</b>\n<i>ይህን አረፍተ ነገር አነባበብ እና ቅላጼ በጥሞና ያዳምጡ 👆</i>`,
-          parse_mode: 'HTML',
-        });
+        await ctx.replyWithVoice(new InputFile(fullAudioBuffer, 'model_speech.mp3'));
       }
     } catch (e) {
       console.error('[Lesson] Failed to generate TTS audio:', e);
@@ -264,15 +261,14 @@ export const generateAndSendLesson = async (ctx: Context, topic: string) => {
 
   // 2. Build Beat 1 (Concept Card) + Beat 2 (Interactive Quiz) Message
   const trapBlock = lessonData.commonTrap
-    ? `\n⚠️ <b>የተለመደ ስህተት (Common Mistake Trap)፦</b>\n` +
-      `• አትበሉ፦ <s>${lessonData.commonTrap.incorrect}</s> ❌\n` +
-      `• በሉ፦ <b>${lessonData.commonTrap.correct}</b> ✅\n` +
-      `<i>💡 ${lessonData.commonTrap.whyAm}</i>\n`
+    ? `\n⚠️ <b>የተለመደ ስህተት፦</b>\n` +
+      `• ስህተት፦ <s>${lessonData.commonTrap.incorrect}</s>\n` +
+      `• ትክክል፦ <b>${lessonData.commonTrap.correct}</b>\n` +
+      `💡 <i>${lessonData.commonTrap.whyAm}</i>\n`
     : '';
 
   let messageText =
-    `📖 <b>ትምህርት፦ ${lessonData.title.toUpperCase()}</b>\n\n` +
-    `💡 <b>ዋናው ሀሳብ (Core Concept)፦</b>\n` +
+    `🎯 <b>${lessonData.title.toUpperCase()}</b>\n\n` +
     `• ${lessonData.conceptEn}\n` +
     `• <i>${lessonData.conceptAm}</i>\n` +
     trapBlock +
