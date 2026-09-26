@@ -7,7 +7,6 @@ export interface IUser {
   lastName?: string;
   username?: string;
   cefrLevel?: string;
-  level?: string;
   isBot?: boolean;
   isPremium?: boolean;
   isMarakiPremium?: boolean;
@@ -44,7 +43,6 @@ export class ApiService {
         telegramId,
         firstName: 'Learner',
         cefrLevel: 'UNTESTED',
-        level: 'UNTESTED',
         isPremium: false,
         isMarakiPremium: false,
       };
@@ -185,7 +183,6 @@ export class ApiService {
       const user = await this.getUserByTelegramId(telegramId);
       return {
         cefrLevel: user?.cefrLevel || 'UNTESTED',
-        level: user?.cefrLevel || 'UNTESTED',
         isPremium: user?.isMarakiPremium || false,
         subscriptionTier: user?.subscriptionTier || 'FREE',
       };
@@ -601,7 +598,7 @@ export class ApiService {
     currentDay: number;
     completedDaysCount: number;
     streak: number;
-    level: string;
+    cefrLevel: string;
   }>> {
     try {
       const { data } = await axios.get(`${this.backendUrl}/api/student/plan/active-learners`, { timeout: 10000 });

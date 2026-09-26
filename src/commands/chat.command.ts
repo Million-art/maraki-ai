@@ -34,10 +34,10 @@ export async function handleChatConversation(ctx: Context) {
 
   try {
     // Get user level for personalized responses
-    let userLevel = 'intermediate';
+    let userLevel = 'UNTESTED';
     try {
       const user = await apiService.getUserByTelegramId(userId);
-      userLevel = user?.level || 'intermediate';
+      userLevel = user?.cefrLevel || 'UNTESTED';
     } catch (apiError) {
       console.warn('API not available, using default user level:', (apiError as Error).message);
     }

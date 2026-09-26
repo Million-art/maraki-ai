@@ -26,7 +26,6 @@ export const registerOrUpdate = async (
       first_name: user?.firstName,
       last_name: user?.lastName,
       cefrLevel: user?.cefrLevel || 'UNTESTED',
-      level: user?.cefrLevel || 'UNTESTED',
       isPremium: user?.isPremium,
       isMarakiPremium: user?.isMarakiPremium,
       isBot: user?.isBot,
@@ -77,18 +76,17 @@ export const getCurrentLevel = async (from: TelegramUser) => {
   try {
     const user = await apiService.getUserByTelegramId(from.id);
     return {
-      level: user?.cefrLevel || 'UNTESTED',
       cefrLevel: user?.cefrLevel || 'UNTESTED',
     };
   } catch (error) {
     console.error("Error getting current level:", error);
-    return { level: 'UNTESTED', cefrLevel: 'UNTESTED' };
+    return { cefrLevel: 'UNTESTED' };
   }
 };
 
 export const updateUserLevel = async (telegramId: number, newLevel: string) => {
   try {
-    const updatedUser = await apiService.createOrUpdateUser(telegramId, { level: newLevel });
+    const updatedUser = await apiService.createOrUpdateUser(telegramId, { cefrLevel: newLevel });
     return updatedUser;
   } catch (error) {
     console.error("Error updating user level:", error);
