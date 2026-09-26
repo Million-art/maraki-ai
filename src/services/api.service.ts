@@ -12,8 +12,6 @@ export interface IUser {
   isMarakiPremium?: boolean;
   subscriptionTier?: string;
   subscriptionExpiresAt?: Date;
-  dailyTokensUsed?: number;
-  monthlyTokensUsed?: number;
   referredBy?: number;
   referral?: {
     code: string;
