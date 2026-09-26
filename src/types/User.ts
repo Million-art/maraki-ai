@@ -14,5 +14,7 @@ export interface User {
   };
   subscriptionTier?: string;
   subscriptionExpiresAt?: string;
+  timezone?: string;
   isNewUser?: boolean;
 }
+

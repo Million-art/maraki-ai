@@ -12,6 +12,7 @@ export interface IUser {
   isMarakiPremium?: boolean;
   subscriptionTier?: string;
   subscriptionExpiresAt?: Date;
+  timezone?: string;
   referredBy?: number;
   referral?: {
     code: string;
@@ -59,7 +60,7 @@ export class ApiService {
     }
   }
 
-  async registerStudent(studentData: { telegramId: number; firstName?: string; lastName?: string; username?: string; cefrLevel?: string; referredBy?: number }): Promise<any> {
+  async registerStudent(studentData: { telegramId: number; firstName?: string; lastName?: string; username?: string; cefrLevel?: string; referredBy?: number; timezone?: string }): Promise<any> {
     return this.createOrUpdateUser(studentData.telegramId, studentData);
   }
 
