@@ -6,6 +6,7 @@ export interface IUser {
   firstName?: string;
   lastName?: string;
   username?: string;
+  cefrLevel?: string;
   level?: string;
   isBot?: boolean;
   isPremium?: boolean;
@@ -182,7 +183,8 @@ export class ApiService {
     try {
       const user = await this.getUserByTelegramId(telegramId);
       return {
-        level: user?.level || 'beginner',
+        cefrLevel: user?.cefrLevel || user?.level || 'B1',
+        level: user?.cefrLevel || user?.level || 'B1',
         isPremium: user?.isMarakiPremium || false,
         subscriptionTier: user?.subscriptionTier || 'FREE',
       };

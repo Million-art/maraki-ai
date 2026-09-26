@@ -1,5 +1,6 @@
 export interface User {
   id: string;
+  cefrLevel?: string;
   level?: string;
   first_name?: string;
   last_name?: string;   
