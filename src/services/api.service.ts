@@ -59,7 +59,7 @@ export class ApiService {
     }
   }
 
-  async registerStudent(studentData: { telegramId: number; firstName?: string; lastName?: string; username?: string; level?: string; referredBy?: number }): Promise<any> {
+  async registerStudent(studentData: { telegramId: number; firstName?: string; lastName?: string; username?: string; cefrLevel?: string; referredBy?: number }): Promise<any> {
     return this.createOrUpdateUser(studentData.telegramId, studentData);
   }
 
@@ -242,7 +242,7 @@ export class ApiService {
   }
 
   // Ultra-fast structured quiz fetching with Anti-Repeat logic and Bulk Pre-fetching
-  async getStructuredQuiz(telegramId: number, level: string = 'beginner'): Promise<any[] | null> {
+  async getStructuredQuiz(telegramId: number, cefrLevel: string = 'UNTESTED'): Promise<any[] | null> {
     try {
       const startTime = Date.now();
 
@@ -275,7 +275,7 @@ export class ApiService {
       let availableQuizzes: any[] = [];
       try {
         const { data } = await axios.get(
-          `${this.backendUrl}/api/student/quizzes?level=${level}`,
+          `${this.backendUrl}/api/student/quizzes?level=${cefrLevel}`,
           { timeout: 10000 }
         );
         availableQuizzes = data;
@@ -299,7 +299,7 @@ export class ApiService {
       const unseenQuizzes = availableQuizzes.filter(q => !completedQuizIds.has(q.id));
 
       if (unseenQuizzes.length === 0) {
-        console.log(`⚠️ User ${telegramId} completed ALL DB quizzes for ${level}! Switching to dynamic AI generation.`);
+        console.log(`⚠️ User ${telegramId} completed ALL DB quizzes for ${cefrLevel}! Switching to dynamic AI generation.`);
         return null; // User finished all DB quizzes! Fallback to infinite Gemini AI generation.
       }
 
@@ -383,10 +383,10 @@ export class ApiService {
    * Fetch the Daily Challenge directly from the DB.
    * If it fails or returns null, the bot falls back to Gemini.
    */
-  async getDailyChallenge(level: string): Promise<any | null> {
+  async getDailyChallenge(cefrLevel: string = 'UNTESTED'): Promise<any | null> {
     try {
       const response = await axios.get(`${this.backendUrl}/api/challenges/today`, {
-        params: { level },
+        params: { level: cefrLevel },
         timeout: 2000 // 2 seconds max
       });
       return response.data?.data || null;
