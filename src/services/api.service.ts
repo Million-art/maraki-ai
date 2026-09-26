@@ -43,7 +43,8 @@ export class ApiService {
       return {
         telegramId,
         firstName: 'Learner',
-        level: 'beginner',
+        cefrLevel: 'UNTESTED',
+        level: 'UNTESTED',
         isPremium: false,
         isMarakiPremium: false,
       };
@@ -183,8 +184,8 @@ export class ApiService {
     try {
       const user = await this.getUserByTelegramId(telegramId);
       return {
-        cefrLevel: user?.cefrLevel || user?.level || 'B1',
-        level: user?.cefrLevel || user?.level || 'B1',
+        cefrLevel: user?.cefrLevel || 'UNTESTED',
+        level: user?.cefrLevel || 'UNTESTED',
         isPremium: user?.isMarakiPremium || false,
         subscriptionTier: user?.subscriptionTier || 'FREE',
       };
