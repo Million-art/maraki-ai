@@ -451,7 +451,7 @@ export const LESSON_DATABASE = {
             title: "Spoken English Fluency",
             topic: "Vowel Lengths & Minimal Pairs (Ship vs Sheep)",
             duration: "5 mins",
-            strategy: "English has two 'i' sounds: a short 'i' (as in 'ship', 'fit', 'live' — your tongue is relaxed) and a long 'ee' (as in 'sheep', 'feet', 'leave' — stretch your lips and hold longer). Amharic has only one 'i' sound, which often causes confusion between these pairs.",
+            strategy: "English has two 'i' sounds: a short 'i' (as in 'ship', 'fit', 'live'   your tongue is relaxed) and a long 'ee' (as in 'sheep', 'feet', 'leave'   stretch your lips and hold longer). Amharic has only one 'i' sound, which often causes confusion between these pairs.",
             question: "In the sentence 'I have lived here for three years', which vowel sound belongs in 'lived'?",
             options: [
                 "A) The long 'ee' sound like in 'leave'",
@@ -459,7 +459,7 @@ export const LESSON_DATABASE = {
                 "C) The 'a' sound like in 'cat'",
             ],
             correctIndex: 1,
-            explanation: "'Lived' uses the short relaxed 'i' sound. If you use the long 'ee' sound, it sounds like 'leaved' (which means departed — a different word entirely).",
+            explanation: "'Lived' uses the short relaxed 'i' sound. If you use the long 'ee' sound, it sounds like 'leaved' (which means departed   a different word entirely).",
         },
         4: {
             title: "Spoken English Fluency",

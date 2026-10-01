@@ -62,7 +62,7 @@ export const levelCommand = async (ctx: Context) => {
     ? `🗣️ ንግግር (Speaking):  ${renderBar(speakingScoreNum)} <b>${speakingScoreNum}</b>/100\n`
     : `🗣️ ንግግር (Speaking):  ⏭️ <i>አልተፈተነም</i>\n`;
 
-  // Always recompute diagnosis from live skill scores — never trust the cached
+  // Always recompute diagnosis from live skill scores   never trust the cached
   // report.diagnosis, which was stored at assessment time and may be stale.
   // getLinguisticDiagnosisFallback now checks the actual lowest score first
   // (e.g. Listening=25 will always beat Speaking=81 via the Silent Trap heuristic).

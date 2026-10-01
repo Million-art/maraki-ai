@@ -37,7 +37,7 @@ export function getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTeste
     const speakingScore = typeof skills.speaking === 'number' ? skills.speaking : null;
     // ─── STEP 1: Actual lowest-score check (HIGHEST PRIORITY) ─────────────────
     // If ANY skill is critically weak (below 50), that skill is the real primary
-    // gap — regardless of the Silent Trap heuristic. Listening=25 beats Speaking=81.
+    // gap   regardless of the Silent Trap heuristic. Listening=25 beats Speaking=81.
     const testedSkills = [
         { key: 'Listening', score: skills.listening ?? 999 },
         { key: 'Vocabulary', score: skills.vocabulary ?? 999 },

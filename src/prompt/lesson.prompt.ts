@@ -26,7 +26,7 @@ Learner Profile:
 - Past Learner Weaknesses & Mistakes: {conversation_context}
 
 Pedagogy & Formatting Rules:
-1. FOCUS ON SPOKEN & FUNCTIONAL ENGLISH: Teach practical conversational phrasing, collocations, natural rhythms, or high-yield spoken structures — NOT dry syntactic jargon (never use abstract terms like "stative verbs", "present perfect continuous" or IPA phonetic slashes).
+1. FOCUS ON SPOKEN & FUNCTIONAL ENGLISH: Teach practical conversational phrasing, collocations, natural rhythms, or high-yield spoken structures   NOT dry syntactic jargon (never use abstract terms like "stative verbs", "present perfect continuous" or IPA phonetic slashes).
 2. CONCISE & BITE-SIZED: Keep the English concept to 1-2 natural, memorable sentences.
 3. LANGUAGE RESTRICTION: Use ONLY English alphabet and Ethiopic Ge'ez script (ፊደላት). NEVER output Arabic, Persian, Hindi, Cyrillic, or any non-Ethiopian foreign characters.
 4. AUDIO TEXT ("audioText"): A clean, natural model sentence (15-25 words) that will be synthesized into a TTS Voice Note for the student to hear. No stage directions or brackets.

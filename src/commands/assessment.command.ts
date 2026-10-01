@@ -118,7 +118,7 @@ export async function assessmentCommand(ctx: Context) {
 }
 
 /**
- * Begin assessment session — launches Step 1 (Voice) immediately!
+ * Begin assessment session   launches Step 1 (Voice) immediately!
  */
 export async function startAssessmentSession(ctx: Context) {
   if (!ctx.from) return;
@@ -153,8 +153,8 @@ export async function renderSpeakingPrompt(ctx: Context) {
   const speakingText =
     `🎙️ <b>የእንግሊዝኛ ችሎታ መለያ (Speaking Diagnostic) 🇪🇹</b>\n\n` +
     `<b>Express yourself freely!</b>\n\n` +
-    `<i>"Hi! I'm Maraki. Go ahead and express yourself freely — tell me a little about who you are, what you love doing, or what your goals are. Speak naturally, there are no wrong answers!"</i>\n\n` +
-    `💪 <b>አይጨነቁ — ፍጹም እንግሊዝኛ መናገር አይጠበቅብዎትም!</b>\n` +
+    `<i>"Hi! I'm Maraki. Go ahead and express yourself freely   tell me a little about who you are, what you love doing, or what your goals are. Speak naturally, there are no wrong answers!"</i>\n\n` +
+    `💪 <b>አይጨነቁ   ፍጹም እንግሊዝኛ መናገር አይጠበቅብዎትም!</b>\n` +
     `<i>ራስዎን በነፃነት ይግለጹ (ስለራስዎ፣ ስለሚወዱት ነገር ወይም ስለ ህልምዎ በጥቂቱ ይንገሩኝ። ስህተት ቢኖርም እንኳን በድፍረት ይናገሩ!)</i>\n\n` +
     `⏱️ <b>15–30 ሰከንድ ድምፅ በእንግሊዝኛ ይቅረጹ</b>\n\n` +
     `👇 <b>የቴሌግራም ማይክራፎን ምልክቱን ተጭነው ድምፅዎን ይላኩ!</b>`;
