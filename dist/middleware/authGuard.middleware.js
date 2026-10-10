@@ -37,7 +37,7 @@ export async function checkCentralAuthAndAccess(ctx, resource) {
                 const keyboard = new InlineKeyboard()
                     .text("💳 1 Week Access (149 ETB)", "pay_weekly")
                     .row()
-                    .text("🌟 1 Month VIP Access (499 ETB)", "pay_monthly")
+                    .text("🌟 1 Month VIP Access (550 ETB)", "pay_monthly")
                     .row()
                     .text("🔥 3 Months Pass (1,299 ETB)", "pay_quarterly");
                 const isSubActive = !voiceQuota.isExpired && voiceQuota.tier !== 'FREE';
@@ -93,7 +93,7 @@ export async function checkCentralAuthAndAccess(ctx, resource) {
                 await ctx.reply(`🚫 *Weekly Lesson Limit Reached!*\n\n` +
                     `You have used all *${lessonLimit} free lessons* for your current 7-day window.\n\n` +
                     `⏳ Your next free lesson unlocks ${resetText}.\n\n` +
-                    `🔓 *Upgrade to VIP* for unlimited lessons, quizzes, and AI practice   499 ETB/month!`, { parse_mode: 'Markdown', reply_markup: keyboard });
+                    `🔓 *Upgrade to VIP* for unlimited lessons, quizzes, and AI practice   550 ETB/month!`, { parse_mode: 'Markdown', reply_markup: keyboard });
                 return false;
             }
         }
@@ -124,7 +124,7 @@ export async function checkCentralAuthAndAccess(ctx, resource) {
                 await ctx.reply(`🚫 *Weekly Quiz Limit Reached!*\n\n` +
                     `You have used all *${quizLimit} free quizzes* for your current 7-day window.\n\n` +
                     `⏳ Your next free quiz unlocks ${resetText}.\n\n` +
-                    `🔓 *Upgrade to VIP* for unlimited quizzes, lessons, and AI practice   499 ETB/month!`, { parse_mode: 'Markdown', reply_markup: keyboard });
+                    `🔓 *Upgrade to VIP* for unlimited quizzes, lessons, and AI practice   550 ETB/month!`, { parse_mode: 'Markdown', reply_markup: keyboard });
                 return false;
             }
         }
