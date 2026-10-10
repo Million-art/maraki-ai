@@ -23,10 +23,6 @@ import { handlePaymentSelection } from '../commands/payment.command.js';
 import { generateAndSendLesson } from '../commands/lesson.comand.js';
 import { handleAdminFollowupAction } from '../utils/analytics.util.js';
 import { apiService } from '../services/api.service.js';
-import { assessmentCommand, startAssessmentSession, handleAssessmentAnswer, handleAssessmentVoiceSubmission, skipAssessmentVoice } from '../commands/assessment.command.js';
-import { sendWeeklyPlan, sendCertificate } from '../commands/level.command.js';
-import { startPlanLesson, handlePlanLessonAnswer } from '../commands/plan-lesson.command.js';
-import { getPlanProgress } from '../utils/plan-progress.util.js';
 
 
 dotenv.config();
@@ -130,36 +126,6 @@ bot.command('start', startCommand);
 bot.command('grammar', grammarCommand);
 bot.command('lesson', lessonCommand);
 bot.command('level', levelCommand);
-bot.command('plan', async (ctx) => {
-  if (!ctx.from) return;
-  const progress = await getPlanProgress(ctx.from.id);
-  await startPlanLesson(ctx, progress.currentDay || 1);
-});                                         
-bot.command('myplan', async (ctx) => {
-  if (!ctx.from) return;
-  const progress = await getPlanProgress(ctx.from.id);
-  await startPlanLesson(ctx, progress.currentDay || 1);
-});
-bot.command(['listen', 'listening'], async (ctx) => {
-  if (!ctx.from) return;
-  await startPlanLesson(ctx, 1, 'Listening');
-});
-bot.command(['speak', 'speaking'], async (ctx) => {
-  if (!ctx.from) return;
-  await startPlanLesson(ctx, 1, 'Speaking');
-});
-bot.command(['read', 'reading'], async (ctx) => {
-  if (!ctx.from) return;
-  await startPlanLesson(ctx, 1, 'Reading');
-});
-bot.command(['grammar_practice', 'grammar_lesson'], async (ctx) => {
-  if (!ctx.from) return;
-  await startPlanLesson(ctx, 1, 'Grammar');
-});
-bot.command(['vocab', 'vocabulary'], async (ctx) => {
-  if (!ctx.from) return;
-  await startPlanLesson(ctx, 1, 'Vocabulary');
-});
 bot.command('referral_link', referralCommand);
 bot.command('referral', referralCommand);
 bot.command('hack', referralCommand);
@@ -168,10 +134,6 @@ bot.command('translation', translationCommand);
 bot.command('help', helpCommand);
 bot.command('usage', usageCommand);
 bot.command('quiz', quizCommand);
-bot.command('assessment', assessmentCommand);
-bot.command('test', assessmentCommand);
-bot.command('certificate', sendCertificate);
-bot.command('report', sendCertificate);
 bot.command('challenge', challengeCommand);
 bot.command('daily_challenge', challengeCommand);
 bot.command('pay', handlePaymentCommand);
@@ -179,11 +141,6 @@ bot.command('subscribe', handlePaymentCommand);
 
 bot.command('admin_status', adminStatusCommand);
 bot.command(['intel', 'digest', 'admin_intel'], adminIntelligenceCommand);
-
-// Handle Spoken Voice Notes & Audio Clips (Diagnostic Speaking Assessment)
-bot.on(['message:voice', 'message:audio'], async (ctx) => {
-  await handleAssessmentVoiceSubmission(ctx);
-});
 
 // Stop daily challenge notifications
 bot.command('stop_daily', async (ctx) => {
@@ -580,36 +537,16 @@ bot.on('callback_query:data', async (ctx) => {
       case 'level':
         await levelCommand(ctx);
         break;
-      case 'assessment':
-      case 'start_assessment':
-        await startAssessmentSession(ctx);
-        break;
-      case 'assess_skip_voice':
-        await skipAssessmentVoice(ctx);
-        break;
-      case 'view_weekly_plan':
-        await sendWeeklyPlan(ctx);
-        break;
-      case 'view_certificate':
-      case 'view_report':
-      case 'certificate':
-      case 'report':
-        await sendCertificate(ctx);
-        break;
-      case 'close_assessment':
-        await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
-        try {
-          await ctx.reply('❌ Assessment closed.', { reply_markup: { remove_keyboard: true } });
-        } catch (e) {}
-        return ctx.deleteMessage();
+      
+      
+      
+      
+      
       case 'referral':
       case 'referral_link':
         await referralCommand(ctx);
         break;
-      case 'start_plan_lesson_1':
-      case 'start_plan_lesson':
-        await startPlanLesson(ctx, 1);
-        break;
+      
       case 'daily_challenge':
       case 'challenge':
         await challengeCommand(ctx);
@@ -621,21 +558,8 @@ bot.on('callback_query:data', async (ctx) => {
         await handleAdminCallback(ctx, data);
         return;
       default:
-        if (data.startsWith('start_plan_lesson_')) {
-          const dayNum = parseInt(data.replace('start_plan_lesson_', ''), 10);
-          await startPlanLesson(ctx, isNaN(dayNum) ? 1 : dayNum);
-          return;
-        }
-        if (data.startsWith('plan_ans_')) {
-          const parts = data.replace('plan_ans_', '').split('_');
-          const weakness = parts[0];
-          const day = parseInt(parts[1], 10);
-          const opt = parseInt(parts[2], 10);
-          if (!isNaN(day) && !isNaN(opt)) {
-            await handlePlanLessonAnswer(ctx, weakness, day, opt);
-            return;
-          }
-        }
+        
+        
         if (data.startsWith('lesson_ans_')) {
           const optIdx = parseInt(data.replace('lesson_ans_', ''), 10);
           if (!isNaN(optIdx)) {
@@ -644,15 +568,7 @@ bot.on('callback_query:data', async (ctx) => {
             return;
           }
         }
-        if (data.startsWith('assess_ans_')) {
-          const parts = data.replace('assess_ans_', '').split('_');
-          const qIndex = parseInt(parts[0], 10);
-          const optIndex = parseInt(parts[1], 10);
-          if (!isNaN(qIndex) && !isNaN(optIndex)) {
-            await handleAssessmentAnswer(ctx, qIndex, optIndex);
-            return;
-          }
-        }
+        
         if (data.startsWith('admin_followup_') || data.startsWith('admin_discount_') || data.startsWith('admin_approve_')) {
           await handleAdminFollowupAction(ctx, data);
           return;

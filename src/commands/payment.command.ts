@@ -31,7 +31,7 @@ export async function handlePaymentCommand(ctx: Context) {
   const keyboard = new InlineKeyboard()
     .text("⚡ 1 Week (149 ETB)", "pay_weekly")
     .row()
-    .text("🌟 1 Month (499 ETB)", "pay_monthly")
+    .text("🌟 1 Month (550 ETB)", "pay_monthly")
     .row()
     .text("🔥 3 Months (1,299 ETB) - Save 13%", "pay_quarterly")
     .row()
@@ -47,7 +47,7 @@ export async function handlePaymentCommand(ctx: Context) {
 }
 
 export async function handlePaymentSelection(ctx: Context, data: string) {
-  let amount = '499';
+  let amount = '550';
   let tierName = '🌟 1 Month VIP';
   let tierParam = 'monthly';
 
@@ -150,13 +150,13 @@ export async function handleReceiptVerification(ctx: Context, referenceText: str
     } catch (e) { }
 
     if (result.success) {
-      const amountPaid = result.result?.amount || 499;
+      const amountPaid = result.result?.amount || 550;
       let durationText = '1 MONTH';
-      if (amountPaid >= 4999) {
+      if (amountPaid >= 5509) {
         durationText = '12 MONTHS';
       } else if (amountPaid >= 1299) {
         durationText = '3 MONTHS';
-      } else if (amountPaid >= 499) {
+      } else if (amountPaid >= 550) {
         durationText = '1 MONTH';
       } else if (amountPaid >= 149) {
         durationText = '1 WEEK';

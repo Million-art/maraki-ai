@@ -18,7 +18,7 @@ export class ApiService {
             return {
                 telegramId,
                 firstName: 'Learner',
-                level: 'beginner',
+                cefrLevel: 'UNTESTED',
                 isPremium: false,
                 isMarakiPremium: false,
             };
@@ -145,7 +145,7 @@ export class ApiService {
         try {
             const user = await this.getUserByTelegramId(telegramId);
             return {
-                level: user?.level || 'beginner',
+                cefrLevel: user?.cefrLevel || 'UNTESTED',
                 isPremium: user?.isMarakiPremium || false,
                 subscriptionTier: user?.subscriptionTier || 'FREE',
             };
@@ -206,7 +206,7 @@ export class ApiService {
         }
     }
     // Ultra-fast structured quiz fetching with Anti-Repeat logic and Bulk Pre-fetching
-    async getStructuredQuiz(telegramId, level = 'beginner') {
+    async getStructuredQuiz(telegramId, cefrLevel = 'UNTESTED') {
         try {
             const startTime = Date.now();
             // 1. Fetch user completed quiz IDs first
@@ -234,7 +234,7 @@ export class ApiService {
             // 2. Fetch active quizzes for this level (with fallback to all active quizzes if level match is empty)
             let availableQuizzes = [];
             try {
-                const { data } = await axios.get(`${this.backendUrl}/api/student/quizzes?level=${level}`, { timeout: 10000 });
+                const { data } = await axios.get(`${this.backendUrl}/api/student/quizzes?level=${cefrLevel}`, { timeout: 10000 });
                 availableQuizzes = data;
             }
             catch (e) { }
@@ -251,7 +251,7 @@ export class ApiService {
             // 3. Anti-Repeat: Filter out completed quizzes
             const unseenQuizzes = availableQuizzes.filter(q => !completedQuizIds.has(q.id));
             if (unseenQuizzes.length === 0) {
-                console.log(`⚠️ User ${telegramId} completed ALL DB quizzes for ${level}! Switching to dynamic AI generation.`);
+                console.log(`⚠️ User ${telegramId} completed ALL DB quizzes for ${cefrLevel}! Switching to dynamic AI generation.`);
                 return null; // User finished all DB quizzes! Fallback to infinite Gemini AI generation.
             }
             // Load asked question texts history from session to prevent duplicate question texts across different quiz IDs
@@ -318,10 +318,10 @@ export class ApiService {
      * Fetch the Daily Challenge directly from the DB.
      * If it fails or returns null, the bot falls back to Gemini.
      */
-    async getDailyChallenge(level) {
+    async getDailyChallenge(cefrLevel = 'UNTESTED') {
         try {
             const response = await axios.get(`${this.backendUrl}/api/challenges/today`, {
-                params: { level },
+                params: { level: cefrLevel },
                 timeout: 2000 // 2 seconds max
             });
             return response.data?.data || null;

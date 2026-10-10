@@ -117,10 +117,10 @@ export async function challengeCommand(ctx: Context) {
   }
 
   // ── 2. Fetch from DB (Fast) or Generate via Gemini (Fallback) ─────────────
-  let userLevel = 'intermediate';
+  let userLevel = 'UNTESTED';
   try {
     const user = await apiService.getUserByTelegramId(userId);
-    userLevel = user?.level || 'intermediate';
+    userLevel = user?.cefrLevel || 'UNTESTED';
   } catch (e) {}
 
   try {
@@ -224,10 +224,10 @@ export async function buildDailyChallengeMessage(userId: number): Promise<{ text
 
   // Fetch from DB first (same as challengeCommand), or fallback to Gemini
   let data: any = null;
-  let userLevel = 'intermediate';
+  let userLevel = 'UNTESTED';
   try {
     const user = await apiService.getUserByTelegramId(userId);
-    userLevel = user?.level || 'intermediate';
+    userLevel = user?.cefrLevel || 'UNTESTED';
   } catch (e) {}
 
   try {

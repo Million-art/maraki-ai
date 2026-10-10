@@ -104,7 +104,7 @@ const generateQuizQuestions = async (userId) => {
     try {
         // Get user level
         const user = await apiService.getUserByTelegramId(userId);
-        const userLevel = user?.level || 'intermediate';
+        const userLevel = user?.cefrLevel || 'UNTESTED';
         // 1. Anti-Repeat DB Check: Try to fetch a fully structured zero-cost quiz from the database first
         const structuredQuiz = await apiService.getStructuredQuiz(userId, userLevel);
         if (structuredQuiz && structuredQuiz.length > 0) {
@@ -133,7 +133,7 @@ const generateQuizQuestions = async (userId) => {
     }
     catch (error) {
         console.error('Error generating quiz questions:', error);
-        return await generateGeneralQuestions('intermediate', 5, [], userId);
+        return await generateGeneralQuestions('UNTESTED', 5, [], userId);
     }
 };
 const generateQuestionFromMistake = async (mistake, userLevel) => {

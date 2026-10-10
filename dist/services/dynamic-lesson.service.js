@@ -92,7 +92,7 @@ Speaking Lesson Requirements:
    - "amharicTip": Practical advice in Amharic on building mouth muscle memory and speaking without fear.
    - "explanation": Friendly breakdown of why the selected phrasing creates confidence and executive presence.
 
-CRITICAL RULE: NEVER use IPA phonetic symbols or slashes in any output field (no /p/, /b/, /v/, /ɪ/, /i:/, /æ/, etc.). Always describe sounds using plain English in quotes — e.g. "short 'i' sound", "long 'ee' sound", "soft 'v'". This is non-negotiable.
+CRITICAL RULE: NEVER use IPA phonetic symbols or slashes in any output field (no /p/, /b/, /v/, /ɪ/, /i:/, /æ/, etc.). Always describe sounds using plain English in quotes   e.g. "short 'i' sound", "long 'ee' sound", "soft 'v'". This is non-negotiable.
 
 Return ONLY a valid JSON object matching this schema:
 {

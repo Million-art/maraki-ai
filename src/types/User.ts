@@ -1,6 +1,6 @@
 export interface User {
   id: string;
-  level?: string;
+  cefrLevel?: string;
   first_name?: string;
   last_name?: string;   
   telegramId?: number;
@@ -14,5 +14,7 @@ export interface User {
   };
   subscriptionTier?: string;
   subscriptionExpiresAt?: string;
+  timezone?: string;
   isNewUser?: boolean;
 }
+

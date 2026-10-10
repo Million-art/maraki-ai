@@ -7,9 +7,8 @@ export class VoiceValidationService {
             process.env.GEMINI_API_KEY,
             process.env.GEMINI_API_KEY_2,
             process.env.GEMINI_API_KEY_3,
+            process.env.GEMINI_API_KEY_4,
             process.env.GOOGLE_API_KEY,
-            // Fallback key from dashboard-backend
-            'AQ.Ab8RN6IQGH8-7glXAbVZjOXXJKZZgR5lmYS0p3bCtSsqh84Kmg',
         ]
             .filter((k) => Boolean(k && typeof k === 'string' && k.trim().length > 10))
             .map(k => k.trim().replace(/^["']|["']$/g, ''));
