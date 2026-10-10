@@ -23,10 +23,6 @@ import { handlePaymentSelection } from '../commands/payment.command.js';
 import { generateAndSendLesson } from '../commands/lesson.comand.js';
 import { handleAdminFollowupAction } from '../utils/analytics.util.js';
 import { apiService } from '../services/api.service.js';
-import { assessmentCommand, startAssessmentSession, handleAssessmentAnswer, handleAssessmentVoiceSubmission, skipAssessmentVoice } from '../commands/assessment.command.js';
-import { sendWeeklyPlan, sendCertificate } from '../commands/level.command.js';
-import { startPlanLesson, handlePlanLessonAnswer } from '../commands/plan-lesson.command.js';
-import { getPlanProgress } from '../utils/plan-progress.util.js';
 dotenv.config();
 const bot_token = process.env.DEV_BOT_TOKEN || process.env.TOKEN || process.env.TKN || process.env.BOT_TOKEN;
 if (!bot_token) {
@@ -124,43 +120,6 @@ bot.command('start', startCommand);
 bot.command('grammar', grammarCommand);
 bot.command('lesson', lessonCommand);
 bot.command('level', levelCommand);
-bot.command('plan', async (ctx) => {
-    if (!ctx.from)
-        return;
-    const progress = await getPlanProgress(ctx.from.id);
-    await startPlanLesson(ctx, progress.currentDay || 1);
-});
-bot.command('myplan', async (ctx) => {
-    if (!ctx.from)
-        return;
-    const progress = await getPlanProgress(ctx.from.id);
-    await startPlanLesson(ctx, progress.currentDay || 1);
-});
-bot.command(['listen', 'listening'], async (ctx) => {
-    if (!ctx.from)
-        return;
-    await startPlanLesson(ctx, 1, 'Listening');
-});
-bot.command(['speak', 'speaking'], async (ctx) => {
-    if (!ctx.from)
-        return;
-    await startPlanLesson(ctx, 1, 'Speaking');
-});
-bot.command(['read', 'reading'], async (ctx) => {
-    if (!ctx.from)
-        return;
-    await startPlanLesson(ctx, 1, 'Reading');
-});
-bot.command(['grammar_practice', 'grammar_lesson'], async (ctx) => {
-    if (!ctx.from)
-        return;
-    await startPlanLesson(ctx, 1, 'Grammar');
-});
-bot.command(['vocab', 'vocabulary'], async (ctx) => {
-    if (!ctx.from)
-        return;
-    await startPlanLesson(ctx, 1, 'Vocabulary');
-});
 bot.command('referral_link', referralCommand);
 bot.command('referral', referralCommand);
 bot.command('hack', referralCommand);
@@ -169,20 +128,12 @@ bot.command('translation', translationCommand);
 bot.command('help', helpCommand);
 bot.command('usage', usageCommand);
 bot.command('quiz', quizCommand);
-bot.command('assessment', assessmentCommand);
-bot.command('test', assessmentCommand);
-bot.command('certificate', sendCertificate);
-bot.command('report', sendCertificate);
 bot.command('challenge', challengeCommand);
 bot.command('daily_challenge', challengeCommand);
 bot.command('pay', handlePaymentCommand);
 bot.command('subscribe', handlePaymentCommand);
 bot.command('admin_status', adminStatusCommand);
 bot.command(['intel', 'digest', 'admin_intel'], adminIntelligenceCommand);
-// Handle Spoken Voice Notes & Audio Clips (Diagnostic Speaking Assessment)
-bot.on(['message:voice', 'message:audio'], async (ctx) => {
-    await handleAssessmentVoiceSubmission(ctx);
-});
 // Stop daily challenge notifications
 bot.command('stop_daily', async (ctx) => {
     if (!ctx.from)
@@ -330,71 +281,6 @@ bot.on('message:text', async (ctx) => {
     else if (session?.mode === 'lesson_followup') {
         const { handleLessonFollowup } = await import('../commands/lesson.comand.js');
         await handleLessonFollowup(ctx);
-    }
-    else if (session?.mode === 'in_assessment') {
-        const rawText = text.trim();
-        const lowerText = rawText.toLowerCase();
-        // Check for cancel
-        if (lowerText === '❌ cancel assessment' ||
-            lowerText === 'cancel' ||
-            lowerText === '/cancel' ||
-            lowerText === 'ሰርዝ' ||
-            lowerText === 'stop' ||
-            lowerText === 'exit') {
-            await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
-            await ctx.reply('❌ <b>Assessment cancelled.</b> You can restart anytime with /assessment.', {
-                parse_mode: 'HTML',
-                reply_markup: { remove_keyboard: true },
-            });
-            return;
-        }
-        // Map A, B, C, D (or 1, 2, 3, 4) to option index
-        let optionIndex = -1;
-        if (lowerText === 'a' || lowerText === '1' || lowerText.startsWith('a.') || lowerText.startsWith('a)')) {
-            optionIndex = 0;
-        }
-        else if (lowerText === 'b' || lowerText === '2' || lowerText.startsWith('b.') || lowerText.startsWith('b)')) {
-            optionIndex = 1;
-        }
-        else if (lowerText === 'c' || lowerText === '3' || lowerText.startsWith('c.') || lowerText.startsWith('c)')) {
-            optionIndex = 2;
-        }
-        else if (lowerText === 'd' || lowerText === '4' || lowerText.startsWith('d.') || lowerText.startsWith('d)')) {
-            optionIndex = 3;
-        }
-        if (optionIndex !== -1) {
-            const qIndex = session.questionIndex ?? 0;
-            await handleAssessmentAnswer(ctx, qIndex, optionIndex);
-            return;
-        }
-        await ctx.reply('⚠️ Please reply by tapping <b>A</b>, <b>B</b>, <b>C</b>, or <b>D</b> (or tap ❌ Cancel Assessment).', {
-            parse_mode: 'HTML',
-        });
-        return;
-    }
-    else if (session?.mode === 'assessment_awaiting_voice') {
-        const rawText = text.trim().toLowerCase();
-        if (rawText === 'skip' ||
-            rawText === '/skip' ||
-            rawText.includes('skip') ||
-            rawText === 'ዝለል') {
-            await skipAssessmentVoice(ctx);
-            return;
-        }
-        if (rawText === 'cancel' || rawText === '/cancel' || rawText === 'stop' || rawText === 'ሰርዝ') {
-            await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
-            await ctx.reply('❌ <b>Assessment cancelled.</b> You can restart anytime with /assessment.', {
-                parse_mode: 'HTML',
-                reply_markup: { remove_keyboard: true },
-            });
-            return;
-        }
-        await ctx.reply('🎙️ <b>Speaking Diagnostic in Progress:</b>\n\n' +
-            '💪 <i>አይጨነቁ   ፍጹም እንግሊዝኛ መናገር አይጠበቅብዎትም! ጥቂት አረፍተ-ነገሮች ብቻ በቂ ናቸው።</i>\n\n' +
-            'Please hold down your Telegram microphone button to send a short <b>15–30 second voice note</b> in English, or type /skip to complete without speaking.', {
-            parse_mode: 'HTML',
-        });
-        return;
     }
     else if (session?.mode === 'chat_conversation') {
         await handleChatConversation(ctx);
@@ -547,36 +433,9 @@ bot.on('callback_query:data', async (ctx) => {
             case 'level':
                 await levelCommand(ctx);
                 break;
-            case 'assessment':
-            case 'start_assessment':
-                await startAssessmentSession(ctx);
-                break;
-            case 'assess_skip_voice':
-                await skipAssessmentVoice(ctx);
-                break;
-            case 'view_weekly_plan':
-                await sendWeeklyPlan(ctx);
-                break;
-            case 'view_certificate':
-            case 'view_report':
-            case 'certificate':
-            case 'report':
-                await sendCertificate(ctx);
-                break;
-            case 'close_assessment':
-                await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });
-                try {
-                    await ctx.reply('❌ Assessment closed.', { reply_markup: { remove_keyboard: true } });
-                }
-                catch (e) { }
-                return ctx.deleteMessage();
             case 'referral':
             case 'referral_link':
                 await referralCommand(ctx);
-                break;
-            case 'start_plan_lesson_1':
-            case 'start_plan_lesson':
-                await startPlanLesson(ctx, 1);
                 break;
             case 'daily_challenge':
             case 'challenge':
@@ -589,35 +448,11 @@ bot.on('callback_query:data', async (ctx) => {
                 await handleAdminCallback(ctx, data);
                 return;
             default:
-                if (data.startsWith('start_plan_lesson_')) {
-                    const dayNum = parseInt(data.replace('start_plan_lesson_', ''), 10);
-                    await startPlanLesson(ctx, isNaN(dayNum) ? 1 : dayNum);
-                    return;
-                }
-                if (data.startsWith('plan_ans_')) {
-                    const parts = data.replace('plan_ans_', '').split('_');
-                    const weakness = parts[0];
-                    const day = parseInt(parts[1], 10);
-                    const opt = parseInt(parts[2], 10);
-                    if (!isNaN(day) && !isNaN(opt)) {
-                        await handlePlanLessonAnswer(ctx, weakness, day, opt);
-                        return;
-                    }
-                }
                 if (data.startsWith('lesson_ans_')) {
                     const optIdx = parseInt(data.replace('lesson_ans_', ''), 10);
                     if (!isNaN(optIdx)) {
                         const { handleLessonAnswer } = await import('../commands/lesson.comand.js');
                         await handleLessonAnswer(ctx, optIdx);
-                        return;
-                    }
-                }
-                if (data.startsWith('assess_ans_')) {
-                    const parts = data.replace('assess_ans_', '').split('_');
-                    const qIndex = parseInt(parts[0], 10);
-                    const optIndex = parseInt(parts[1], 10);
-                    if (!isNaN(qIndex) && !isNaN(optIndex)) {
-                        await handleAssessmentAnswer(ctx, qIndex, optIndex);
                         return;
                     }
                 }
