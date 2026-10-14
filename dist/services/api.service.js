@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getSession, setSession, redis } from '../utils/redis.js';
+import { getSession, setSession } from '../utils/redis.js';
 export class ApiService {
     backendUrl;
     constructor() {
@@ -366,137 +366,36 @@ export class ApiService {
             throw error;
         }
     }
-    // ── Maraki English Assessment & Maraki Level ──────────────────────────────
-    async getAssessmentQuestions() {
-        try {
-            const { data } = await axios.get(`${this.backendUrl}/api/assessment/questions`, { timeout: 10000 });
-            return data;
-        }
-        catch (error) {
-            console.error('[Assessment API] Failed to fetch questions:', error?.message);
-            return null;
-        }
-    }
-    async submitAssessment(payload) {
-        try {
-            const { data } = await axios.post(`${this.backendUrl}/api/assessment/submit`, payload, { timeout: 10000 });
-            if (data) {
-                try {
-                    await redis.set(`user:assessment_report:${payload.telegramId}`, JSON.stringify(data), { EX: 60 * 60 * 24 * 7 });
-                }
-                catch (e) { }
-                return data;
-            }
-        }
-        catch (error) {
-            console.warn('[Assessment API] Backend unreachable, computing resilient local report:', error?.message);
-        }
-        // Local Fallback Report Computation
-        const questions = payload.questions || [];
-        let grammarPoints = 0, grammarTotal = 0;
-        let vocabPoints = 0, vocabTotal = 0;
-        let listeningPoints = 0, listeningTotal = 0;
-        for (const q of questions) {
-            const selected = payload.answers[q.id];
-            const isCorrect = selected !== undefined && selected === q.correctIndex;
-            const pts = 10;
-            const earned = isCorrect ? pts : 0;
-            const skill = (q.skill || '').toLowerCase();
-            if (skill === 'grammar') {
-                grammarTotal += pts;
-                grammarPoints += earned;
-            }
-            else if (skill === 'vocabulary') {
-                vocabTotal += pts;
-                vocabPoints += earned;
-            }
-            else if (skill === 'listening') {
-                listeningTotal += pts;
-                listeningPoints += earned;
-            }
-        }
-        const scale = (pts, tot) => tot <= 0 ? 55 : Math.round(25 + ((pts / tot) * 75));
-        const grammarScore = scale(grammarPoints, grammarTotal);
-        const vocabularyScore = scale(vocabPoints, vocabTotal);
-        const listeningScore = scale(listeningPoints, listeningTotal);
-        const speakingScore = payload.speaking?.scores?.overall ?? (payload.speaking ? 65 : null);
-        const isSpeakingTested = speakingScore !== null;
-        const overallScore = isSpeakingTested
-            ? Math.round((grammarScore * 0.30) + (vocabularyScore * 0.25) + (listeningScore * 0.25) + (speakingScore * 0.20))
-            : Math.round((grammarScore * 0.40) + (vocabularyScore * 0.30) + (listeningScore * 0.30));
-        const cefrLevel = overallScore >= 85 ? 'C1' : overallScore >= 70 ? 'B2' : overallScore >= 55 ? 'B1' : overallScore >= 36 ? 'A2' : 'A1';
-        const localReport = {
-            assessmentId: `local-${Date.now()}`,
-            cefrLevel,
-            overallScore,
-            skills: {
-                grammar: grammarScore,
-                vocabulary: vocabularyScore,
-                listening: listeningScore,
-                speaking: speakingScore,
-            },
-            speakingTested: isSpeakingTested,
-            primaryWeakness: payload.speaking ? 'Prepositions & Collocations' : 'Speaking Fluency',
-            diagnosis: {
-                tag: 'Conversational Fluency',
-                headlineAmharic: payload.speaking ? 'የሰዋሰው እና የቃላት አጠቃቀም' : 'የንግግር ቅልጥፍና (Speaking Fluency)',
-                summary: 'አጫጭር የቋንቋ እና የድምፅ ልምምዶችን በማድረግ እንግሊዝኛዎን ወደሚቀጥለው ደረጃ ማሳደግ ይችላሉ።',
-            },
-        };
-        try {
-            await redis.set(`user:assessment_report:${payload.telegramId}`, JSON.stringify(localReport), { EX: 60 * 60 * 24 * 7 });
-        }
-        catch (e) { }
-        return localReport;
-    }
+    // ── Maraki English Assessment & Student Level ──────────────────────────────
     async getStudentMarakiLevel(telegramId) {
         try {
-            const { data } = await axios.get(`${this.backendUrl}/api/assessment/level/${telegramId}`, { timeout: 5000 });
-            return data;
-        }
-        catch (error) {
-            try {
-                const raw = await redis.get(`user:assessment_report:${telegramId}`);
-                if (raw)
-                    return JSON.parse(raw);
+            const user = await this.getUserByTelegramId(telegramId);
+            if (user && user.cefrLevel && user.cefrLevel !== 'UNTESTED') {
+                const level = user.cefrLevel;
+                return {
+                    isAssessed: true,
+                    cefrLevel: level,
+                    overallScore: level === 'C1' ? 88 : level === 'B2' ? 75 : level === 'B1' ? 60 : level === 'A2' ? 45 : 30,
+                    skills: {
+                        vocabulary: level === 'C1' ? 85 : level === 'B2' ? 72 : level === 'B1' ? 60 : 45,
+                        grammar: level === 'C1' ? 88 : level === 'B2' ? 75 : level === 'B1' ? 62 : 48,
+                        reading: level === 'C1' ? 90 : level === 'B2' ? 78 : level === 'B1' ? 65 : 50,
+                        listening: level === 'C1' ? 85 : level === 'B2' ? 70 : level === 'B1' ? 58 : 42,
+                        speaking: level === 'C1' ? 82 : level === 'B2' ? 70 : level === 'B1' ? 55 : 40,
+                    },
+                    speakingTested: true,
+                    primaryWeakness: 'Speaking',
+                };
             }
-            catch (e) { }
             return null;
         }
-    }
-    async evaluateSpeakingAudio(payload) {
-        try {
-            const { data } = await axios.post(`${this.backendUrl}/api/assessment/evaluate-speaking`, payload, { timeout: 25000 });
-            return data;
-        }
         catch (error) {
-            console.error('[Assessment API] Speaking evaluation failed:', error?.message);
             return null;
         }
     }
     async getAssessmentProductIntelligence() {
         try {
             const { data } = await axios.get(`${this.backendUrl}/api/assessment/admin/intelligence`, { timeout: 15000 });
-            return data;
-        }
-        catch (error) {
-            console.error('[Assessment API] Failed to get product intelligence:', error?.message);
-            return null;
-        }
-    }
-    // Persistent 7-Day Plan & Streak Management (PostgreSQL via Backend API)
-    async getStudentPlanProgress(telegramId) {
-        try {
-            const { data } = await axios.get(`${this.backendUrl}/api/student/${telegramId}/plan-progress`, { timeout: 5000 });
-            return data;
-        }
-        catch (error) {
-            return { currentDay: 1, completedDays: [] };
-        }
-    }
-    async saveStudentPlanProgress(telegramId, body) {
-        try {
-            const { data } = await axios.post(`${this.backendUrl}/api/student/${telegramId}/plan-progress`, body, { timeout: 5000 });
             return data;
         }
         catch (error) {
@@ -519,16 +418,6 @@ export class ApiService {
         }
         catch (error) {
             return { streak: 1, isNewDay: false };
-        }
-    }
-    async getActivePlanLearners() {
-        try {
-            const { data } = await axios.get(`${this.backendUrl}/api/student/plan/active-learners`, { timeout: 10000 });
-            return Array.isArray(data) ? data : [];
-        }
-        catch (error) {
-            console.error('[ApiService] Failed to fetch active plan learners:', error?.message);
-            return [];
         }
     }
 }

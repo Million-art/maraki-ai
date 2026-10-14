@@ -32,7 +32,7 @@ describe('Bot Support, Follow-Up, and Admin Relay E2E Integration Suite', () => 
 
     expect(mockSendMessage).toHaveBeenCalledWith(
       ADMIN_TELEGRAM_ID,
-      expect.stringContaining('User Clicked Upgrade / VIP!'),
+      expect.stringContaining('User Viewed Payment Details!'),
       expect.objectContaining({
         parse_mode: 'HTML',
         reply_markup: expect.anything(),

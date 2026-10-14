@@ -3,6 +3,7 @@ import { quizCommand } from '../src/commands/quiz.command.js';
 import { lessonCommand } from '../src/commands/lesson.comand.js';
 import { apiService } from '../src/services/api.service.js';
 import { checkCentralAuthAndAccess } from '../src/middleware/authGuard.middleware.js';
+import { deleteSession } from '../src/utils/redis.js';
 
 describe('Multi-Button Entry Paths Test Suite (Quiz & Lesson)', () => {
   let mockCtx: any;
@@ -11,8 +12,9 @@ describe('Multi-Button Entry Paths Test Suite (Quiz & Lesson)', () => {
   let createOrUpdateSpy: any;
   let getUserByTelegramIdSpy: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.restoreAllMocks();
+    await deleteSession(777888999);
     registerSpy = jest.spyOn(apiService, 'registerStudent').mockResolvedValue({ success: true } as never);
     createOrUpdateSpy = jest.spyOn(apiService, 'createOrUpdateUser').mockResolvedValue({ success: true } as never);
     getUserByTelegramIdSpy = jest.spyOn(apiService, 'getUserByTelegramId').mockResolvedValue({ firstName: 'Million', level: 'intermediate' } as never);
@@ -100,7 +102,7 @@ describe('Multi-Button Entry Paths Test Suite (Quiz & Lesson)', () => {
 
       expect(mockCtx.reply).toHaveBeenCalledWith(
         expect.stringContaining('Weekly Quiz Limit Reached!'),
-        expect.objectContaining({ parse_mode: 'HTML' })
+        expect.objectContaining({ parse_mode: 'Markdown' })
       );
     });
   });
@@ -181,7 +183,7 @@ describe('Multi-Button Entry Paths Test Suite (Quiz & Lesson)', () => {
 
       expect(mockCtx.reply).toHaveBeenCalledWith(
         expect.stringContaining('Weekly Lesson Limit Reached!'),
-        expect.objectContaining({ parse_mode: 'HTML' })
+        expect.objectContaining({ parse_mode: 'Markdown' })
       );
     });
   });

@@ -1,9 +1,4 @@
-import { Context, InlineKeyboard, InputFile } from "grammy";
-import * as path from "path";
-import * as fs from "fs";
-import { fileURLToPath } from "url";
-import { execFile } from "child_process";
-import { promisify } from "util";
+import { Context, InlineKeyboard } from "grammy";
 import { getDailyStreak } from "../utils/streak.util.js";
 import { apiService } from "../services/api.service.js";
 import {
@@ -13,10 +8,6 @@ import {
   getReportKeyboard,
   sanitizeAmharicDiagnosis,
 } from "../utils/report-formatter.util.js";
-
-const execFileAsync = promisify(execFile);
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export const levelCommand = async (ctx: Context) => {
   if (!ctx.from) {
@@ -37,10 +28,14 @@ export const levelCommand = async (ctx: Context) => {
       `⏱️ <b>የሚፈጀው ጊዜ፦</b> 1 ደቂቃ ብቻ (በድምፅ)\n` +
       `🎯 <b>ምን ያገኛሉ?</b> የችሎታ ውጤት፣ ያለብዎት ክፍተት እና ዕለታዊ ቻሌንጅ!`;
 
-    const keyboard = new InlineKeyboard()
-      .text("🎙️ የንግግር ችሎታ መለያ ጀምር (1 ደቂቃ)", "start_assessment")
-      .row()
-      .text("🔥 የዛሬውን ነፃ ቻሌንጅ ሞክር", "daily_challenge");
+    const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
+    const keyboard = new InlineKeyboard();
+    if (miniAppUrl.includes('t.me/')) {
+      keyboard.url("🎙️ የንግግር ችሎታ መለያ ጀምር (Voice App)", miniAppUrl);
+    } else {
+      keyboard.webApp("🎙️ የንግግር ችሎታ መለያ ጀምር (Voice App)", miniAppUrl);
+    }
+    keyboard.row().text("🔥 የዛሬውን ነፃ ቻሌንጅ ሞክር", "daily_challenge");
 
     return await ctx.reply(unassessedCard, { parse_mode: "HTML", reply_markup: keyboard });
   }
@@ -62,10 +57,6 @@ export const levelCommand = async (ctx: Context) => {
     ? `🗣️ ንግግር (Speaking):  ${renderBar(speakingScoreNum)} <b>${speakingScoreNum}</b>/100\n`
     : `🗣️ ንግግር (Speaking):  ⏭️ <i>አልተፈተነም</i>\n`;
 
-  // Always recompute diagnosis from live skill scores   never trust the cached
-  // report.diagnosis, which was stored at assessment time and may be stale.
-  // getLinguisticDiagnosisFallback now checks the actual lowest score first
-  // (e.g. Listening=25 will always beat Speaking=81 via the Silent Trap heuristic).
   const diagnosis = getLinguisticDiagnosisFallback(skills, weakness, isSpeakingTested);
   const career = report.careerTranslation || getCareerTranslationFallback(levelName);
   const plan = report.recommendedPlan;
@@ -95,11 +86,3 @@ export const levelCommand = async (ctx: Context) => {
 
   await ctx.reply(progressCard, { parse_mode: "HTML", reply_markup: keyboard });
 };
-
-/**
- * Send the personalized 7-Day Learning Plan
- */
-
-/**
- * Send the official Maraki Milestone Certificate sample / preview
- */

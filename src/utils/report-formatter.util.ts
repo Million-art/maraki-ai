@@ -289,19 +289,21 @@ export function getFullTextMessage(report: any, fullName: string, credId: string
 }
 
 export function getReportKeyboard(options?: { isAssessed?: boolean; speakingTested?: boolean }): InlineKeyboard {
-  const keyboard = new InlineKeyboard()
-    .text('🚀 የዛሬውን ልምምድ ጀምር', 'start_plan_lesson_1')
-    .row()
-    .text('📊 የፈተና ውጤት', 'view_certificate')
-    .text('📅 የልምምድ እቅድ', 'view_weekly_plan')
-    .row();
+  const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
+  const keyboard = new InlineKeyboard();
 
-  if (options?.speakingTested === false) {
-    keyboard.text('🎙️ ድምፅዎን ይሞክሩ', 'start_speaking_flow');
+  if (miniAppUrl.includes('t.me/')) {
+    keyboard.url("🎙️ ከማራኪ ጋር አውራ (Voice App)", miniAppUrl);
   } else {
-    keyboard.text('🔥 ዕለታዊ ቻሌንጅ', 'daily_challenge');
+    keyboard.webApp("🎙️ ከማራኪ ጋር አውራ (Voice App)", miniAppUrl);
   }
 
-  keyboard.text('🔄 እንደገና ፈትን', 'start_assessment');
+  keyboard.row()
+    .text('🔥 ዕለታዊ ቻሌንጅ', 'daily_challenge')
+    .text('📚 ትምህርቶች', 'lesson')
+    .row()
+    .text('🧠 ጥያቄዎች', 'quiz')
+    .text('🌐 ትርጉም', 'translation');
+
   return keyboard;
 }

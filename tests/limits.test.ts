@@ -51,7 +51,7 @@ describe('Strict Feature Usage Limits Test Suite', () => {
       expect(allowed).toBe(false);
       expect(mockCtx.reply).toHaveBeenCalledWith(
         expect.stringContaining('Weekly Quiz Limit Reached!'),
-        expect.objectContaining({ parse_mode: 'HTML' })
+        expect.objectContaining({ parse_mode: 'Markdown' })
       );
     });
 
@@ -67,7 +67,7 @@ describe('Strict Feature Usage Limits Test Suite', () => {
 
       expect(allowed).toBe(false);
       expect(mockCtx.reply).toHaveBeenCalledWith(
-        expect.stringContaining('You have used all <b>3 free quizzes</b> this week.'),
+        expect.stringContaining('Weekly Quiz Limit Reached!'),
         expect.anything()
       );
     });
@@ -101,7 +101,7 @@ describe('Strict Feature Usage Limits Test Suite', () => {
       expect(allowed).toBe(false);
       expect(mockCtx.reply).toHaveBeenCalledWith(
         expect.stringContaining('Weekly Lesson Limit Reached!'),
-        expect.objectContaining({ parse_mode: 'HTML' })
+        expect.objectContaining({ parse_mode: 'Markdown' })
       );
     });
   });

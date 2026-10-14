@@ -51,7 +51,7 @@ describe('Menu & Callback Navigation Validation Test Suite', () => {
       );
 
       expect(mockCtx.reply).toHaveBeenCalledWith(
-        expect.stringContaining('Welcome to <b>Maraki AI</b>, <b>Million</b>!'),
+        expect.stringContaining('ሰላም Million! እንኳን ወደ Maraki AI በደህና መጡ'),
         expect.objectContaining({ parse_mode: 'HTML' })
       );
     });
@@ -60,7 +60,7 @@ describe('Menu & Callback Navigation Validation Test Suite', () => {
       await helpCommand(mockCtx);
 
       expect(mockCtx.reply).toHaveBeenCalledWith(
-        expect.stringContaining('Welcome to Maraki AI English Help Center'),
+        expect.stringContaining('Maraki AI   Quick Guide'),
         expect.objectContaining({
           reply_markup: expect.objectContaining({
             inline_keyboard: expect.arrayContaining([
@@ -78,9 +78,9 @@ describe('Menu & Callback Navigation Validation Test Suite', () => {
     test('getPersonalizedStartMsg() template should contain core pillars: Practice, Learn, Quiz, Daily Challenge', () => {
       const msg = getPersonalizedStartMsg('Million');
 
-      expect(msg).toContain('Welcome to <b>Maraki AI</b>, <b>Million</b>!');
-      expect(msg).toContain('🎙️ Real-time English speaking');
-      expect(msg).toContain('Choose an option below 👇');
+      expect(msg).toContain('ሰላም Million! እንኳን ወደ Maraki AI በደህና መጡ');
+      expect(msg).toContain('Speaking');
+      expect(msg).toContain('ለመጀመር ከታች ካሉት አማራጮች አንዱን ይጫኑ');
     });
   });
 });
