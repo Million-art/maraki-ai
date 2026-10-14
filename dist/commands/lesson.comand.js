@@ -398,6 +398,9 @@ export const handleLessonFollowup = async (ctx) => {
         const session = await getSession(userId);
         const lastLessonContent = session?.lastLessonContent || '';
         if (!lastLessonContent) {
+            if (session) {
+                await setSession(userId, { ...session, mode: null });
+            }
             await ctx.reply("❌ የትምህርቱ መረጃ አልተገኘም። እባክዎ አዲስ ትምህርት ለመጀመር /lesson ይጫኑ።");
             return;
         }

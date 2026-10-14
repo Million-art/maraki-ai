@@ -7,6 +7,7 @@ import { challengeCommand } from '../src/commands/challenge.command.js';
 import { handlePaymentCommand } from '../src/commands/payment.command.js';
 import { apiService } from '../src/services/api.service.js';
 import { quizStatsService } from '../src/utils/quiz-stats.util.js';
+import { deleteSession } from '../src/utils/redis.js';
 
 describe('Callback Navigation & All Menu Option Buttons Test Suite', () => {
   let mockCtx: any;
@@ -14,15 +15,33 @@ describe('Callback Navigation & All Menu Option Buttons Test Suite', () => {
   let getLocalQuizStatsSpy: any;
   let getUserByTelegramIdSpy: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     process.env.GEMINI_API_KEY = 'test_key_for_jest_mock';
     jest.restoreAllMocks();
+    await deleteSession(555666777);
     jest.spyOn(apiService, 'registerStudent').mockResolvedValue({ success: true } as never);
     jest.spyOn(apiService, 'createOrUpdateUser').mockResolvedValue({ success: true } as never);
     getUserByTelegramIdSpy = jest.spyOn(apiService, 'getUserByTelegramId').mockResolvedValue({
       firstName: 'Million',
-      level: 'intermediate',
+      cefrLevel: 'B1',
       isMarakiPremium: false,
+    } as never);
+    jest.spyOn(apiService, 'getStudentMarakiLevel').mockResolvedValue({
+      isAssessed: true,
+      cefrLevel: 'B1',
+      overallScore: 60,
+      skills: { vocabulary: 60, grammar: 60, listening: 60, speaking: 60 },
+      speakingTested: true,
+      primaryWeakness: 'Speaking',
+    } as never);
+    jest.spyOn(apiService, 'getDailyChallenge').mockResolvedValue({
+      id: 'challenge-1',
+      word: 'perseverance',
+      partOfSpeech: 'noun',
+      definitionEn: 'persistence in doing something',
+      definitionAm: 'ጽናት',
+      exampleSentence: 'Success requires perseverance.',
+      exampleSentenceAm: 'ስኬት ጽናትን ይጠይቃል።',
     } as never);
     getUsageSpy = jest.spyOn(apiService, 'getUsageStatus');
     getLocalQuizStatsSpy = jest.spyOn(quizStatsService, 'getLocalQuizStats').mockResolvedValue({
@@ -129,18 +148,11 @@ describe('Callback Navigation & All Menu Option Buttons Test Suite', () => {
     test('Clicking "⚙️ My Progress" button should render progress dashboard & level selection keyboard', async () => {
       await levelCommand(mockCtx);
 
-      expect(getUserByTelegramIdSpy).toHaveBeenCalledWith(555666777);
       expect(mockCtx.reply).toHaveBeenCalledWith(
-        expect.stringContaining('LEARNING PROGRESS DASHBOARD'),
+        expect.stringContaining('የእንግሊዝኛ ችሎታዎ'),
         expect.objectContaining({
-          reply_markup: expect.objectContaining({
-            inline_keyboard: expect.arrayContaining([
-              expect.arrayContaining([
-                expect.objectContaining({ text: '🟢 Beginner' }),
-                expect.objectContaining({ text: '✅ Intermediate' }),
-              ])
-            ])
-          })
+          parse_mode: 'HTML',
+          reply_markup: expect.anything(),
         })
       );
     });

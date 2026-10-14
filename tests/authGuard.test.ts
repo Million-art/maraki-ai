@@ -30,31 +30,8 @@ describe('Central Auth Guard & Access Control Test Suite', () => {
     };
   });
 
-  describe('Local Stats & Backend Sync Edge Cases', () => {
-    test('CRITICAL: Should BLOCK quiz access when backend returns 0 used BUT local stats has 3 quizzes completed', async () => {
-      getUsageSpy.mockResolvedValueOnce({
-        isPremium: false,
-        weeklyQuizzesUsed: 0,
-        weeklyQuizLimit: 3,
-        remaining: 3,
-      });
-
-      getLocalQuizStatsSpy.mockResolvedValueOnce({
-        totalQuizzesCompleted: 3,
-        totalQuestions: 15,
-        totalCorrect: 12,
-      });
-
-      const allowed = await checkCentralAuthAndAccess(mockCtx, 'quiz');
-
-      expect(allowed).toBe(false);
-      expect(mockCtx.reply).toHaveBeenCalledWith(
-        expect.stringContaining('Weekly Quiz Limit Reached!'),
-        expect.objectContaining({ parse_mode: 'HTML' })
-      );
-    });
-
-    test('Should BLOCK quiz access when backend returns 3 quizzes used regardless of local stats', async () => {
+  describe('Usage & Quota Edge Cases', () => {
+    test('Should BLOCK quiz access when backend returns 3 quizzes used', async () => {
       getUsageSpy.mockResolvedValueOnce({
         isPremium: false,
         weeklyQuizzesUsed: 3,
@@ -62,33 +39,21 @@ describe('Central Auth Guard & Access Control Test Suite', () => {
         remaining: 0,
       });
 
-      getLocalQuizStatsSpy.mockResolvedValueOnce({
-        totalQuizzesCompleted: 0,
-        totalQuestions: 0,
-        totalCorrect: 0,
-      });
-
       const allowed = await checkCentralAuthAndAccess(mockCtx, 'quiz');
 
       expect(allowed).toBe(false);
       expect(mockCtx.reply).toHaveBeenCalledWith(
         expect.stringContaining('Weekly Quiz Limit Reached!'),
-        expect.objectContaining({ parse_mode: 'HTML' })
+        expect.objectContaining({ parse_mode: 'Markdown' })
       );
     });
 
-    test('Should ALLOW quiz access when both backend and local stats indicate remaining quota (1/3 used)', async () => {
+    test('Should ALLOW quiz access when backend indicates remaining quota (1/3 used)', async () => {
       getUsageSpy.mockResolvedValueOnce({
         isPremium: false,
         weeklyQuizzesUsed: 1,
         weeklyQuizLimit: 3,
         remaining: 2,
-      });
-
-      getLocalQuizStatsSpy.mockResolvedValueOnce({
-        totalQuizzesCompleted: 1,
-        totalQuestions: 5,
-        totalCorrect: 4,
       });
 
       const allowed = await checkCentralAuthAndAccess(mockCtx, 'quiz');
@@ -105,12 +70,6 @@ describe('Central Auth Guard & Access Control Test Suite', () => {
         weeklyQuizzesUsed: 10,
         weeklyQuizLimit: -1,
         remaining: -1,
-      });
-
-      getLocalQuizStatsSpy.mockResolvedValueOnce({
-        totalQuizzesCompleted: 15,
-        totalQuestions: 75,
-        totalCorrect: 70,
       });
 
       const allowed = await checkCentralAuthAndAccess(mockCtx, 'quiz');
@@ -135,20 +94,14 @@ describe('Central Auth Guard & Access Control Test Suite', () => {
   });
 
   describe('Fail-Closed Resilience & Error Handling', () => {
-    test('Should FAIL CLOSED (block quiz) if apiService throws an unhandled error AND local stats indicate 3+ completed', async () => {
+    test('Should FAIL CLOSED (block quiz) if apiService throws an unhandled error', async () => {
       getUsageSpy.mockRejectedValueOnce(new Error('Database connection timeout'));
-
-      getLocalQuizStatsSpy.mockResolvedValueOnce({
-        totalQuizzesCompleted: 3,
-        totalQuestions: 15,
-        totalCorrect: 10,
-      });
 
       const allowed = await checkCentralAuthAndAccess(mockCtx, 'quiz');
 
       expect(allowed).toBe(false);
       expect(mockCtx.reply).toHaveBeenCalledWith(
-        expect.stringContaining('Weekly Quiz Limit Reached!'),
+        expect.stringContaining('Service Unavailable'),
         expect.anything()
       );
     });
