@@ -40,7 +40,7 @@ export const levelCommand = async (ctx: Context) => {
     return await ctx.reply(unassessedCard, { parse_mode: "HTML", reply_markup: keyboard });
   }
 
-  const levelName = report.cefrLevel || 'B1';
+  const levelName = report.cefrLevel || 'A1';
   const score = report.overallScore || 55;
   const skills = report.skills || { vocabulary: 55, grammar: 55, reading: 55, listening: 55, speaking: null };
   const weakness = report.primaryWeakness || 'Speaking';

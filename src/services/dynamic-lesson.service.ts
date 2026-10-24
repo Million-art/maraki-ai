@@ -20,7 +20,7 @@ export class DynamicLessonService {
    */
   static async generateLesson(
     weakness: string,
-    cefrLevel: string = 'B1',
+    cefrLevel: string = 'A1',
     dayNumber: number = 1,
     dayTitle?: string,
     dayTask?: string

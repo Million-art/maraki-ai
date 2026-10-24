@@ -170,7 +170,7 @@ export function getLinguisticDiagnosisFallback(skills: SkillScores, weakness: st
 }
 
 export function getCareerTranslationFallback(cefrLevel: string) {
-  const level = (cefrLevel || 'B1').toUpperCase();
+  const level = (cefrLevel || 'A1').toUpperCase();
   switch (level) {
     case 'A1':
     case 'A2':
@@ -208,7 +208,7 @@ export function getCareerTranslationFallback(cefrLevel: string) {
 }
 
 export function getPhotoScorecard(report: any, fullName: string, credId: string): string {
-  const levelName = report.cefrLevel || 'B1';
+  const levelName = report.cefrLevel || 'A1';
   const overall = report.overallScore || 55;
   const skills = report.skills || { vocabulary: 55, grammar: 55, reading: 55, listening: 55, speaking: null };
   const weakness = report.primaryWeakness || 'Speaking';
@@ -246,7 +246,7 @@ export function getPhotoScorecard(report: any, fullName: string, credId: string)
 }
 
 export function getDetailedDiagnosisMessage(report: any): string {
-  const levelName = report.cefrLevel || 'B1';
+  const levelName = report.cefrLevel || 'A1';
   const skills = report.skills || { vocabulary: 55, grammar: 55, reading: 55, listening: 55, speaking: null };
   const weakness = report.primaryWeakness || 'Speaking';
 

@@ -4,7 +4,7 @@ export class DynamicLessonService {
      * Generate an adaptive, Ethiopian-localized daily lesson using cost-efficient Gemini models.
      * Returns null if generation fails or times out, triggering immediate offline fallback.
      */
-    static async generateLesson(weakness, cefrLevel = 'B1', dayNumber = 1, dayTitle, dayTask) {
+    static async generateLesson(weakness, cefrLevel = 'A1', dayNumber = 1, dayTitle, dayTask) {
         const normalizedSkill = weakness.trim().toLowerCase();
         let specializedPrompt = '';
         if (normalizedSkill === 'listening') {
