@@ -3,7 +3,7 @@ import { getSession, setSession } from '../utils/redis.js';
 export class ApiService {
     backendUrl;
     constructor() {
-        this.backendUrl = process.env.BACKEND_API_URL || 'http://localhost:3000';
+        this.backendUrl = (process.env.BACKEND_API_URL || 'http://localhost:3000').replace(/\/+$/, '');
         const internalApiKey = process.env.INTERNAL_API_KEY || 'maraki-internal-secret-key-12345';
         axios.defaults.headers.common['X-Maraki-Bot-Key'] = internalApiKey;
         axios.defaults.headers.common['x-internal-token'] = process.env.INTERNAL_API_TOKEN || 'dev-internal-token-123';
