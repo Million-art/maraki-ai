@@ -258,16 +258,11 @@ export function getReportKeyboard(options) {
     const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
     const keyboard = new InlineKeyboard();
     if (miniAppUrl.includes('t.me/')) {
-        keyboard.url("🎙️ ከማራኪ ጋር አውራ (Voice App)", miniAppUrl);
+        keyboard.url("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
     }
     else {
-        keyboard.webApp("🎙️ ከማራኪ ጋር አውራ (Voice App)", miniAppUrl);
+        keyboard.webApp("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
     }
-    keyboard.row()
-        .text('🔥 ዕለታዊ ቻሌንጅ', 'daily_challenge')
-        .text('📚 ትምህርቶች', 'lesson')
-        .row()
-        .text('🧠 ጥያቄዎች', 'quiz')
-        .text('🌐 ትርጉም', 'translation');
+    keyboard.row().text('🔥 Daily Challenge', 'daily_challenge');
     return keyboard;
 }

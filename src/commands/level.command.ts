@@ -22,20 +22,20 @@ export const levelCommand = async (ctx: Context) => {
 
   if (!isAssessed) {
     const unassessedCard =
-      `🎯 <b>የእንግሊዝኛ ችሎታዎ</b> 🇪🇹\n\n` +
-      `እስካሁን የችሎታ መለያ ፈተና አልወሰዱም!\n\n` +
-      `የእንግሊዝኛ ችሎታዎን (A1 – C1) ለማወቅ እና ድክመትዎን የሚቀርፍ ዕለታዊ ልምምድ ለመጀመር አሁኑኑ ፈተናውን ይውሰዱ።\n\n` +
-      `⏱️ <b>የሚፈጀው ጊዜ፦</b> 1 ደቂቃ ብቻ (በድምፅ)\n` +
-      `🎯 <b>ምን ያገኛሉ?</b> የችሎታ ውጤት፣ ያለብዎት ክፍተት እና ዕለታዊ ቻሌንጅ!`;
+      `🎯 <b>Your English Proficiency</b> 🌟\n\n` +
+      `You haven't completed your assessment yet!\n\n` +
+      `Discover your CEFR English level (A1 – C1) and start personalized practice with Maraki AI.\n\n` +
+      `⏱️ <b>Duration:</b> Only 1 minute (voice)\n` +
+      `🎯 <b>What you get:</b> CEFR level scorecard, detailed feedback, and daily challenges!`;
 
     const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
     const keyboard = new InlineKeyboard();
     if (miniAppUrl.includes('t.me/')) {
-      keyboard.url("🎙️ የንግግር ችሎታ መለያ ጀምር (Voice App)", miniAppUrl);
+      keyboard.url("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
     } else {
-      keyboard.webApp("🎙️ የንግግር ችሎታ መለያ ጀምር (Voice App)", miniAppUrl);
+      keyboard.webApp("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
     }
-    keyboard.row().text("🔥 የዛሬውን ነፃ ቻሌንጅ ሞክር", "daily_challenge");
+    keyboard.row().text("🔥 Daily Challenge", "daily_challenge");
 
     return await ctx.reply(unassessedCard, { parse_mode: "HTML", reply_markup: keyboard });
   }

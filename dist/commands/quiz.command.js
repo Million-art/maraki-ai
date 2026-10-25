@@ -347,21 +347,15 @@ const showQuizResults = async (ctx) => {
     }
     resultMessage += `\n\nWhat would you like to do next? 🚀`;
     // Attach Call-to-Action inline keyboard with direct Talk with Maraki Mini App button
-    const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app';
-    const keyboard = new InlineKeyboard()
-        .text("🧠 Take Another Quiz", "quiz")
-        .text("📖 Learn a Lesson", "lesson")
-        .row();
+    const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
+    const keyboard = new InlineKeyboard();
     if (miniAppUrl.includes('t.me/')) {
-        keyboard.url("🎙️ Talk with Maraki", miniAppUrl);
+        keyboard.url("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
     }
     else {
-        keyboard.webApp("🎙️ Talk with Maraki", miniAppUrl);
+        keyboard.webApp("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
     }
-    keyboard
-        .text("🔗 Referral Link", "referral_link")
-        .row()
-        .text("💳 Upgrade to VIP", "pay");
+    keyboard.row().text("🔥 Daily Challenge", "daily_challenge");
     await ctx.reply(resultMessage, { reply_markup: keyboard });
     // Clear quiz session while preserving session history, asked question texts, and prefetched quizzes
     const currentSession = (await getSession(ctx.from.id)) || {};

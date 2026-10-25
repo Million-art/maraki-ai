@@ -21,11 +21,19 @@ export const referralCommand = async (ctx) => {
         `• 👥 <b>Friends Referred:</b> ${count} / ${target}\n` +
         `• 🎯 <b>Status:</b> ${count >= 10 ? '🎉 Reward Unlocked (1 Month VIP Activated!)' : `${10 - count} more friend(s) needed`}\n\n` +
         `💡 <i>Share your link with friends or groups. When they click /start, your progress updates automatically!</i>`;
-    const keyboard = new InlineKeyboard()
-        .url("📢 Share on Telegram", `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me on Maraki AI to practice English & improve your skills for free! 🚀")}`)
+    const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
+    const keyboard = new InlineKeyboard();
+    if (miniAppUrl.includes('t.me/')) {
+        keyboard.url("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
+    }
+    else {
+        keyboard.webApp("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
+    }
+    keyboard
         .row()
-        .text("🧠 Take Quiz", "quiz")
-        .text("📖 Learn Lesson", "lesson");
+        .text("🔥 Daily Challenge", "daily_challenge")
+        .row()
+        .url("📢 Share on Telegram", `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me on Maraki AI to practice English & improve your skills for free! 🚀")}`);
     await ctx.reply(message, { parse_mode: 'HTML', reply_markup: keyboard });
 };
 function createProgressBar(current, target) {

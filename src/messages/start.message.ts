@@ -1,11 +1,10 @@
 export const getStartMenuMsg = (name: string) => {
   return (
-    `👋 <b>ሰላም ${name}! እንኳን ወደ Maraki AI በደህና መጡ 🇪🇹</b>\n\n` +
-    `የእንግሊዝኛ ቋንቋ ችሎታዎን በAI የቀጥታ ድምፅ፣ ዕለታዊ ልምምዶች እና አዝናኝ ጥያቄዎች ያሳድጉ!\n\n` +
-    `🎯 <b>የእንግሊዝኛ ንግግር (Speaking) ችሎታዎን ያሳድጉ!</b>\n` +
-    `ያለምንም ፍርሃት እና መቆራረጥ አቀላጥፈው እንዲያወሩ ከማራኪ AI ጋር በቀጥታ በድምፅ ይለማመዱ።\n\n` +
-  
-    `ለመጀመር ከታች ካሉት አማራጮች አንዱን ይጫኑ 👇`
+    `👋 <b>Hello ${name}! Welcome to Maraki AI 🌟</b>\n\n` +
+    `Level up your English skills with interactive AI voice conversations and daily practice!\n\n` +
+    `🎯 <b>Master English Speaking</b>\n` +
+    `Practice speaking naturally, confidently, and fluently by talking directly with Maraki AI.\n\n` +
+    `Tap an option below to get started 👇`
   );
 };
 
@@ -13,4 +12,3 @@ export const getStartMenuMsg = (name: string) => {
 export const getUnassessedStartMsg = getStartMenuMsg;
 export const getAssessedStartMsg = (name: string) => getStartMenuMsg(name);
 export const getPersonalizedStartMsg = getStartMenuMsg;
-

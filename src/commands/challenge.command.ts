@@ -74,13 +74,21 @@ async function setCachedChallenge(userId: number, content: string): Promise<void
 
 function buildShareKeyboard(word: string, idiom: string, userId: number): InlineKeyboard {
   const botUsername = process.env.BOT_USERNAME || 'marakiai_bot';
+  const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
   const shareText = encodeURIComponent(
     `🎯 MARAKI AI Daily English Challenge!\n\n💡 Word of the Day: ${word}\n🗣️ Idiom of the Day: ${idiom}\n\nJoin the challenge → t.me/${botUsername}?start=${userId}`
   );
   const shareUrl = `https://t.me/share/url?url=t.me%2F${botUsername}&text=${shareText}`;
-  return new InlineKeyboard()
-    .url("📤 Share Challenge", shareUrl)
-    .text("📚 Lessons", "lesson");
+  const keyboard = new InlineKeyboard();
+
+  if (miniAppUrl.includes('t.me/')) {
+    keyboard.url("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
+  } else {
+    keyboard.webApp("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
+  }
+
+  keyboard.row().url("📤 Share Challenge", shareUrl);
+  return keyboard;
 }
 
 export async function challengeCommand(ctx: Context) {
@@ -190,7 +198,13 @@ Return JSON format with:
 
   } catch (err) {
     console.error('Challenge command error:', err);
-    const fallbackKeyboard = new InlineKeyboard().text("📚 Lessons", "lesson");
+    const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
+    const fallbackKeyboard = new InlineKeyboard();
+    if (miniAppUrl.includes('t.me/')) {
+      fallbackKeyboard.url("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
+    } else {
+      fallbackKeyboard.webApp("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
+    }
     await ctx.reply(
       `🎯 <b>MARAKI AI DAILY CHALLENGE</b> 🌟\n` +
       `${streakHeader}\n\n` +
@@ -206,12 +220,17 @@ export async function buildDailyChallengeMessage(userId: number): Promise<{ text
   const { streak } = await import('../utils/streak.util.js').then(m => m.updateDailyStreak(userId));
 
   const botUsername = process.env.BOT_USERNAME || 'marakiai_bot';
+  const miniAppUrl = process.env.MINI_APP_URL || 'https://maraki-mini-app.vercel.app/';
   const shareText = encodeURIComponent(`🎯 I'm doing the MARAKI AI Daily English Challenge!\nJoin me and improve your English every day 🚀\n\nt.me/${botUsername}?start=challenge`);
   const shareUrl = `https://t.me/share/url?url=t.me%2F${botUsername}&text=${shareText}`;
 
-  const keyboard = new InlineKeyboard()
-    .url("📤 Share Challenge", shareUrl)
-    .text("📚 Lessons", "lesson");
+  const keyboard = new InlineKeyboard();
+  if (miniAppUrl.includes('t.me/')) {
+    keyboard.url("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
+  } else {
+    keyboard.webApp("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
+  }
+  keyboard.row().url("📤 Share Challenge", shareUrl);
 
   // Serve from cache if already generated today
   const cached = await getCachedChallenge(userId);

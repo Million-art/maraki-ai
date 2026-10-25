@@ -48,18 +48,13 @@ export async function startCommand(ctx) {
         const keyboard = new InlineKeyboard();
         // 1. Hero Action: Live Voice Coaching in Mini App
         if (miniAppUrl.includes('t.me/')) {
-            keyboard.url("🎙️ ከማራኪ ጋር አውራ (Voice App)", miniAppUrl);
+            keyboard.url("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
         }
         else {
-            keyboard.webApp("🎙️ ከማራኪ ጋር አውራ (Voice App)", miniAppUrl);
+            keyboard.webApp("🎙️ Speak with Maraki (Voice App)", miniAppUrl);
         }
-        keyboard.row()
-            .text("🔥 ዕለታዊ ልምምድ", "daily_challenge")
-            .text("📚 ትምህርቶች", "lesson")
-            .row()
-            .text("🧠 ጥያቄዎች", "quiz")
-            .text("🌐 ትርጉም", "translation");
-        const welcomeMsg = getStartMenuMsg(ctx.from.first_name || "ተማሪ");
+        keyboard.row().text("🔥 Daily Challenge", "daily_challenge");
+        const welcomeMsg = getStartMenuMsg(ctx.from.first_name || "Friend");
         await ctx.reply(welcomeMsg, { parse_mode: 'HTML', reply_markup: keyboard });
     }
     catch (error) {

@@ -41,12 +41,8 @@ const initialize = async () => {
             // Set Telegram persistent Menu Commands
             try {
                 await bot.api.setMyCommands([
-                    { command: 'start', description: 'ዋና ማውጫ' },
-                    { command: 'challenge', description: '🔥 ዕለታዊ ልምምድ' },
-                    { command: 'lesson', description: '📚 ትምህርቶች' },
-                    { command: 'quiz', description: '🧠 አዝናኝ ጥያቄዎች' },
-                    { command: 'translation', description: '🌐 እንግሊዝኛ ↔ አማርኛ ትርጉም' },
-                    { command: 'help', description: '💡 መመሪያ (Help & Info)' },
+                    { command: 'start', description: '🎙️ Speak with Maraki (Voice App)' },
+                    { command: 'challenge', description: '🔥 Daily Challenge' },
                 ]);
             } catch (cmdErr) {
                 console.warn('Could not set bot commands menu:', cmdErr);
