@@ -1,5 +1,5 @@
-# Optimized Dockerfile for AWS Graviton (ARM64)
-FROM public.ecr.aws/docker/library/node:20-alpine AS runner
+# Optimized Dockerfile for AWS Graviton (ARM64) & AMD64
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 

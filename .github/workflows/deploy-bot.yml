@@ -44,12 +44,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & Push Docker Image (AWS Graviton ARM64)
+      - name: Build & Push Docker Image (Multi-Arch: AMD64 & ARM64)
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/arm64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ghcr.io/${{ env.REPO_LOWER }}/maraki-bot:latest
           cache-from: type=gha
@@ -59,7 +59,7 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         env:
           ACTOR: ${{ github.actor }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GHCR_PAT || secrets.CR_PAT || secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
@@ -72,75 +72,97 @@ jobs:
             # Authenticate with GHCR on EC2
             echo "$GH_TOKEN" | sudo docker login ghcr.io -u $ACTOR --password-stdin
 
-            # Auto-detect target project directory on EC2
-            TARGET_DIR="/home/${{ secrets.SERVER_USER }}/carramarket/compliance-backend"
-            if [ ! -d "/home/${{ secrets.SERVER_USER }}/carramarket" ]; then
-              TARGET_DIR="/home/${{ secrets.SERVER_USER }}/remittance-backend/compliance-backend"
+            # Detect project and configuration directories on EC2
+            COMPOSE_DIR="/home/${{ secrets.SERVER_USER }}/carramarket"
+            if [ ! -d "$COMPOSE_DIR" ]; then
+              COMPOSE_DIR="/home/${{ secrets.SERVER_USER }}/remittance-backend"
             fi
 
+            TARGET_DIR="$COMPOSE_DIR/compliance-backend"
             mkdir -p "$TARGET_DIR"
-            cd "$TARGET_DIR"
 
             WEBHOOK_URL_VAL="${{ secrets.WEBHOOK_URL }}"
             if [ -z "$WEBHOOK_URL_VAL" ] || [[ "$WEBHOOK_URL_VAL" == *"alertmanager.ptgr.io"* ]]; then
               WEBHOOK_URL_VAL="https://alert.carramarket.com/webhook"
             fi
 
-            # Auto-generate .env from GitHub Secrets
-            cat << EOF > "$TARGET_DIR/.env"
-            TKN=${{ secrets.TKN }}
-            PORT=1000
-            NODE_ENV=${{ secrets.NODE_ENV || 'production' }}
-            WEBHOOK_URL=$WEBHOOK_URL_VAL
-            BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            REDIS_URL=${{ secrets.REDIS_URL }}
-            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-            CRON_SECRET=${{ secrets.CRON_SECRET }}
-            EOF
+            # Auto-generate or update .env from GitHub Secrets if TKN is set, or if .env does not exist
+            if [ -n "${{ secrets.TKN }}" ]; then
+              cat << EOF > "$TARGET_DIR/.env"
+TKN=${{ secrets.TKN }}
+PORT=1000
+NODE_ENV=${{ secrets.NODE_ENV || 'production' }}
+WEBHOOK_URL=$WEBHOOK_URL_VAL
+BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
+DATABASE_URL=${{ secrets.DATABASE_URL }}
+REDIS_URL=${{ secrets.REDIS_URL }}
+GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+CRON_SECRET=${{ secrets.CRON_SECRET }}
+EOF
+            elif [ ! -f "$TARGET_DIR/.env" ]; then
+              cat << EOF > "$TARGET_DIR/.env"
+PORT=1000
+NODE_ENV=production
+WEBHOOK_URL=$WEBHOOK_URL_VAL
+EOF
+            fi
 
             # Pull latest pre-compiled image
-            echo "Pulling container image..."
+            echo "Pulling container image: ghcr.io/$REPO_LOWER/maraki-bot:latest..."
             sudo docker pull ghcr.io/$REPO_LOWER/maraki-bot:latest
 
-            # Stop and remove existing container if running
-            echo "Stopping old compliance-backend process..."
-            sudo docker stop compliance-backend || true
-            sudo docker rm compliance-backend || true
-
-            # Automatically resolve target Docker network attached to Nginx Gateway
-            DOCKER_NET=$(sudo docker inspect gateway --format '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null)
-            if [ -z "$DOCKER_NET" ]; then
-              DOCKER_NET=$(sudo docker network ls --format '{{.Name}}' | grep -E 'raffle-network|ptgr-network|remittance|carramarket|nginx' | head -n 1)
+            # Deploy using Docker Compose if docker-compose.yml exists
+            if [ -f "$COMPOSE_DIR/docker-compose.yml" ]; then
+              echo "Deploying compliance-backend via Docker Compose in $COMPOSE_DIR..."
+              cd "$COMPOSE_DIR"
+              if sudo docker compose version >/dev/null 2>&1; then
+                sudo docker compose pull compliance-backend
+                sudo docker compose up -d --no-deps compliance-backend
+              elif command -v docker-compose >/dev/null 2>&1; then
+                sudo docker-compose pull compliance-backend
+                sudo docker-compose up -d --no-deps compliance-backend
+              else
+                echo "Docker Compose command not found, using fallback docker run..."
+              fi
             fi
 
-            NET_FLAG=""
-            if [ -n "$DOCKER_NET" ]; then
-              echo "Connecting to EC2 network: $DOCKER_NET"
-              NET_FLAG="--network $DOCKER_NET"
-            fi
+            # Standalone fallback if container is not running under Compose
+            if ! sudo docker ps --format '{{.Names}}' | grep -q "^compliance-backend$"; then
+              echo "Starting standalone compliance-backend container..."
+              sudo docker stop compliance-backend 2>/dev/null || true
+              sudo docker rm compliance-backend 2>/dev/null || true
 
-            # Run pre-compiled container attached to Gateway network on Port 1000
-            echo "Starting compliance-backend container on Port 1000..."
-            sudo docker run -d \
-              --name compliance-backend \
-              --restart unless-stopped \
-              $NET_FLAG \
-              -p 1000:1000 \
-              -e VIRTUAL_HOST=alert.carramarket.com,alertmanager.ptgr.io \
-              -e VIRTUAL_PORT=1000 \
-              --env-file "$TARGET_DIR/.env" \
-              ghcr.io/$REPO_LOWER/maraki-bot:latest
+              # Resolve Docker network attached to Nginx Gateway
+              DOCKER_NET=$(sudo docker inspect gateway --format '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null)
+              if [ -z "$DOCKER_NET" ]; then
+                DOCKER_NET=$(sudo docker network ls --format '{{.Name}}' | grep -E 'bid-network|raffle-network|ptgr-network|remittance|carramarket|nginx' | head -n 1)
+              fi
 
-            if [ -n "$DOCKER_NET" ]; then
-              sudo docker network connect "$DOCKER_NET" compliance-backend 2>/dev/null || true
+              NET_FLAG=""
+              if [ -n "$DOCKER_NET" ]; then
+                echo "Connecting to EC2 network: $DOCKER_NET"
+                NET_FLAG="--network $DOCKER_NET"
+              fi
+
+              sudo docker run -d \
+                --name compliance-backend \
+                --restart always \
+                $NET_FLAG \
+                -p 1000:1000 \
+                -e VIRTUAL_HOST=alert.carramarket.com \
+                -e VIRTUAL_PORT=1000 \
+                --env-file "$TARGET_DIR/.env" \
+                ghcr.io/$REPO_LOWER/maraki-bot:latest
+
+              if [ -n "$DOCKER_NET" ]; then
+                sudo docker network connect "$DOCKER_NET" compliance-backend 2>/dev/null || true
+              fi
             fi
 
             # Reload gateway Nginx proxy if running
             sudo docker exec gateway nginx -s reload 2>/dev/null || true
 
-            # Setup Auto-Healing Watchdog
-            CRON_CMD="* * * * * sudo docker ps | grep -q compliance-backend || sudo docker run -d --name compliance-backend --restart unless-stopped $NET_FLAG -p 1000:1000 -e VIRTUAL_HOST=alert.carramarket.com -e VIRTUAL_PORT=1000 --env-file $TARGET_DIR/.env ghcr.io/$REPO_LOWER/maraki-bot:latest"
-            (crontab -l 2>/dev/null | grep -v "compliance-backend"; echo "$CRON_CMD") | crontab -
+            # Remove legacy cron watchdog if present (Docker / Compose restart: always handles restarts natively)
+            (crontab -l 2>/dev/null | grep -v "compliance-backend" || true) | crontab -
 
-            echo "✅ Deployment successful! Container joined network: $DOCKER_NET."
+            echo "✅ Deployment successful! compliance-backend is running."
