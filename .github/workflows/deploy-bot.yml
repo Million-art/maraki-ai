@@ -44,7 +44,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & Push Docker Image (Multi-Arch: AMD64 & ARM64)
+      - name: "Build & Push Docker Image (Multi-Arch: AMD64 & ARM64)"
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -88,23 +88,21 @@ jobs:
 
             # Auto-generate or update .env from GitHub Secrets if TKN is set, or if .env does not exist
             if [ -n "${{ secrets.TKN }}" ]; then
-              cat << EOF > "$TARGET_DIR/.env"
-TKN=${{ secrets.TKN }}
-PORT=1000
-NODE_ENV=${{ secrets.NODE_ENV || 'production' }}
-WEBHOOK_URL=$WEBHOOK_URL_VAL
-BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
-DATABASE_URL=${{ secrets.DATABASE_URL }}
-REDIS_URL=${{ secrets.REDIS_URL }}
-GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-CRON_SECRET=${{ secrets.CRON_SECRET }}
-EOF
+              printf "%s\n" \
+                "TKN=${{ secrets.TKN }}" \
+                "PORT=1000" \
+                "NODE_ENV=${{ secrets.NODE_ENV || 'production' }}" \
+                "WEBHOOK_URL=$WEBHOOK_URL_VAL" \
+                "BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}" \
+                "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+                "REDIS_URL=${{ secrets.REDIS_URL }}" \
+                "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" \
+                "CRON_SECRET=${{ secrets.CRON_SECRET }}" > "$TARGET_DIR/.env"
             elif [ ! -f "$TARGET_DIR/.env" ]; then
-              cat << EOF > "$TARGET_DIR/.env"
-PORT=1000
-NODE_ENV=production
-WEBHOOK_URL=$WEBHOOK_URL_VAL
-EOF
+              printf "%s\n" \
+                "PORT=1000" \
+                "NODE_ENV=production" \
+                "WEBHOOK_URL=$WEBHOOK_URL_VAL" > "$TARGET_DIR/.env"
             fi
 
             # Pull latest pre-compiled image
