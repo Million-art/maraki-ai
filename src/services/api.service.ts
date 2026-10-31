@@ -131,6 +131,7 @@ export class ApiService {
           telegramId,
           referenceNumber,
           tier,
+          source: 'bot',
         },
         { timeout: 30000 },
       );

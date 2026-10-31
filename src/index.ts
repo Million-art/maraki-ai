@@ -206,7 +206,7 @@ app.post('/cron/weekly-digest', async (req: express.Request, res: Response) => {
 
 // Internal Webhook: Direct Message Dispatch from Dashboard-Backend
 app.post('/internal/send-message', async (req: express.Request, res: express.Response) => {
-    const { telegramId, text } = req.body;
+    const { telegramId, text, parse_mode, reply_markup } = req.body;
 
     if (!telegramId || !text) {
         res.status(400).json({ error: 'Invalid payload' });
@@ -214,7 +214,10 @@ app.post('/internal/send-message', async (req: express.Request, res: express.Res
     }
 
     try {
-        await bot.api.sendMessage(telegramId, text, { parse_mode: 'Markdown' });
+        await bot.api.sendMessage(telegramId, text, {
+            parse_mode: parse_mode || 'Markdown',
+            ...(reply_markup ? { reply_markup } : {}),
+        });
         console.log(`[Send Message Webhook] Sent message to ${telegramId}`);
         res.status(200).json({ success: true });
     } catch (e: any) {
