@@ -1,4 +1,17 @@
-# Optimized Dockerfile for AWS Graviton (ARM64) & AMD64
+# Multi-stage build: works on Railway (clean git checkout) and in GitHub Actions
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+# postinstall runs the TypeScript build, so skip scripts here and build explicitly below
+RUN npm ci --ignore-scripts
+
+COPY tsconfig.json ./
+COPY src ./src
+RUN npm run build
+RUN npm prune --omit=dev --ignore-scripts
+
 FROM node:20-alpine AS runner
 
 WORKDIR /app
@@ -11,10 +24,9 @@ RUN apk add --no-cache python3 py3-pip py3-pillow ttf-dejavu fontconfig
 # Install qrcode using pip
 RUN pip3 install --break-system-packages qrcode
 
-# Copy package manifests, pre-pruned production dependencies, and compiled dist
 COPY package*.json ./
-COPY node_modules ./node_modules
-COPY dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
 COPY assets ./assets
 COPY scripts ./scripts
 
