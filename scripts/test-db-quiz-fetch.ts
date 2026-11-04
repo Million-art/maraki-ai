@@ -7,7 +7,7 @@ dotenv.config();
 async function testDatabaseQuizFetch() {
   console.log('🔍 --- SCANNING ALL BEGINNER DB QUIZZES FOR QUESTION OVERLAP --- 🔍\n');
 
-  const targetUrl = process.env.BACKEND_API_URL || 'http://localhost:3000';
+  const targetUrl = process.env.BACKEND_API_URL?.replace(/\/+$/, '');
   
   try {
     const { data: quizzes } = await axios.get(`${targetUrl}/api/student/quizzes?level=beginner`, { timeout: 5000 });
