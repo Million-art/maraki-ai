@@ -26,7 +26,12 @@ export class ApiService {
   private backendUrl: string;
 
   constructor() {
-    this.backendUrl = process.env.BACKEND_API_URL || 'https://dashboard-backend-production-6674.up.railway.app/';
+    const rawBackendUrl = (process.env.BACKEND_API_URL || '').trim();
+    const resolvedBackendUrl =
+      rawBackendUrl && !rawBackendUrl.includes('dashboard-backend-z16d.vercel.app')
+        ? rawBackendUrl
+        : 'https://dashboard-backend-production-6674.up.railway.app';
+    this.backendUrl = resolvedBackendUrl.replace(/\/+$/, '');
     const internalApiKey = process.env.INTERNAL_API_KEY || 'maraki-internal-secret-key-12345';
     axios.defaults.headers.common['X-Maraki-Bot-Key'] = internalApiKey;
     axios.defaults.headers.common['x-internal-token'] = process.env.INTERNAL_API_TOKEN || 'dev-internal-token-123';
