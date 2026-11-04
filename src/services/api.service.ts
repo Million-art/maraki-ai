@@ -26,7 +26,7 @@ export class ApiService {
   private backendUrl: string;
 
   constructor() {
-    this.backendUrl = process.env.BACKEND_API_URL?.replace(/\/+$/, '');
+    this.backendUrl = process.env.BACKEND_API_URL?.replace(/\/+$/, '') || 'https://dashboard-backend-z16d.vercel.app';
     const internalApiKey = process.env.INTERNAL_API_KEY || 'maraki-internal-secret-key-12345';
     axios.defaults.headers.common['X-Maraki-Bot-Key'] = internalApiKey;
     axios.defaults.headers.common['x-internal-token'] = process.env.INTERNAL_API_TOKEN || 'dev-internal-token-123';
