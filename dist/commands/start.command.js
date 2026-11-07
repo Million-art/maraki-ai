@@ -1,13 +1,48 @@
 import { InlineKeyboard } from "grammy";
 import { getStartMenuMsg } from "../messages/start.message.js";
 import { registerOrUpdate } from "../services/user.service.js";
-import { setSession } from "../utils/redis.js";
+import { setSession, redis } from "../utils/redis.js";
 import { handlePaymentCommand } from "./payment.command.js";
 import { checkChannelMembership } from '../utils/channel-check.util.js';
 import { trackReferralJoin, trackNewUser } from "../utils/analytics.util.js";
 export async function startCommand(ctx) {
     if (!ctx.from)
         return;
+    // 1. Immediately track and alert admin if this is a brand new user
+    // This runs before the channel membership check so that even if the user
+    // hasn't joined the channel yet, the admin is alerted immediately!
+    await trackNewUser(ctx).catch((err) => {
+        console.error("Error in start trackNewUser:", err);
+    });
+    // Extract or restore valid numerical referrerId from start payload
+    let referrerId = undefined;
+    if (ctx.match) {
+        const parsed = parseInt(String(ctx.match).trim(), 10);
+        if (!isNaN(parsed) && parsed !== ctx.from.id) {
+            referrerId = parsed;
+            try {
+                if (redis.isOpen) {
+                    await redis.set(`pending_referrer:${ctx.from.id}`, String(referrerId), { EX: 86400 });
+                }
+            }
+            catch (e) { }
+        }
+    }
+    else {
+        // Check if there was a pending referrer stored prior to channel join
+        try {
+            if (redis.isOpen) {
+                const stored = await redis.get(`pending_referrer:${ctx.from.id}`);
+                if (stored) {
+                    const parsed = parseInt(stored, 10);
+                    if (!isNaN(parsed) && parsed !== ctx.from.id) {
+                        referrerId = parsed;
+                    }
+                }
+            }
+        }
+        catch (e) { }
+    }
     // Deep-link: /start pay or /start=pay   triggered from Mini App upgrade popup
     const matchStr = String(ctx.match || '').trim().toLowerCase();
     if (matchStr === 'pay' || matchStr.includes('pay')) {
@@ -20,27 +55,14 @@ export async function startCommand(ctx) {
         return; // Access denied until they join
     }
     try {
-        // Extract valid numerical referrerId from start payload (ignoring self-referrals)
-        let referrerId = undefined;
-        if (ctx.match) {
-            const parsed = parseInt(String(ctx.match).trim(), 10);
-            if (!isNaN(parsed) && parsed !== ctx.from.id) {
-                referrerId = parsed;
-            }
-        }
         // Always register or update user via service layer to record referrer
         const user = await registerOrUpdate(ctx.from, referrerId);
-        const isBrandNewUser = user.isNewUser === true;
-        // Track referral join ONLY if user is brand new (ignore existing users clicking referral links)
-        if (referrerId && isBrandNewUser) {
+        // Track referral join
+        if (referrerId) {
             try {
                 await trackReferralJoin(referrerId, ctx.from.id);
             }
             catch (e) { }
-        }
-        // Notify Admin ONLY for brand new user registrations
-        if (isBrandNewUser) {
-            await trackNewUser(ctx);
         }
         // Clear any active session mode when starting fresh
         await setSession(ctx.from.id, { mode: null, timestamp: Date.now() });

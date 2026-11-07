@@ -1,6 +1,7 @@
 import { Context } from 'grammy';
+import { sendAdminNotification, ADMIN_TELEGRAM_ID } from './analytics.util.js';
 
-export const ADMIN_TELEGRAM_ID = parseInt(process.env.ADMIN_TELEGRAM_ID || process.env.ADMIN_ID || '386095768', 10);
+export { ADMIN_TELEGRAM_ID };
 
 /**
  * Sends a real-time error alert to the Admin on Telegram whenever any user encounters an error.
@@ -23,9 +24,7 @@ export async function notifyAdminOnError(ctx: Context | any, error: any, context
       `<code>${errorMessage.slice(0, 1000)}</code>\n\n` +
       `👉 <a href="tg://user?id=${userId}">Click to message user</a>`;
 
-    if (ctx?.api) {
-      await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMessage, { parse_mode: 'HTML' });
-    }
+    await sendAdminNotification(ctx, alertMessage, { parse_mode: 'HTML' });
   } catch (notifyErr) {
     console.error('Failed to send error notification to admin:', notifyErr);
   }

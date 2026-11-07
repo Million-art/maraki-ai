@@ -1,11 +1,10 @@
 import { InlineKeyboard } from 'grammy';
 import { redis } from '../utils/redis.js';
-import { getAnalyticsStats, ADMIN_TELEGRAM_ID } from '../utils/analytics.util.js';
+import { getAnalyticsStats, isAdminUser, getAdminTelegramIds } from '../utils/analytics.util.js';
 import { apiService } from '../services/api.service.js';
 // Middleware to check if user is admin
 export const isAdmin = (userId) => {
-    const adminId = parseInt(process.env.ADMIN_TELEGRAM_ID || process.env.ADMIN_ID || String(ADMIN_TELEGRAM_ID), 10);
-    return userId === adminId || userId === ADMIN_TELEGRAM_ID;
+    return isAdminUser(userId);
 };
 /**
  * /intel and /digest: Rich Executive Product Intelligence Briefing
@@ -159,15 +158,22 @@ export function buildProductIntelligenceMessage(intel, analytics) {
  */
 export async function sendWeeklyAdminDigest(api) {
     try {
-        const adminId = parseInt(process.env.ADMIN_TELEGRAM_ID || process.env.ADMIN_ID || String(ADMIN_TELEGRAM_ID), 10);
+        const adminIds = getAdminTelegramIds();
         const intel = await apiService.getAssessmentProductIntelligence();
         const analytics = await getAnalyticsStats();
         const { text, keyboard } = buildProductIntelligenceMessage(intel, analytics);
-        await api.sendMessage(adminId, `📅 <b>WEEKLY EXECUTIVE PRODUCT DIGEST</b>\n\n${text}`, {
-            parse_mode: 'HTML',
-            reply_markup: keyboard,
-        });
-        console.log('[Weekly Digest] Sent product intelligence briefing to admin');
+        for (const adminId of adminIds) {
+            try {
+                await api.sendMessage(adminId, `📅 <b>WEEKLY EXECUTIVE PRODUCT DIGEST</b>\n\n${text}`, {
+                    parse_mode: 'HTML',
+                    reply_markup: keyboard,
+                });
+            }
+            catch (err) {
+                console.error(`[Weekly Digest] Failed to send briefing to ${adminId}:`, err?.message);
+            }
+        }
+        console.log('[Weekly Digest] Sent product intelligence briefing to admins');
     }
     catch (error) {
         console.error('[Weekly Digest] Failed to send briefing:', error?.message);

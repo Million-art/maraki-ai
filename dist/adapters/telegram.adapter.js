@@ -21,7 +21,7 @@ import { notifyAdminOnError, ADMIN_TELEGRAM_ID } from '../utils/admin-notify.uti
 import { setNotifyPreference } from '../utils/daily-notify.util.js';
 import { handlePaymentSelection } from '../commands/payment.command.js';
 import { generateAndSendLesson } from '../commands/lesson.comand.js';
-import { handleAdminFollowupAction } from '../utils/analytics.util.js';
+import { handleAdminFollowupAction, trackNewUser, isAdminUser, sendAdminNotification } from '../utils/analytics.util.js';
 import { apiService } from '../services/api.service.js';
 dotenv.config();
 const bot_token = process.env.DEV_BOT_TOKEN || process.env.TOKEN || process.env.TKN || process.env.BOT_TOKEN;
@@ -36,6 +36,11 @@ bot.use(async (ctx, next) => {
     if (!ctx.from) {
         return next();
     }
+    // Automatically detect and notify admin of brand-new users on their very first action
+    // (whether /start, inline button click, or direct message)
+    trackNewUser(ctx).catch((err) => {
+        console.error('Error in trackNewUser middleware:', err);
+    });
     if (ctx.callbackQuery) {
         console.log(`[Bot Callback Query] User ${ctx.from.id} clicked: ${ctx.callbackQuery.data}`);
     }
@@ -192,7 +197,7 @@ bot.on('message:text', async (ctx) => {
         return;
     const text = ctx.message.text;
     // 1. Admin 2-Way Live Relay: Handle Admin replying to user support messages
-    if (ctx.from.id === ADMIN_TELEGRAM_ID) {
+    if (isAdminUser(ctx.from.id)) {
         if (text.startsWith('/reply ')) {
             const parts = text.split(' ');
             const targetId = parseInt(parts[1], 10);
@@ -261,11 +266,12 @@ bot.on('message:text', async (ctx) => {
         const user = ctx.from;
         const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
         const username = user.username ? `@${user.username}` : 'No username';
-        await bot.api.sendMessage(ADMIN_TELEGRAM_ID, `📩 *New In-Bot Support Message*\n\n` +
+        const supportAlert = `📩 *New In-Bot Support Message*\n\n` +
             `👤 *From:* ${name} (${username})\n` +
             `🆔 *User ID:* \`${user.id}\`\n\n` +
             `💬 *Message:*\n${text}\n\n` +
-            `👇 *To reply, simply use Telegram's Reply feature on this message!*`, { parse_mode: 'Markdown' });
+            `👇 *To reply, simply use Telegram's Reply feature on this message!*`;
+        await sendAdminNotification(ctx, supportAlert, { parse_mode: 'Markdown' });
         await ctx.reply(`✅ *Support message sent!* Our team will reply to you directly inside this bot chat.`, { parse_mode: 'Markdown' });
         return;
     }

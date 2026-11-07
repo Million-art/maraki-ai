@@ -1,8 +1,35 @@
 import { redis } from './redis.js';
 import { InlineKeyboard } from 'grammy';
-export const ADMIN_TELEGRAM_ID = parseInt(process.env.ADMIN_TELEGRAM_ID || process.env.ADMIN_ID || '386095768', 10);
+export const getAdminTelegramIds = () => {
+    const envAdmins = process.env.ADMIN_TELEGRAM_IDS || process.env.ADMIN_TELEGRAM_ID || process.env.ADMIN_ID || '386095768';
+    return envAdmins
+        .split(',')
+        .map(id => parseInt(id.trim(), 10))
+        .filter(id => !isNaN(id) && id > 0);
+};
+export const ADMIN_TELEGRAM_ID = getAdminTelegramIds()[0] || 386095768;
+export function isAdminUser(userId) {
+    if (!userId)
+        return false;
+    return getAdminTelegramIds().includes(userId);
+}
+export async function sendAdminNotification(ctx, text, extra = { parse_mode: 'HTML' }) {
+    const adminIds = getAdminTelegramIds();
+    for (const adminId of adminIds) {
+        try {
+            if (ctx?.api) {
+                await ctx.api.sendMessage(adminId, text, extra);
+            }
+        }
+        catch (err) {
+            console.error(`Failed to send admin notification to ${adminId}:`, err?.message || err);
+        }
+    }
+}
 // Map to track pending automated 15-minute follow-up timers
 const activeFollowupTimers = new Map();
+// In-memory set for zero-overhead deduplication
+const inMemorySeenUsers = new Set();
 // In-memory counter store fallback
 const statsStore = {
     newUsers: 0,
@@ -13,17 +40,31 @@ const statsStore = {
 // Track and Notify New User Join
 export async function trackNewUser(ctx) {
     if (!ctx.from)
-        return;
+        return false;
+    const userId = ctx.from.id;
     // Prevent admin self-notifications
-    if (ctx.from.id === ADMIN_TELEGRAM_ID)
-        return;
-    statsStore.newUsers++;
-    try {
-        if (redis.isOpen) {
+    if (isAdminUser(userId))
+        return false;
+    // 1. In-memory check (instant O(1))
+    if (inMemorySeenUsers.has(userId)) {
+        return false;
+    }
+    // 2. Redis Set deduplication
+    if (redis.isOpen) {
+        try {
+            const added = await redis.sAdd('analytics:known_user_ids', String(userId));
+            if (added === 0) {
+                inMemorySeenUsers.add(userId);
+                return false;
+            }
             await redis.incr('analytics:new_users');
         }
+        catch (e) {
+            // If Redis fails, continue with in-memory tracking
+        }
     }
-    catch (e) { }
+    inMemorySeenUsers.add(userId);
+    statsStore.newUsers++;
     const user = ctx.from;
     const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
     const username = user.username ? `@${user.username}` : 'No username';
@@ -32,19 +73,16 @@ export async function trackNewUser(ctx) {
         `💬 <b>Username:</b> ${username}\n` +
         `🆔 <b>User ID:</b> <code>${user.id}</code>\n` +
         `📅 <b>Joined:</b> ${new Date().toLocaleString()}`;
-    try {
-        await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML' });
-    }
-    catch (err) {
-        console.error('Failed to notify admin of new user:', err);
-    }
+    console.log(`[Analytics] Sending new user alert to admins for user ${userId} (${name})`);
+    await sendAdminNotification(ctx, alertMsg, { parse_mode: 'HTML' });
+    return true;
 }
 // Track and Notify Upgrade/Payment Detail View with 1-Click Admin Follow-up & Scheduled Auto Nudge
 export async function trackUpgradeIntent(ctx, tierName, amount) {
     if (!ctx.from)
         return;
     // Prevent admin self-notifications
-    if (ctx.from.id === ADMIN_TELEGRAM_ID)
+    if (isAdminUser(ctx.from.id))
         return;
     statsStore.upgradeClicks++;
     try {
@@ -67,7 +105,7 @@ export async function trackUpgradeIntent(ctx, tierName, amount) {
         `💬 <b>Username:</b> ${username}\n` +
         `🆔 <b>User ID:</b> <code>${userId}</code>\n`;
     try {
-        await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML', reply_markup: keyboard });
+        await sendAdminNotification(ctx, alertMsg, { parse_mode: 'HTML', reply_markup: keyboard });
     }
     catch (err) {
         console.error('Failed to notify admin of upgrade click:', err);
@@ -150,7 +188,7 @@ export async function trackPaymentAttempt(ctx, referenceText, result) {
             `💰 <b>Amount:</b> ${result.result?.amount || 299} ETB\n` +
             `🧾 <b>Reference:</b> <code>${referenceText}</code>`;
         try {
-            await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML' });
+            await sendAdminNotification(ctx, alertMsg, { parse_mode: 'HTML' });
         }
         catch (err) { }
     }
@@ -187,7 +225,7 @@ export async function trackPaymentAttempt(ctx, referenceText, result) {
             `⏰ <b>Timestamp:</b> ${new Date().toLocaleString()}\n\n` +
             `💡 <i>You can click "Approve" below to instantly grant VIP access to this user directly via Telegram!</i>`;
         try {
-            await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML', reply_markup: keyboard });
+            await sendAdminNotification(ctx, alertMsg, { parse_mode: 'HTML', reply_markup: keyboard });
         }
         catch (err) { }
     }
@@ -218,7 +256,7 @@ export async function notifyAdminPaymentError(ctx, referenceText, error) {
         `⏰ <b>Timestamp:</b> ${new Date().toLocaleString()}\n\n` +
         `💡 <i>Click "Approve" below to manually grant VIP access to this student without checking Docker logs!</i>`;
     try {
-        await ctx.api.sendMessage(ADMIN_TELEGRAM_ID, alertMsg, { parse_mode: 'HTML', reply_markup: keyboard });
+        await sendAdminNotification(ctx, alertMsg, { parse_mode: 'HTML', reply_markup: keyboard });
     }
     catch (err) {
         console.error('Failed to send admin payment exception alert:', err);
@@ -226,7 +264,7 @@ export async function notifyAdminPaymentError(ctx, referenceText, error) {
 }
 // Helper function to handle Admin 1-click follow-up & approval buttons from alerts
 export async function handleAdminFollowupAction(ctx, actionData) {
-    if (!ctx.from || ctx.from.id !== ADMIN_TELEGRAM_ID)
+    if (!ctx.from || !isAdminUser(ctx.from.id))
         return;
     if (actionData.startsWith('admin_approve_')) {
         // Format: admin_approve_<userId>_<tier>
