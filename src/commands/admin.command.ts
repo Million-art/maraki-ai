@@ -5,7 +5,7 @@ import { apiService } from '../services/api.service.js';
 
 // Middleware to check if user is admin
 export const isAdmin = (userId: number): boolean => {
-  const adminId = parseInt(process.env.ADMIN_ID || String(ADMIN_TELEGRAM_ID), 10);
+  const adminId = parseInt(process.env.ADMIN_TELEGRAM_ID || process.env.ADMIN_ID || String(ADMIN_TELEGRAM_ID), 10);
   return userId === adminId || userId === ADMIN_TELEGRAM_ID;
 };
 
@@ -176,7 +176,7 @@ export function buildProductIntelligenceMessage(intel: any, analytics?: any): { 
  */
 export async function sendWeeklyAdminDigest(api: any) {
   try {
-    const adminId = parseInt(process.env.ADMIN_ID || String(ADMIN_TELEGRAM_ID), 10);
+    const adminId = parseInt(process.env.ADMIN_TELEGRAM_ID || process.env.ADMIN_ID || String(ADMIN_TELEGRAM_ID), 10);
     const intel = await apiService.getAssessmentProductIntelligence();
     const analytics = await getAnalyticsStats();
     const { text, keyboard } = buildProductIntelligenceMessage(intel, analytics);

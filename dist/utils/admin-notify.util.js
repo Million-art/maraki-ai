@@ -1,4 +1,4 @@
-export const ADMIN_TELEGRAM_ID = 386095768;
+export const ADMIN_TELEGRAM_ID = parseInt(process.env.ADMIN_TELEGRAM_ID || process.env.ADMIN_ID || '386095768', 10);
 /**
  * Sends a real-time error alert to the Admin on Telegram whenever any user encounters an error.
  */
